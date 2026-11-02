@@ -61,9 +61,14 @@ const SuperadminDashboard = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to="/superadmin/tenants?new=1" className="inline-flex items-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors">
-            <Plus size={17} /> New client
-          </Link>
+          <a
+            href={import.meta.env.VITE_CENTRAL_PLATFORM_URL || 'https://apps.vsph.in'}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors"
+          >
+            <Plus size={17} /> Onboard a client
+          </a>
           <Link to="/superadmin/users" className="inline-flex items-center gap-2 h-11 px-5 rounded-lg border border-vsph-navy text-vsph-navy text-sm font-semibold hover:bg-vsph-navy hover:text-white transition-colors">
             <Users size={17} /> Manage users
           </Link>
@@ -174,14 +179,14 @@ const SuperadminDashboard = () => {
           <h2 className="text-vsph-navy text-lg font-semibold">Quick actions</h2>
           <p className="text-xs text-slate-500 mt-0.5 mb-4">Shortcuts for common setup tasks.</p>
           <div className="space-y-2.5">
-            <Link to="/superadmin/tenants?new=1" className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-vsph-core-blue hover:bg-[#F7FBFF] transition-colors">
+            <a href={import.meta.env.VITE_CENTRAL_PLATFORM_URL || 'https://apps.vsph.in'} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-vsph-core-blue hover:bg-[#F7FBFF] transition-colors">
               <span className="w-9 h-9 rounded-lg bg-vsph-light-blue/20 text-vsph-core-blue grid place-items-center"><Building2 size={18} /></span>
               <span className="min-w-0">
-                <strong className="block text-sm font-semibold text-vsph-navy">Create a client</strong>
-                <small className="block text-xs text-slate-500">Add a new organization</small>
+                <strong className="block text-sm font-semibold text-vsph-navy">Onboard a client</strong>
+                <small className="block text-xs text-slate-500">Starts at apps.vsph.in</small>
               </span>
               <ArrowRight size={15} className="ml-auto text-slate-400" />
-            </Link>
+            </a>
             <Link to="/superadmin/users" className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-vsph-core-blue hover:bg-[#F7FBFF] transition-colors">
               <span className="w-9 h-9 rounded-lg bg-vsph-grey text-vsph-navy grid place-items-center"><UserPlus size={18} /></span>
               <span className="min-w-0">

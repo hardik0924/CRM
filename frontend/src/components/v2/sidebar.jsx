@@ -21,6 +21,7 @@ import {
   LogOut,
   Menu,
   X,
+  UserCog,
 } from 'lucide-react';
 
 const Sidebar = ({ open = false, onClose }) => {
@@ -42,6 +43,10 @@ const Sidebar = ({ open = false, onClose }) => {
     { name: 'Projects', path: '/v2/projects', icon: Layers },
     { name: 'Campaigns', path: '/v2/campaigns', icon: Megaphone },
     { name: 'Tasks', path: '/v2/tasks', icon: ListChecks },
+    ...(localStorage.getItem('vsph_user_role') === 'ADMIN' ||
+    localStorage.getItem('vsph_user_owner') === 'true'
+      ? [{ name: 'Team', path: '/v2/team', icon: UserCog }]
+      : []),
     { name: 'Calendar', path: '/v2/calendar', icon: Calendar },
     { name: 'Reports', path: '/v2/reports', icon: BarChart2 },
     { name: 'Settings', path: '/v2/settings', icon: Settings },
@@ -127,16 +132,8 @@ const Sidebar = ({ open = false, onClose }) => {
       </div>
 
       {/* User Profile Section */}
-      <div className="p-4 border-t border-slate-800 bg-[#0f172a] shrink-0">
-        <button 
-          onClick={() => {
-            if (window.confirm("Are you sure you want to log out?")) {
-              localStorage.removeItem('user');
-              window.location.href = '/v2/login';
-            }
-          }}
-          className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-white/5 transition-colors text-left"
-        >
+      <div className="p-4 border-t border-slate-800 bg-[#0f172a] shrink-0 space-y-2">
+        <div className="flex items-center gap-3 w-full p-2 rounded-lg text-left">
           <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
             {user ? (user.user_name || user.name || "U").substring(0, 2).toUpperCase() : "US"}
           </div>
@@ -148,7 +145,19 @@ const Sidebar = ({ open = false, onClose }) => {
               {user ? user.user_role : "Administrator"}
             </p>
           </div>
-          <ChevronDown size={16} className="text-slate-500 shrink-0" />
+        </div>
+
+        <button
+          onClick={() => {
+            if (window.confirm("Are you sure you want to sign out?")) {
+              localStorage.clear();
+              window.location.href = '/';
+            }
+          }}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:bg-white/5 hover:border-slate-500 transition-colors text-left"
+        >
+          <LogOut size={18} className="text-slate-400 shrink-0" />
+          <span className="text-[13px] font-semibold">Sign out</span>
         </button>
       </div>
       

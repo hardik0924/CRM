@@ -118,24 +118,45 @@ const TenantManagement = () => {
             Create a client, then add the people who can sign in to their CRM.
           </p>
         </div>
-        <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors">
-          <Plus size={18} /> New client
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <a
+            href={import.meta.env.VITE_CENTRAL_PLATFORM_URL || 'https://apps.vsph.in'}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors"
+          >
+            <Plus size={18} /> Onboard via apps.vsph.in
+          </a>
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-vsph-navy text-vsph-navy text-sm font-semibold hover:bg-vsph-navy hover:text-white transition-colors"
+            title="Internal support only"
+          >
+            Internal support
+          </button>
+        </div>
       </div>
 
-      {/* Onboarding banner */}
+      {/* Centralized onboarding notice */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 rounded-xl bg-[#F7FBFF] border border-[#CFE1F1] p-6 mb-6">
         <div className="max-w-2xl">
-          <p className="text-[11px] font-bold tracking-[0.14em] text-vsph-core-blue">GUIDED SETUP</p>
-          <h2 className="text-vsph-navy text-xl font-semibold tracking-tight mt-2">Bring a new customer on board</h2>
+          <p className="text-[11px] font-bold tracking-[0.14em] text-vsph-core-blue">CENTRALIZED ONBOARDING</p>
+          <h2 className="text-vsph-navy text-xl font-semibold tracking-tight mt-2">New clients start at apps.vsph.in</h2>
           <p className="text-slate-500 text-sm mt-1 leading-relaxed">
-            Start with the organization, then create its first user. That user signs in from the client login
-            and only sees this client's CRM data.
+            Create the organization, assign CRM and send the first administrator invitation from the central
+            platform. CRM receives the organization automatically and stays the source of truth for CRM data.
+            Use <span className="font-semibold text-vsph-navy">Internal support</span> only to repair or maintain
+            an existing setup.
           </p>
         </div>
-        <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] shrink-0">
-          <Plus size={17} /> Start onboarding
-        </button>
+        <a
+          href={import.meta.env.VITE_CENTRAL_PLATFORM_URL || 'https://apps.vsph.in'}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-vsph-core-blue text-vsph-core-blue text-sm font-semibold hover:bg-vsph-core-blue hover:text-white transition-colors shrink-0"
+        >
+          Open central platform <ArrowRight size={16} />
+        </a>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl">
@@ -159,6 +180,7 @@ const TenantManagement = () => {
                 <th className="px-5 py-3 font-semibold">Client</th>
                 <th className="px-5 py-3 font-semibold">Plan</th>
                 <th className="px-5 py-3 font-semibold">Status</th>
+                <th className="px-5 py-3 font-semibold">CRM access</th>
                 <th className="px-5 py-3 font-semibold">Users</th>
                 <th className="px-5 py-3 font-semibold">Accounts</th>
                 <th className="px-5 py-3 font-semibold">Created</th>
@@ -168,16 +190,16 @@ const TenantManagement = () => {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="py-14 text-center text-slate-500">
+                  <td colSpan="8" className="py-14 text-center text-slate-500">
                     <Loader2 size={24} className="animate-spin text-vsph-core-blue mx-auto mb-2" />
                     Loading clients...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-14 text-center text-slate-500">
+                  <td colSpan="8" className="py-14 text-center text-slate-500">
                     {tenants.length === 0
-                      ? 'No clients yet. Create your first client to get started.'
+                      ? 'No clients yet. New commercial clients are onboarded at apps.vsph.in.'
                       : 'No clients match your search.'}
                   </td>
                 </tr>
@@ -208,6 +230,29 @@ const TenantManagement = () => {
                       }`}>
                         {t.tenant_status}
                       </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      {(() => {
+                        const entitlement = t.tenant_entitlements?.[0]
+                        const status = entitlement?.entitlement_status
+                        const crew = {
+                          ACTIVE: 'bg-emerald-50 text-emerald-700',
+                          SUSPENDED: 'bg-amber-50 text-amber-700',
+                          EXPIRED: 'bg-rose-50 text-rose-700',
+                          REVOKED: 'bg-rose-50 text-rose-700',
+                          PENDING: 'bg-slate-100 text-slate-600',
+                        }
+                        return (
+                          <div className="space-y-1">
+                            <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${crew[status] || 'bg-rose-50 text-rose-700'}`}>
+                              {status || 'UNKNOWN'}
+                            </span>
+                            <span className="block text-[10px] text-slate-400">
+                              {t.external_organization_id ? `Synced ${t.tenant_sync_status || ''}`.trim() : 'Not linked to platform'}
+                            </span>
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td className="px-5 py-4 text-slate-600">{t._count?.tenant_users ?? 0}</td>
                     <td className="px-5 py-4 text-slate-600">{t._count?.tenant_accounts ?? 0}</td>
@@ -245,9 +290,11 @@ const TenantManagement = () => {
           <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
               <div>
-                <h2 className="text-vsph-navy text-lg font-semibold">{editing ? 'Edit client' : 'New client'}</h2>
+                <h2 className="text-vsph-navy text-lg font-semibold">{editing ? 'Edit client' : 'Internal support: new client'}</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {editing ? 'Update the client organization.' : 'Create the organization, then add its first user.'}
+                  {editing
+                    ? 'Update the client organization. CRM access is controlled by platform entitlement.'
+                    : 'Commercial onboarding belongs at apps.vsph.in. Use this only for support or repair.'}
                 </p>
               </div>
               <button onClick={closeForm} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-vsph-navy" aria-label="Close">

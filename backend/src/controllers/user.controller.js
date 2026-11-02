@@ -11,6 +11,7 @@ export const getUsers = async (req, res) => {
         user_email: true,
         user_role: true,
         user_status: true,
+        user_is_tenant_owner: true,
         tenant_fk: true,
         tenant: { select: { tenant_name: true, tenant_code: true } },
       },

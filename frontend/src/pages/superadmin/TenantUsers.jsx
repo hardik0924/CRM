@@ -91,6 +91,11 @@ const TenantUsers = () => {
               <span className="font-mono">{tenant?.tenant_code}</span>
               <span className="mx-2 text-slate-300">•</span>
               {tenant?.tenant_plan} plan
+              {tenant?.tenant_entitlements?.[0] && (
+                <span className="ml-2 font-semibold text-vsph-navy">
+                  · CRM {tenant.tenant_entitlements[0].entitlement_status}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -98,6 +103,13 @@ const TenantUsers = () => {
           <Plus size={17} /> Add user
         </button>
       </div>
+
+      {tenant?.external_organization_id && (
+        <div className="mb-6 rounded-xl bg-[#F7FBFF] border border-[#CFE1F1] p-4 text-sm text-slate-600">
+          This organization is linked to <span className="font-semibold text-vsph-navy">apps.vsph.in</span>.
+          Manage its identity, subscription and CRM entitlement there. User actions here are internal support only.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-white border border-slate-200 rounded-xl p-5">
@@ -168,6 +180,11 @@ const TenantUsers = () => {
                       <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-medium bg-vsph-light-blue/20 text-vsph-core-blue">
                         {u.user_role?.replace(/_/g, ' ')}
                       </span>
+                      {u.user_is_tenant_owner && (
+                        <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                          <ShieldCheck size={11} /> Owner
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-4 text-slate-600">{u.user_department?.replace(/_/g, ' ')}</td>
                     <td className="px-5 py-4">

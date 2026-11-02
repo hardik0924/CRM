@@ -27,6 +27,7 @@ const LoginForm = ({ role, title, subtitle }) => {
                 localStorage.setItem("vsph_user_role", user.role);
                 localStorage.setItem("vsph_user_name", user.name);
                 localStorage.setItem("vsph_user_email", user.email);
+                localStorage.setItem("vsph_user_owner", user.isTenantOwner ? "true" : "false");
                 localStorage.setItem("vsph_tenant_id", user.tenantId || "");
                 localStorage.setItem("vsph_tenant_name", user.tenantName || "");
                 localStorage.setItem("vsph_tenant_code", user.tenantCode || "");

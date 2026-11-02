@@ -38,6 +38,15 @@ export const api = {
     return response.json();
   },
 
+  patch: async (endpoint, data) => {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
   delete: async (endpoint, data) => {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "DELETE",

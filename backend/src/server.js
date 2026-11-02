@@ -10,6 +10,9 @@ import callRoutes from "./routes/call.routes.js";
 import taskRoutes from "./routes/task.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import tenantRoutes from "./routes/tenant.routes.js";
+import integrationRoutes from "./routes/integration.routes.js";
+import invitationRoutes from "./routes/invitation.routes.js";
+import organizationRoutes from "./routes/organization.routes.js";
 import { authMiddleware } from "./middleware/auth.middleware.js";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -19,12 +22,19 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT;
 
-app.use(express.json());
 app.use(cors());
 
-app.use("/api/auth", authRoutes);
+// Integration routes need the raw body for HMAC verification, so they must be
+// mounted before the JSON parser. They never accept a user session.
+app.use("/api/integrations", integrationRoutes);
 
-// Auth middleware for all data routes (tenant isolation)
+app.use(express.json());
+
+app.use("/api/auth", authRoutes);
+app.use("/api/invitations", invitationRoutes);
+app.use("/api/organization", organizationRoutes);
+
+// Auth middleware for all data routes (tenant isolation + entitlement)
 app.use("/api/users", authMiddleware);
 app.use("/api/accounts", authMiddleware);
 app.use("/api/contacts", authMiddleware);

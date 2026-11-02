@@ -9,6 +9,15 @@ async function main() {
       tenant_code: "VSPH001",
       tenant_plan: "STARTER",
       tenant_status: "ACTIVE",
+      tenant_sync_status: "INTERNAL_SEED",
+    },
+  });
+  await prisma.organization_app_entitlement.create({
+    data: {
+      tenant_fk: tenant.tenant_id,
+      app_code: "CRM",
+      entitlement_status: "ACTIVE",
+      last_synced_at: new Date(),
     },
   });
   console.log("✅ Tenant seeded:", tenant.tenant_name);
@@ -36,6 +45,7 @@ async function main() {
       user_department: "SALES",
       user_password: "0000",
       user_status: true,
+      user_is_tenant_owner: true,
       tenant_fk: tenant.tenant_id,
     },
   });

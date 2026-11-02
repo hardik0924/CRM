@@ -8,6 +8,8 @@ import Opportunities from './pages/Opportunities'
 import Projects from './pages/Projects'
 import Campaigns from './pages/Campaigns'
 import Tasks from './pages/Tasks'
+import Team from './pages/Team'
+import AcceptInvite from './pages/AcceptInvite'
 import Login from './components/login'
 
 // V2 Imports
@@ -28,6 +30,7 @@ const App = () => {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
+      <Route path="/accept-invite" element={<AcceptInvite />} />
 
       {/* V2 Login Routes */}
       <Route path="/v2/login" element={<LoginV2Layout />}>
@@ -55,6 +58,7 @@ const App = () => {
         <Route path="/v2/projects" element={<Projects />} />
         <Route path="/v2/campaigns" element={<Campaigns />} />
         <Route path="/v2/tasks" element={<Tasks />} />
+        <Route path="/v2/team" element={<Team />} />
       </Route>
 
       {/* Legacy Dashboard Routes */}

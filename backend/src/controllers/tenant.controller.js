@@ -1,4 +1,18 @@
 import { prisma } from "../lib/prisma.js";
+import { CLIENT_ROLES } from "../lib/onboarding.logic.js";
+import { upsertCrmEntitlement } from "../services/entitlement.service.js";
+
+const tenantInclude = {
+  tenant_entitlements: {
+    where: { app_code: "CRM" },
+    select: {
+      entitlement_status: true,
+      external_subscription_ref: true,
+      effective_end: true,
+      last_synced_at: true,
+    },
+  },
+};
 
 export const getTenants = async (req, res) => {
   try {
@@ -22,6 +36,7 @@ export const getTenants = async (req, res) => {
         take,
         orderBy: { tenant_created_at: "desc" },
         include: {
+          ...tenantInclude,
           _count: {
             select: { tenant_users: true, tenant_accounts: true },
           },
@@ -67,12 +82,21 @@ export const createTenant = async (req, res) => {
       });
     }
 
-    const tenant = await prisma.tenant.create({
-      data: {
-        tenant_name,
-        tenant_code,
-        tenant_plan: tenant_plan || "STARTER",
-      },
+    const tenant = await prisma.$transaction(async (tx) => {
+      const row = await tx.tenant.create({
+        data: {
+          tenant_name,
+          tenant_code,
+          tenant_plan: tenant_plan || "STARTER",
+          tenant_sync_status: "INTERNAL_MANUAL",
+        },
+      });
+      // Internal support creation still needs a valid entitlement.
+      await upsertCrmEntitlement(
+        { tenantFk: row.tenant_id, status: "ACTIVE" },
+        tx
+      );
+      return row;
     });
 
     res.status(201).json({
@@ -170,8 +194,9 @@ export const getTenant = async (req, res) => {
     const tenant = await prisma.tenant.findUnique({
       where: { tenant_id: id },
       include: {
+        ...tenantInclude,
         _count: {
-          select: { tenant_users: true, tenant_accounts: true },
+          select: { tenant_users: true, tenant_accounts: true, tenant_invitations: true },
         },
       },
     });
@@ -199,6 +224,7 @@ export const getTenantUsers = async (req, res) => {
         user_role: true,
         user_department: true,
         user_status: true,
+        user_is_tenant_owner: true,
         tenant_fk: true,
       },
       orderBy: { user_created_at: "desc" },
@@ -209,8 +235,6 @@ export const getTenantUsers = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
-
-const CLIENT_ROLES = ["ADMIN", "SALES", "DATA", "PRODUCTION", "SPONSORSHIP", "OPERATION", "USER"];
 
 export const createTenantUser = async (req, res) => {
   try {
@@ -238,14 +262,21 @@ export const createTenantUser = async (req, res) => {
       return res.status(409).json({ success: false, message: "A user with this email already exists" });
     }
 
+    const role = user_role || "ADMIN";
+    const tenantHasOwner = await prisma.user.findFirst({
+      where: { tenant_fk: id, OR: [{ user_is_tenant_owner: true }, { user_role: "ADMIN" }] },
+      select: { user_id: true },
+    });
+
     const user = await prisma.user.create({
       data: {
         user_name,
         user_email,
         user_password,
-        user_role: user_role || "ADMIN",
+        user_role: role,
         user_department: user_department || "SALES",
         user_status: user_status === undefined ? true : Boolean(user_status),
+        user_is_tenant_owner: role === "ADMIN" && !tenantHasOwner,
         tenant_fk: id,
       },
     });

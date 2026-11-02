@@ -7,23 +7,30 @@ datasource db {
 }
 
 model tenant {
-  tenant_id        String   @id @default(uuid())
-  tenant_name      String
-  tenant_code      String   @unique
-  tenant_status    Status   @default(ACTIVE)
-  tenant_plan      String   @default("STARTER")
+  tenant_id         String   @id @default(uuid())
+  tenant_name       String
+  tenant_code       String   @unique
+  tenant_status     Status   @default(ACTIVE)
+  tenant_plan       String   @default("STARTER")
   tenant_created_at DateTime @default(now())
   tenant_updated_at DateTime @updatedAt
 
-  tenant_users     user[]
-  tenant_accounts  account[] @relation("tenant_accounts")
-  tenant_contacts  contact[] @relation("tenant_contacts")
-  tenant_opportunities opportunity[] @relation("tenant_opportunities")
-  tenant_projects  project[] @relation("tenant_projects")
-  tenant_tasks     task[] @relation("tenant_tasks")
-  tenant_calls     call[] @relation("tenant_calls")
-  tenant_campaigns campaign[] @relation("tenant_campaigns")
-  tenant_industries industry[] @relation("tenant_industries")
+  // Central platform (apps.vsph.in) identity. Never use name/email as the key.
+  external_organization_id String?   @unique
+  tenant_sync_status       String?
+  tenant_synced_at         DateTime?
+
+  tenant_users         user[]
+  tenant_accounts      account[]                      @relation("tenant_accounts")
+  tenant_contacts      contact[]                      @relation("tenant_contacts")
+  tenant_opportunities opportunity[]                  @relation("tenant_opportunities")
+  tenant_projects      project[]                      @relation("tenant_projects")
+  tenant_tasks         task[]                         @relation("tenant_tasks")
+  tenant_calls         call[]                         @relation("tenant_calls")
+  tenant_campaigns     campaign[]                     @relation("tenant_campaigns")
+  tenant_industries    industry[]                     @relation("tenant_industries")
+  tenant_entitlements  organization_app_entitlement[]
+  tenant_invitations   invitation[]
 
   @@index([tenant_status])
   @@index([tenant_code])
@@ -31,19 +38,22 @@ model tenant {
 }
 
 model user {
-  user_id         String     @id @default(uuid())
-  user_email      String     @unique
-  user_name       String
-  user_role       Role       @default(USER)
-  user_department Department @default(SALES)
-  user_password   String
-  user_status     Boolean    @default(true)
-  user_created_at DateTime   @default(now())
-  user_updated_at DateTime   @updatedAt
-  user_deleted_at DateTime?
+  user_id              String     @id @default(uuid())
+  user_email           String     @unique
+  user_name            String
+  user_role            Role       @default(USER)
+  user_department      Department @default(SALES)
+  // Null until the user accepts an invitation and sets a password.
+  user_password        String?
+  user_status          Boolean    @default(true)
+  // Explicit client super admin marker (organization owner).
+  user_is_tenant_owner Boolean    @default(false)
+  user_created_at      DateTime   @default(now())
+  user_updated_at      DateTime   @updatedAt
+  user_deleted_at      DateTime?
 
-  tenant_fk       String?
-  tenant          tenant?    @relation(fields: [tenant_fk], references: [tenant_id])
+  tenant_fk String?
+  tenant    tenant? @relation(fields: [tenant_fk], references: [tenant_id])
 
   user_accounts       account[]     @relation("account")
   user_contacts       contact[]     @relation("contact_user")
@@ -65,8 +75,8 @@ model account {
   account_id   String @id @default(uuid())
   account_code String @unique
 
-  tenant_fk    String
-  tenant       tenant @relation("tenant_accounts", fields: [tenant_fk], references: [tenant_id])
+  tenant_fk String
+  tenant    tenant @relation("tenant_accounts", fields: [tenant_fk], references: [tenant_id])
 
   account_owner_fk String
   owner            user   @relation("account", fields: [account_owner_fk], references: [user_id])
@@ -112,8 +122,8 @@ model industry {
   industry_id   String @id @default(uuid())
   industry_name String @unique
 
-  tenant_fk     String
-  tenant        tenant @relation("tenant_industries", fields: [tenant_fk], references: [tenant_id])
+  tenant_fk String
+  tenant    tenant @relation("tenant_industries", fields: [tenant_fk], references: [tenant_id])
 
   industry_status Boolean @default(true)
 
@@ -134,8 +144,8 @@ model industry {
 model contact {
   contact_id String @id @default(uuid())
 
-  tenant_fk    String
-  tenant       tenant @relation("tenant_contacts", fields: [tenant_fk], references: [tenant_id])
+  tenant_fk String
+  tenant    tenant @relation("tenant_contacts", fields: [tenant_fk], references: [tenant_id])
 
   contact_user_fk String?
   user            user?   @relation("contact_user", fields: [contact_user_fk], references: [user_id])
@@ -211,10 +221,10 @@ model contact {
 }
 
 model opportunity {
-  opportunity_id       String @id @default(uuid())
+  opportunity_id String @id @default(uuid())
 
-  tenant_fk            String
-  tenant               tenant @relation("tenant_opportunities", fields: [tenant_fk], references: [tenant_id])
+  tenant_fk String
+  tenant    tenant @relation("tenant_opportunities", fields: [tenant_fk], references: [tenant_id])
 
   opportunity_owner_fk String
   opportunity_owner    user   @relation(fields: [opportunity_owner_fk], references: [user_id])
@@ -239,12 +249,12 @@ model opportunity {
   opportunity_payment_status  payment_status?
   opportunity_loss_reason     loss_reason?
 
-  opportunity_pickup_date        DateTime?
-  opportunity_pickup_time        String?
-  opportunity_pickup_location    String?
-  opportunity_drop_date          DateTime?
-  opportunity_drop_time          String?
-  opportunity_drop_location      String?
+  opportunity_pickup_date     DateTime?
+  opportunity_pickup_time     String?
+  opportunity_pickup_location String?
+  opportunity_drop_date       DateTime?
+  opportunity_drop_time       String?
+  opportunity_drop_location   String?
 
   opportunity_name       String
   opportunity_close_date DateTime
@@ -261,23 +271,23 @@ model opportunity {
 }
 
 model project {
-  project_id   String  @id @default(uuid())
+  project_id String @id @default(uuid())
 
-  tenant_fk    String
-  tenant       tenant @relation("tenant_projects", fields: [tenant_fk], references: [tenant_id])
+  tenant_fk String
+  tenant    tenant @relation("tenant_projects", fields: [tenant_fk], references: [tenant_id])
 
   project_type type?
 
-  project_name String?
-  project_location String
-  project_date DateTime?
+  project_name      String?
+  project_location  String
+  project_date      DateTime?
   project_is_active Status?
 
   contacts      contact[]
   opportunities opportunity[]
 
-  project_created_at DateTime @default(now())
-  project_updated_at DateTime @updatedAt
+  project_created_at DateTime  @default(now())
+  project_updated_at DateTime  @updatedAt
   project_deleted_at DateTime?
 
   @@index([project_type])
@@ -289,25 +299,25 @@ model project {
 }
 
 model call {
-  call_id      String  @id @default(uuid())
+  call_id String @id @default(uuid())
 
-  tenant_fk    String
-  tenant       tenant @relation("tenant_calls", fields: [tenant_fk], references: [tenant_id])
+  tenant_fk String
+  tenant    tenant @relation("tenant_calls", fields: [tenant_fk], references: [tenant_id])
 
   call_user_fk String?
   user         user?   @relation("call_user", fields: [call_user_fk], references: [user_id])
 
   call_contact_fk String?
-  contact contact? @relation("call_contact", fields: [call_contact_fk], references: [contact_id])
-   
+  contact         contact? @relation("call_contact", fields: [call_contact_fk], references: [contact_id])
+
   call_subject     String?
   call_description String?
 
-  call_created_at DateTime @default(now())
-  call_updated_at DateTime @updatedAt
+  call_created_at DateTime  @default(now())
+  call_updated_at DateTime  @updatedAt
   call_deleted_at DateTime?
 
-  call_tasks    task[] @relation("call_task")
+  call_tasks task[] @relation("call_task")
 
   @@index([call_user_fk])
   @@index([call_contact_fk])
@@ -316,10 +326,10 @@ model call {
 }
 
 model task {
-  task_id      String  @id @default(uuid())
+  task_id String @id @default(uuid())
 
-  tenant_fk    String
-  tenant       tenant @relation("tenant_tasks", fields: [tenant_fk], references: [tenant_id])
+  tenant_fk String
+  tenant    tenant @relation("tenant_tasks", fields: [tenant_fk], references: [tenant_id])
 
   task_user_fk String?
   user         user?   @relation("task_user", fields: [task_user_fk], references: [user_id])
@@ -332,8 +342,8 @@ model task {
   task_priority    priority? @default(NORMAL)
   task_due_date    DateTime? @default(now())
 
-  task_created_at DateTime @default(now())
-  task_updated_at DateTime @updatedAt
+  task_created_at DateTime  @default(now())
+  task_updated_at DateTime  @updatedAt
   task_deleted_at DateTime?
 
   @@index([task_user_fk])
@@ -342,10 +352,10 @@ model task {
 }
 
 model campaign {
-  campaign_id      String  @id @default(uuid())
+  campaign_id String @id @default(uuid())
 
-  tenant_fk        String
-  tenant           tenant @relation("tenant_campaigns", fields: [tenant_fk], references: [tenant_id])
+  tenant_fk String
+  tenant    tenant @relation("tenant_campaigns", fields: [tenant_fk], references: [tenant_id])
 
   campaign_user_fk String?
   user             user?   @relation("campaign_user", fields: [campaign_user_fk], references: [user_id])
@@ -392,6 +402,73 @@ model shipping {
 
   @@index([shipping_account_fk])
   @@map("shipping")
+}
+
+model organization_app_entitlement {
+  entitlement_id            String            @id @default(uuid())
+  tenant_fk                 String
+  tenant                    tenant            @relation(fields: [tenant_fk], references: [tenant_id], onDelete: Cascade)
+  app_code                  String            @default("CRM")
+  entitlement_status        EntitlementStatus @default(PENDING)
+  external_subscription_ref String?
+  effective_start           DateTime?
+  effective_end             DateTime?
+  last_synced_at            DateTime?
+  created_at                DateTime          @default(now())
+  updated_at                DateTime          @updatedAt
+
+  @@unique([tenant_fk, app_code])
+  @@index([entitlement_status])
+  @@map("organization_app_entitlements")
+}
+
+model invitation {
+  invitation_id          String           @id @default(uuid())
+  tenant_fk              String
+  tenant                 tenant           @relation(fields: [tenant_fk], references: [tenant_id], onDelete: Cascade)
+  invitation_email       String
+  invitation_role        Role             @default(ADMIN)
+  invitation_token_hash  String           @unique
+  invitation_status      InvitationStatus @default(PENDING)
+  invitation_expires_at  DateTime
+  invitation_accepted_at DateTime?
+  invitation_source      String?
+  invited_by             String?
+  created_at             DateTime         @default(now())
+  updated_at             DateTime         @updatedAt
+
+  @@index([tenant_fk, invitation_email, invitation_status])
+  @@index([invitation_status, invitation_expires_at])
+  @@map("invitations")
+}
+
+model integration_event {
+  event_id                 String   @id @default(uuid())
+  external_organization_id String?
+  event_type               String
+  event_outcome            String
+  event_message            String?  @db.Text
+  event_payload            String?  @db.Text
+  created_at               DateTime @default(now())
+
+  @@index([external_organization_id])
+  @@index([event_type])
+  @@map("integration_events")
+}
+
+enum EntitlementStatus {
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  REVOKED
+  PENDING
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
 }
 
 enum Status {
@@ -494,7 +571,6 @@ enum stage {
   CLOSED_WON
   CLOSED_LOST
 }
-
 
 enum type {
   INBOUND

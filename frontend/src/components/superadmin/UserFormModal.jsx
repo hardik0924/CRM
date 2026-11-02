@@ -90,7 +90,7 @@ const UserFormModal = ({ isOpen, onClose, onSaved, tenants = [], tenantId, userT
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={userToEdit ? 'Edit user' : 'Add client user'}
+      title={userToEdit ? 'Edit user (internal support)' : 'Add client user (internal support)'}
       widthClass="w-full max-w-2xl"
       footer={
         <>
@@ -158,7 +158,8 @@ const UserFormModal = ({ isOpen, onClose, onSaved, tenants = [], tenantId, userT
         </div>
 
         <p className="text-xs text-slate-500">
-          The user can sign in at the client login with this email and password once the account is active.
+          Commercial onboarding and employee invitations happen in the client CRM or at apps.vsph.in.
+          Use this form only for internal support.
         </p>
       </form>
     </Modal>

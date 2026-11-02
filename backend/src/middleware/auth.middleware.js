@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { checkCrmAccess } from "../services/entitlement.service.js";
 
 export const authMiddleware = async (req, res, next) => {
   const userId = req.headers["x-user-id"];
@@ -22,6 +23,19 @@ export const authMiddleware = async (req, res, next) => {
     });
   }
 
+  // Fail closed: unknown or inactive entitlement blocks client access.
+  const access = await checkCrmAccess(user);
+  if (!access.allowed) {
+    return res.status(403).json({
+      success: false,
+      code: `CRM_ACCESS_${access.reason.toUpperCase()}`,
+      message:
+        access.reason === "entitlement_unknown"
+          ? "CRM access is not available for your organization. Contact your provider."
+          : "CRM access is currently suspended for your organization.",
+    });
+  }
+
   req.user = {
     id: user.user_id,
     email: user.user_email,
@@ -31,6 +45,7 @@ export const authMiddleware = async (req, res, next) => {
     tenantFk: user.tenant_fk,
     tenantName: user.tenant?.tenant_name || null,
     tenantCode: user.tenant?.tenant_code || null,
+    isTenantOwner: Boolean(user.user_is_tenant_owner),
   };
 
   next();
