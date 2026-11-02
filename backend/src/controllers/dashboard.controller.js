@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { getTenantFilter } from "../middleware/auth.middleware.js";
 
 export const getDashboardMetrics = async (req, res) => {
   try {
@@ -21,6 +22,7 @@ export const getDashboardMetrics = async (req, res) => {
       prisma.call.count({
         where: {
           call_user_fk: user_id,
+          ...getTenantFilter(req),
           call_deleted_at: null,
           call_created_at: {
             gte: startOfToday,
@@ -31,6 +33,7 @@ export const getDashboardMetrics = async (req, res) => {
       prisma.opportunity.count({
         where: {
           opportunity_owner_fk: user_id,
+          ...getTenantFilter(req),
           opportunity_stage: "CLOSED_WON",
           opportunity_close_date: {
             gte: startOfMonth,

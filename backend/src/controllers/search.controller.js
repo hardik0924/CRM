@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { getTenantFilter } from "../middleware/auth.middleware.js";
 
 export const globalSearch = async (req, res) => {
   try {
@@ -20,7 +21,7 @@ export const globalSearch = async (req, res) => {
     if (filterType === "all" || filterType === "accounts") {
       promises.push(
         prisma.account.findMany({
-          where: { account_name: { contains: searchStr } },
+          where: { account_name: { contains: searchStr }, ...getTenantFilter(req) },
           take: filterType === "all" ? 5 : 20,
           select: { account_id: true, account_name: true },
         }).then(res => results.push(...res.map(acc => ({
@@ -43,6 +44,7 @@ export const globalSearch = async (req, res) => {
               { contact_professional_email: { contains: searchStr } },
               { contact_mobile: { contains: searchStr } },
             ],
+            ...getTenantFilter(req),
           },
           take: filterType === "all" ? 5 : 20,
           select: {
@@ -66,7 +68,7 @@ export const globalSearch = async (req, res) => {
     if (filterType === "all" || filterType === "opportunities") {
       promises.push(
         prisma.opportunity.findMany({
-          where: { opportunity_name: { contains: searchStr } },
+          where: { opportunity_name: { contains: searchStr }, ...getTenantFilter(req) },
           take: filterType === "all" ? 5 : 20,
           select: { opportunity_id: true, opportunity_name: true },
         }).then(res => results.push(...res.map(opp => ({
@@ -82,7 +84,7 @@ export const globalSearch = async (req, res) => {
     if (filterType === "all" || filterType === "projects") {
       promises.push(
         prisma.project.findMany({
-          where: { project_name: { contains: searchStr } },
+          where: { project_name: { contains: searchStr }, ...getTenantFilter(req) },
           take: filterType === "all" ? 3 : 20,
           select: { project_id: true, project_name: true },
         }).then(res => results.push(...res.map(proj => ({

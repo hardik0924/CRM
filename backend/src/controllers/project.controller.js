@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { type as projectType, Status as projectStatus } from "@prisma/client";
+import { getTenantFilter } from "../middleware/auth.middleware.js";
 
 // GET /api/projects/enums
 export const getProjectEnums = async (req, res) => {
@@ -25,7 +26,8 @@ export const getProjects = async (req, res) => {
     const take = Number(limit);
 
     const where = {
-      project_deleted_at: null
+      project_deleted_at: null,
+      ...getTenantFilter(req),
     };
 
     if (search) {
@@ -74,7 +76,19 @@ export const createProject = async (req, res) => {
       return res.status(400).json({ success: false, message: "Location is required" });
     }
 
-    const dataToSave = { project_location };
+    // Resolve tenant: client users always use their own tenant; superadmin may specify one
+    let tenantId = req.user.tenantFk;
+    if (req.user.role === "SUPER_ADMIN" && req.body.tenant_fk) {
+      tenantId = req.body.tenant_fk;
+    }
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        message: "No tenant context. Client users are auto-assigned; superadmin must provide tenant_fk.",
+      });
+    }
+
+    const dataToSave = { tenant_fk: tenantId, project_location };
 
     if (project_name) dataToSave.project_name = project_name;
     if (project_type) dataToSave.project_type = project_type;
@@ -107,7 +121,7 @@ export const updateProject = async (req, res) => {
     if (project_date !== undefined) dataToSave.project_date = project_date ? new Date(project_date) : null;
 
     const updatedProject = await prisma.project.update({
-      where: { project_id: id },
+      where: { project_id: id, ...getTenantFilter(req) },
       data: dataToSave
     });
 
@@ -128,7 +142,7 @@ export const deleteProjects = async (req, res) => {
     }
 
     await prisma.project.updateMany({
-      where: { project_id: { in: ids } },
+      where: { project_id: { in: ids }, ...getTenantFilter(req) },
       data: { project_deleted_at: new Date() },
     });
 

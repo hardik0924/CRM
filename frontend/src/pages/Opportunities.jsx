@@ -1,60 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Download,
-  Upload,
-  Plus,
-  Search,
-  Filter,
-  Eye,
-  Edit2,
-  Loader2,
+  Download, Upload, Plus, Search, Filter, Eye, Edit2, Loader2, Trash2,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import AddOpportunityModal from "../components/modals/AddOpportunityModal";
 
-// Reusing the ResizableHeader from Accounts
-const ResizableHeader = ({ children, initialWidth }) => {
-  const [width, setWidth] = useState(initialWidth || 150);
-
-  const startResize = (e) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startWidth = width;
-
-    const onMouseMove = (moveEvent) => {
-      setWidth(Math.max(50, startWidth + moveEvent.clientX - startX));
-    };
-    const onMouseUp = () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  };
-
-  return (
-    <th
-      className="relative border-r border-b border-slate-200 px-4 py-3 font-semibold tracking-wider text-[11px] uppercase text-slate-500 bg-slate-50 select-none whitespace-nowrap"
-      style={{ width: width, minWidth: width, maxWidth: width }}
-    >
-      <div className="overflow-hidden text-ellipsis w-full pr-2">
-        {children}
-      </div>
-      <div
-        className="absolute right-0 top-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400 z-10 transition-colors"
-        onMouseDown={startResize}
-      />
-    </th>
-  );
-};
-
 const Opportunities = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [stageFilter, setStageFilter] = useState("All Stages");
+  const [stageFilter, setStageFilter] = useState("All stages");
   const [selectAll, setSelectAll] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [opportunitiesData, setOpportunitiesData] = useState([]);
@@ -62,19 +18,14 @@ const Opportunities = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const navigate = useNavigate();
-
-  // Modal states - ready for when we build the components!
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [opportunityToEdit, setOpportunityToEdit] = useState(null);
   const [viewOpportunityId, setViewOpportunityId] = useState(null);
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchOpportunities();
-    }, 300); // 300ms debounce for search
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, currentPage]);
+    const t = setTimeout(() => fetchOpportunities(), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm, currentPage, stageFilter]);
 
   const fetchOpportunities = async () => {
     try {
@@ -82,7 +33,6 @@ const Opportunities = () => {
       const query = `?page=${currentPage}&limit=${limit}${
         searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ""
       }`;
-
       const response = await api.get(`/api/opportunities${query}`);
       if (response.success) {
         setOpportunitiesData(response.data);
@@ -100,268 +50,130 @@ const Opportunities = () => {
       setSelectedRows([]);
       setSelectAll(false);
     } else {
-      setSelectedRows(opportunitiesData.map((opp) => opp.opportunity_id));
+      setSelectedRows(opportunitiesData.map((o) => o.opportunity_id));
       setSelectAll(true);
     }
   };
 
   const toggleRow = (id) => {
     if (selectedRows.includes(id)) {
-      setSelectedRows(selectedRows.filter((rowId) => rowId !== id));
+      setSelectedRows(selectedRows.filter((r) => r !== id));
       setSelectAll(false);
     } else {
-      const newSelected = [...selectedRows, id];
-      setSelectedRows(newSelected);
-      if (newSelected.length === opportunitiesData.length) {
-        setSelectAll(true);
-      }
+      const next = [...selectedRows, id];
+      setSelectedRows(next);
+      if (next.length === opportunitiesData.length) setSelectAll(true);
     }
   };
 
-  const getStageColorClass = (stage) => {
-    switch (stage) {
-      case "Closed Won":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-emerald-500";
-      case "Closed Lost":
-        return "bg-red-50 text-red-700 border-red-200 focus:ring-red-500";
-      case "Pitch Done":
-        return "bg-blue-50 text-blue-700 border-blue-200 focus:ring-blue-500";
-      case "Follow Up":
-        return "bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-500";
-      default:
-        return "bg-white text-slate-700 border-slate-300 focus:ring-blue-500";
-    }
-  };
-
-  const getStageBadgeClass = (stage) => {
-    if (!stage) return "bg-orange-50 text-orange-600 border-orange-200";
-    const normalized = stage.replace(/_/g, " ").toUpperCase();
-    switch (normalized) {
-      case "CLOSED WON":
-        return "bg-emerald-50 text-emerald-600 border-emerald-200";
-      case "CLOSED LOST":
-        return "bg-red-50 text-red-600 border-red-200";
-      case "PITCH DONE":
-        return "bg-blue-50 text-blue-600 border-blue-200";
-      case "FOLLOW UP":
-        return "bg-amber-50 text-amber-600 border-amber-200";
-      default:
-        return "bg-slate-50 text-slate-600 border-slate-200";
-    }
+  const STAGE_COLORS = {
+    PITCH_DONE: "bg-vsph-light-blue/20 text-vsph-core-blue",
+    FOLLOW_UP: "bg-vsph-grey text-vsph-navy",
+    CONTRACT_OUT: "bg-amber-50 text-amber-700",
+    CLOSED_WON: "bg-emerald-50 text-emerald-700",
+    CLOSED_LOST: "bg-rose-50 text-rose-700",
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 animate-fade-in relative overflow-hidden">
-      {/* Section 1: Header */}
-      <div className="flex items-center justify-between px-6 py-5 bg-white border-b border-slate-200 shadow-sm z-10 shrink-0">
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
-            Opportunities
-          </h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">
-            Total Records: {totalRecords}
+    <div className="flex flex-col h-full bg-vsph-grey animate-fade-in relative overflow-hidden">
+      <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-200 shrink-0 z-10">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-vsph-navy text-2xl font-bold tracking-tight">Opportunities</h1>
+          <p className="text-slate-500 text-sm font-medium mt-0.5">
+            Total records: {totalRecords}
           </p>
         </div>
-
         <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            size="default"
-            className="gap-2 text-slate-700 font-semibold shadow-sm border-slate-300"
-          >
-            <Upload size={16} className="text-slate-500" />
-            Import
+          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
+            <Upload size={16} className="text-slate-500" /> Import
+          </Button>
+          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
+            <Download size={16} className="text-slate-500" /> Export
           </Button>
           <Button
-            variant="secondary"
-            size="default"
-            className="gap-2 text-slate-700 font-semibold shadow-sm border-slate-300"
-          >
-            <Download size={16} className="text-slate-500" />
-            Export
-          </Button>
-          <Button
-            variant="default"
-            size="default"
-            className="gap-2 font-semibold shadow-sm bg-[#0066cc] hover:bg-[#0055b3]"
+            variant="primary"
+            size="sm"
             onClick={() => setIsAddModalOpen(true)}
+            className="gap-2 font-semibold"
           >
-            <Plus size={16} />
-            Add Opportunity
+            <Plus size={16} /> New opportunity
           </Button>
         </div>
       </div>
 
-      {/* Section 2: Tabs and Filters */}
-      <div className="px-6 border-b border-slate-200 bg-white flex flex-col shrink-0">
-        {/* Tabs Row */}
-        <div className="flex items-center gap-1 pt-2">
-          <button className="px-4 py-2 text-sm font-semibold text-blue-600 border-b-2 border-blue-600">
-            My Opportunities
-          </button>
-          <button className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 border-b-2 border-transparent transition-colors">
-            Project Wise
-          </button>
-          <button className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 border-b-2 border-transparent transition-colors">
-            Opportunity Report
-          </button>
+      <div className="px-8 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
+        <div className="relative w-80">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <Search size={18} className="text-slate-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search opportunities&hellip;"
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-
-        {/* Filters Row */}
-        <div className="flex items-center justify-between py-3">
-          <div className="flex items-center gap-3">
-            {/* Search Opportunities */}
-            <div className="relative w-64">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={14} className="text-blue-500" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search opportunities..."
-                className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            {/* Stages Dropdown */}
+        <div className="flex items-center gap-3 text-sm">
+          {selectedRows.length > 0 && (
+            <span className="text-vsph-navy font-semibold bg-vsph-light-blue/20 px-3 py-1.5 rounded-md border border-vsph-light-blue/30">
+              {selectedRows.length} selected
+            </span>
+          )}
+          <div className="relative">
             <select
               value={stageFilter}
               onChange={(e) => setStageFilter(e.target.value)}
-              className={`w-50 border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 cursor-pointer font-medium transition-colors ${getStageColorClass(stageFilter)}`}
+              className="px-3 py-2 border border-slate-200 rounded-md text-sm bg-white focus:ring-2 focus:ring-vsph-core-blue"
             >
-              <option
-                value="All Stages"
-                className="bg-white text-slate-700 font-normal"
-              >
-                All Stages
-              </option>
-              <option
-                value="Pitch Done"
-                className="bg-white text-slate-700 font-normal"
-              >
-                Pitch Done
-              </option>
-              <option
-                value="Follow Up"
-                className="bg-white text-slate-700 font-normal"
-              >
-                Follow Up
-              </option>
-              <option
-                value="Closed Won"
-                className="bg-white text-slate-700 font-normal"
-              >
-                Closed Won
-              </option>
-              <option
-                value="Closed Lost"
-                className="bg-white text-slate-700 font-normal"
-              >
-                Closed Lost
-              </option>
+              <option>All stages</option>
+              <option>Pitch done</option>
+              <option>Follow up</option>
+              <option>Contract out</option>
+              <option>Closed won</option>
+              <option>Closed lost</option>
             </select>
-
-            {/* Filter by Account */}
-            <div className="relative w-84">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={14} className="text-blue-500" />
-              </div>
-              <input
-                type="text"
-                placeholder="Filter by account..."
-                className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+            <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none">
+              <Filter size={16} className="text-slate-400" />
             </div>
-
-            {/* Clear Button */}
-            <Button
-              variant="secondary"
-              size="sm"
-              className="gap-1.5 h-[34px] text-blue-600 border-slate-300 bg-white hover:bg-blue-50"
-            >
-              <span className="text-blue-600 font-bold text-lg leading-none mt-[-2px]">
-                &times;
-              </span>{" "}
-              Clear
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm">
-            {selectedRows.length > 0 && (
-              <span className="text-blue-600 font-semibold bg-blue-50 px-3 py-1.5 rounded border border-blue-100">
-                {selectedRows.length} selected
-              </span>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Section 3: Data Table */}
-      <div className="flex-1 p-6 overflow-hidden flex flex-col">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 overflow-hidden">
-          <div className="overflow-auto flex-1 bg-white relative">
-            <table
-              className="w-full text-left text-sm border-collapse"
-              style={{ tableLayout: "fixed" }}
-            >
-              <thead className="sticky top-0 z-20 shadow-[0_1px_0_rgba(226,232,240,1)] bg-slate-50">
+      <div className="flex-1 p-8 overflow-hidden flex flex-col">
+        <div className="card flex-1 flex flex-col overflow-hidden">
+          <div className="overflow-auto flex-1">
+            <table className="w-full text-left text-sm border-collapse" style={{ tableLayout: "fixed" }}>
+              <thead className="sticky top-0 z-10 bg-vsph-grey shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                 <tr>
-                  <th className="border-r border-b border-slate-200 px-4 py-3 bg-slate-50 w-12 min-w-[48px] max-w-[48px] text-center z-20">
+                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
                     <input
                       type="checkbox"
-                      className="rounded border-slate-300 text-blue-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                      className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
                       checked={selectAll}
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <ResizableHeader initialWidth={150}>
-                    OPPORTUNITY NAME
-                  </ResizableHeader>
-                  <ResizableHeader initialWidth={100}>CONTACT</ResizableHeader>
-                  <ResizableHeader initialWidth={100}>ACCOUNT</ResizableHeader>
-                  <ResizableHeader initialWidth={100}>OWNER</ResizableHeader>
-                  <ResizableHeader initialWidth={100}>STAGE</ResizableHeader>
-                  <ResizableHeader initialWidth={100}>WON TYPE</ResizableHeader>
-                  <ResizableHeader initialWidth={100}>AMOUNT</ResizableHeader>
-                  <ResizableHeader initialWidth={100}>
-                    CLOSE DATE
-                  </ResizableHeader>
-                  <ResizableHeader initialWidth={100}>TYPE</ResizableHeader>
-                  <ResizableHeader initialWidth={100}>
-                    CALL STATUS
-                  </ResizableHeader>
-                  <ResizableHeader initialWidth={100}>PROB %</ResizableHeader>
-                  <ResizableHeader initialWidth={100}>
-                    CREATED AT
-                  </ResizableHeader>
-                  <th className="border-b border-slate-200 px-4 py-3 font-semibold tracking-wider text-[11px] uppercase text-slate-500 bg-slate-50 w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(226,232,240,1)] z-20">
-                    ACTIONS
-                  </th>
+                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-80 min-w-[240px]">Opportunity</th>
+                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Stage</th>
+                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-40 min-w-[120px]">Close date</th>
+                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-56 min-w-[168px]">Owner</th>
+                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
+              <tbody className="divide-y divide-slate-200 bg-white">
                 {loading ? (
                   <tr>
-                    <td
-                      colSpan="13"
-                      className="py-12 text-center text-slate-500"
-                    >
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Loader2
-                          className="animate-spin text-blue-500"
-                          size={24}
-                        />
-                        <span>Loading opportunities...</span>
+                    <td colSpan="6" className="py-16 text-center text-slate-500">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
+                        <p className="text-sm font-medium">Loading opportunities&hellip;</p>
                       </div>
                     </td>
                   </tr>
                 ) : opportunitiesData.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan="13"
-                      className="py-12 text-center text-slate-500 font-medium"
-                    >
+                    <td colSpan="6" className="py-16 text-center text-slate-500 font-medium">
                       No opportunities found.
                     </td>
                   </tr>
@@ -369,108 +181,53 @@ const Opportunities = () => {
                   opportunitiesData.map((opp) => (
                     <tr
                       key={opp.opportunity_id}
+                      className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(opp.opportunity_id) ? "bg-vsph-light-blue/30" : ""}`}
                       onClick={() => setViewOpportunityId(opp.opportunity_id)}
-                      className={`hover:bg-blue-50/50 group cursor-pointer ${selectedRows.includes(opp.opportunity_id) ? "bg-blue-50/30" : ""}`}
                     >
-                      <td
-                        className="border-r border-slate-100 px-4 py-3 text-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <td className="border-b border-slate-100 px-6 py-4 text-center">
                         <input
                           type="checkbox"
-                          className="rounded border-slate-300 text-blue-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                          className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
                           checked={selectedRows.includes(opp.opportunity_id)}
-                          onChange={() => toggleRow(opp.opportunity_id)}
+                          onChange={(e) => { e.stopPropagation(); toggleRow(opp.opportunity_id); }}
                         />
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-3 font-semibold text-[#0066cc] hover:underline cursor-pointer truncate">
+                      <td className="border-b border-slate-100 px-6 py-4 font-medium text-vsph-navy hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue">
                         {opp.opportunity_name}
                       </td>
-                      <td
-                        className="border-r border-slate-100 px-4 py-3 font-semibold text-[#0066cc] hover:underline cursor-pointer truncate"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (opp.opportunity_contact_fk) {
-                            navigate(
-                              `/contacts?contact_id=${opp.opportunity_contact_fk}`,
-                            );
-                          }
-                        }}
-                      >
-                        {opp.opportunity_contact
-                          ? `${opp.opportunity_contact.contact_firstname || ""} ${opp.opportunity_contact.contact_lastname || ""}`.trim()
-                          : "-"}
+                      <td className="border-b border-slate-100 px-6 py-4">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${STAGE_COLORS[opp.opportunity_stage] || "bg-vsph-grey text-slate-600"}`}>
+                          {opp.opportunity_stage?.replace(/_/g, " ") || "-"}
+                        </span>
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate">
-                        {opp.opportunity_account?.account_name || "-"}
+                      <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
+                        {opp.opportunity_close_date ? new Date(opp.opportunity_close_date).toLocaleDateString() : "-"}
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate">
+                      <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
                         {opp.opportunity_owner?.user_name || "-"}
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate">
-                        {opp.opportunity_stage ? (
-                          <span
-                            className={`px-2.5 py-1 text-[11px] font-bold rounded border uppercase tracking-wide ${getStageBadgeClass(opp.opportunity_stage)}`}
-                          >
-                            {opp.opportunity_stage.replace(/_/g, " ")}
-                          </span>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-400 truncate">
-                        —
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-400 truncate">
-                        —
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate">
-                        {opp.opportunity_close_date
-                          ? new Date(
-                              opp.opportunity_close_date,
-                            ).toLocaleDateString("en-GB")
-                          : "-"}
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate capitalize">
-                        {opp.opportunity_type?.toLowerCase() || "-"}
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate capitalize">
-                        {opp.opportunity_call_status
-                          ?.replace(/_/g, " ")
-                          .toLowerCase() || "-"}
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate">
-                        10.00%
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-3 text-slate-600 truncate">
-                        {new Date(
-                          opp.opportunity_created_at,
-                        ).toLocaleDateString("en-GB")}
-                      </td>
-                      <td
-                        className={`px-4 py-3 text-center sticky right-0 group-hover:bg-blue-50/50 shadow-[-1px_0_0_rgba(241,245,249,1)] ${selectedRows.includes(opp.opportunity_id) ? "bg-blue-50/30" : "bg-white"}`}
-                      >
-                        <div className="flex items-center justify-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <td className={`px-6 py-4 text-center sticky right-0 group-hover:bg-vsph-light-blue/20 shadow-[-1px_0_0_rgba(0,0,0,0.05)] ${selectedRows.includes(opp.opportunity_id) ? "bg-vsph-light-blue/30" : "bg-white"}`}>
+                        <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
                           <button
-                            className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 transition-colors cursor-pointer"
+                            className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
                             title="View"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setViewOpportunityId(opp.opportunity_id);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); setViewOpportunityId(opp.opportunity_id); }}
                           >
-                            <Eye size={14} />
+                            <Eye size={16} />
                           </button>
                           <button
-                            className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 transition-colors cursor-pointer"
+                            className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
                             title="Edit"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpportunityToEdit(opp);
-                              setIsAddModalOpen(true);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); setOpportunityToEdit(opp); setIsAddModalOpen(true); }}
                           >
-                            <Edit2 size={14} />
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            className="p-2 bg-rose-50 hover:bg-rose-100 rounded text-rose-500 hover:text-rose-600 transition-colors"
+                            title="Delete"
+                            onClick={(e) => { e.stopPropagation(); }}
+                          >
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -481,29 +238,25 @@ const Opportunities = () => {
             </table>
           </div>
 
-          {/* Pagination */}
-          <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
+          <div className="px-8 py-4 border-t border-slate-200 flex items-center justify-between bg-vsph-grey shrink-0">
             <span className="text-xs text-slate-500 font-medium">
-              Showing {totalRecords === 0 ? 0 : (currentPage - 1) * limit + 1}{" "}
-              to {Math.min(currentPage * limit, totalRecords)} of {totalRecords}{" "}
-              records
+              Showing {totalRecords === 0 ? 0 : (currentPage - 1) * limit + 1} to{" "}
+              {Math.min(currentPage * limit, totalRecords)} of {totalRecords} records
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button
                 variant="secondary"
                 size="sm"
-                className="text-xs px-3 shadow-sm border-slate-300"
                 disabled={currentPage === 1}
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               >
                 Previous
               </Button>
               <Button
                 variant="secondary"
                 size="sm"
-                className="text-xs px-3 shadow-sm border-slate-300"
                 disabled={currentPage * limit >= totalRecords}
-                onClick={() => setCurrentPage((prev) => prev + 1)}
+                onClick={() => setCurrentPage((p) => p + 1)}
               >
                 Next
               </Button>
@@ -512,13 +265,9 @@ const Opportunities = () => {
         </div>
       </div>
 
-      {/* Modals */}
       <AddOpportunityModal
         isOpen={isAddModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false);
-          setOpportunityToEdit(null);
-        }}
+        onClose={() => { setIsAddModalOpen(false); setOpportunityToEdit(null); }}
         onSuccess={fetchOpportunities}
         opportunityToEdit={opportunityToEdit}
       />

@@ -1,11 +1,25 @@
 import { prisma } from "../lib/prisma.js";
+import { getTenantFilter } from "../middleware/auth.middleware.js";
 
 export const createCall = async (req, res) => {
   try {
     const { call_user_fk, call_contact_fk, call_subject, call_description } = req.body;
 
+    // Resolve tenant: client users always use their own tenant; superadmin may specify one
+    let tenantId = req.user.tenantFk;
+    if (req.user.role === "SUPER_ADMIN" && req.body.tenant_fk) {
+      tenantId = req.body.tenant_fk;
+    }
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        message: "No tenant context. Client users are auto-assigned; superadmin must provide tenant_fk.",
+      });
+    }
+
     const newCall = await prisma.call.create({
       data: {
+        tenant_fk: tenantId,
         call_user_fk,
         call_contact_fk,
         call_subject,
@@ -25,7 +39,7 @@ export const getCalls = async (req, res) => {
     const { contact_id } = req.query;
 
     const query = {
-      where: { call_deleted_at: null },
+      where: { call_deleted_at: null, ...getTenantFilter(req) },
       include: {
         user: { select: { user_id: true, user_name: true } },
       },
@@ -49,7 +63,7 @@ export const getCallById = async (req, res) => {
     const { id } = req.params;
 
     const call = await prisma.call.findUnique({
-      where: { call_id: id },
+      where: { call_id: id, ...getTenantFilter(req) },
       include: {
         user: { select: { user_id: true, user_name: true } },
         contact: { select: { contact_id: true, contact_firstname: true, contact_lastname: true } },
@@ -74,7 +88,7 @@ export const updateCall = async (req, res) => {
     const updateData = req.body;
 
     const updatedCall = await prisma.call.update({
-      where: { call_id: id },
+      where: { call_id: id, ...getTenantFilter(req) },
       data: updateData,
     });
 
@@ -91,7 +105,7 @@ export const deleteCall = async (req, res) => {
 
     // Soft delete
     await prisma.call.update({
-      where: { call_id: id },
+      where: { call_id: id, ...getTenantFilter(req) },
       data: { call_deleted_at: new Date() },
     });
 

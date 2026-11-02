@@ -21,7 +21,7 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
     `w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all text-sm ${
       fieldErrors[fieldName]
         ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
-        : "border-slate-300 focus:ring-blue-500/20 focus:border-blue-500"
+        : "border-slate-200 focus:ring-vsph-core-blue/20 focus:border-vsph-core-blue"
     }`;
 
   const defaultFormData = {
@@ -270,16 +270,16 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
         type="button"
         variant="secondary"
         onClick={onClose}
-        className="text-slate-600 hover:bg-slate-100"
+        className="text-vsph-navy hover:bg-vsph-grey"
       >
         Cancel
       </Button>
       <Button
         type="submit"
         form="add-contact-form"
-        variant="default"
+        variant="primary"
         disabled={loading}
-        className="bg-[#0066cc] hover:bg-[#0055b3] min-w-[120px] shadow-sm"
+        className="min-w-[120px]"
       >
         {loading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
         {loading ? "Saving..." : "Save Contact"}
@@ -305,9 +305,9 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
 
         <div className="space-y-6 p-6">
           {/* Section 1: Basic Info */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-blue-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-core-blue rounded-full"></span>
               Basic Information
             </h3>
             <div className="grid grid-cols-4 gap-4 mb-4">
@@ -466,9 +466,9 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
           </div>
 
           {/* Section 2: Contact Details */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-indigo-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-navy rounded-full"></span>
               Contact Details
             </h3>
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -599,9 +599,9 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
           </div>
 
           {/* Section 3: Relations */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-orange-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-core-blue rounded-full"></span>
               Relations
             </h3>
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -670,9 +670,9 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
           </div>
 
           {/* Section 4: Status & Segmentation */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-yellow-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-navy rounded-full"></span>
               Status & Segmentation
             </h3>
             <div className="grid grid-cols-3 gap-4 mb-4">
@@ -794,9 +794,9 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
           </div>
 
           {/* Section 5: Logistics & Location */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-teal-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-navy rounded-full"></span>
               Logistics & Location
             </h3>
             <div className="grid grid-cols-3 gap-4 mb-4">
@@ -925,9 +925,9 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
 
           {/* Section 6: Addresses */}
           <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+            <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
               <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                <span className="w-1.5 h-4 bg-purple-500 rounded-full"></span>
+                <span className="w-1.5 h-4 bg-vsph-navy rounded-full"></span>
                 Billing Address
               </h3>
               <div className="space-y-4">
@@ -1003,7 +1003,7 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+            <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
               <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
                 <span className="w-1.5 h-4 bg-emerald-500 rounded-full"></span>
                 Shipping Address

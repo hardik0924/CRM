@@ -1,27 +1,36 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import Sidebar from './sidebar';
-import Navbar from './navbar';
+import React, { useState } from 'react'
+import { Outlet } from 'react-router-dom'
+import Sidebar from './sidebar'
+import Navbar from './navbar'
 
 const DashboardV2Layout = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#0B1120] font-sans">
       {/* Left Sidebar */}
-      <Sidebar />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-[#0B1120]/80 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#0B1120] relative z-10">
-        
         {/* Top Navbar */}
-        <Navbar />
-        
+        <Navbar onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+
         {/* Scrollable Page Content */}
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DashboardV2Layout;
+export default DashboardV2Layout

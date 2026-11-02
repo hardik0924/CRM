@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { getTenantFilter } from "../middleware/auth.middleware.js";
 
 export const getContacts = async (req, res) => {
   try {
@@ -16,8 +17,9 @@ export const getContacts = async (req, res) => {
             { contact_code: { contains: search } },
             { contact_professional_email: { contains: search } },
           ],
+          ...getTenantFilter(req),
         }
-      : {};
+      : getTenantFilter(req);
 
     // Fetch data and count in parallel
     const [contacts, total] = await Promise.all([
@@ -117,6 +119,18 @@ export const createContact = async (req, res) => {
         .json({ success: false, message: "First and last name are required" });
     }
 
+    // Resolve tenant: client users always use their own tenant; superadmin may specify one
+    let tenantId = req.user.tenantFk;
+    if (req.user.role === "SUPER_ADMIN" && req.body.tenant_fk) {
+      tenantId = req.body.tenant_fk;
+    }
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        message: "No tenant context. Client users are auto-assigned; superadmin must provide tenant_fk.",
+      });
+    }
+
     const lastContact = await prisma.contact.findFirst({
       orderBy: { contact_created_at: "desc" },
       select: { contact_code: true },
@@ -158,6 +172,7 @@ export const createContact = async (req, res) => {
 
     const newContact = await prisma.contact.create({
       data: {
+        tenant_fk: tenantId,
         contact_code: generatedCode,
         contact_salutation: contact_salutation || null,
         contact_firstname,
@@ -354,7 +369,7 @@ export const updateContact = async (req, res) => {
     }
 
     await prisma.contact.update({
-      where: { contact_id: id },
+      where: { contact_id: id, ...getTenantFilter(req) },
       data: {
         contact_salutation: contact_salutation || null,
         contact_firstname,
@@ -477,7 +492,7 @@ export const getContactById = async (req, res) => {
   try {
     const { id } = req.params;
     const contact = await prisma.contact.findUnique({
-      where: { contact_id: id },
+      where: { contact_id: id, ...getTenantFilter(req) },
       include: {
         account: { select: { account_name: true } },
         contact_owner: { select: { user_name: true } },

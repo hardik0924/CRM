@@ -268,16 +268,16 @@ const AddOpportunityModal = ({
         type="button"
         variant="secondary"
         onClick={onClose}
-        className="text-slate-600 hover:bg-slate-100"
+        className="text-vsph-navy hover:bg-vsph-grey"
       >
         Cancel
       </Button>
       <Button
         type="submit"
         form="add-opp-form"
-        variant="default"
+        variant="primary"
         disabled={loading}
-        className="bg-[#0066cc] hover:bg-[#0055b3] min-w-[120px] shadow-sm"
+        className="min-w-[120px]"
       >
         {loading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
         {loading ? "Saving..." : "Save Opportunity"}
@@ -303,9 +303,9 @@ const AddOpportunityModal = ({
 
         <div className="space-y-6 p-6 max-h-[70vh] overflow-y-auto">
           {/* Section 1: Core Details */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-blue-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-core-blue rounded-full"></span>
               Core Details
             </h3>
 
@@ -542,9 +542,9 @@ const AddOpportunityModal = ({
           </div>
 
           {/* Section 2: Relations */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-purple-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-navy rounded-full"></span>
               Relations (Optional)
             </h3>
             <div className="space-y-4">
@@ -632,9 +632,9 @@ const AddOpportunityModal = ({
           </div>
 
           {/* Section 3: Logistics (Pickup & Drop) */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-orange-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-navy rounded-full"></span>
               Logistics (Pickup & Drop)
             </h3>
             <div className="space-y-4">

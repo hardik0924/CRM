@@ -16,7 +16,7 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess, accountToEdit }) => {
   const [fieldErrors, setFieldErrors] = useState({});
 
   const getInputClass = (fieldName) =>
-    `w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all text-sm ${fieldErrors[fieldName] ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300 focus:ring-blue-500/20 focus:border-blue-500"}`;
+    `w-full px-4 py-2.5 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue transition-all text-sm text-slate-900 placeholder:text-slate-400 ${fieldErrors[fieldName] ? "border-rose-500 focus:ring-rose-500/20 focus:border-rose-500" : ""}`;
 
   const [formData, setFormData] = useState({
     account_name: "",
@@ -225,7 +225,7 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess, accountToEdit }) => {
 
   const headerActions = (
     <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm">
-      <div className="bg-blue-100 p-1 rounded-full text-blue-600">
+      <div className="bg-vsph-light-blue/20 p-1 rounded-full text-vsph-core-blue">
         <User size={14} />
       </div>
       <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
@@ -241,16 +241,16 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess, accountToEdit }) => {
         type="button"
         variant="secondary"
         onClick={onClose}
-        className="text-slate-600 hover:bg-slate-100"
+        className="text-vsph-navy hover:bg-vsph-grey"
       >
         Cancel
       </Button>
       <Button
         type="submit"
         form="add-account-form"
-        variant="default"
+        variant="primary"
         disabled={loading}
-        className="bg-[#0066cc] hover:bg-[#0055b3] min-w-[120px] shadow-sm"
+        className="min-w-[120px]"
       >
         {loading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
         {loading ? "Saving..." : "Save Account"}
@@ -276,9 +276,9 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess, accountToEdit }) => {
 
         <div className="space-y-6 p-6">
           {/* Section 2: Account Info */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-blue-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-core-blue rounded-full"></span>
               Account Information
             </h3>
 
@@ -422,9 +422,9 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess, accountToEdit }) => {
           {/* Section 3: Billing & Shipping */}
           <div className="grid grid-cols-2 gap-6">
             {/* Billing */}
-            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+            <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
               <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                <span className="w-1.5 h-4 bg-purple-500 rounded-full"></span>
+                <span className="w-1.5 h-4 bg-vsph-navy rounded-full"></span>
                 Billing Address
               </h3>
               <div className="space-y-4">
@@ -501,7 +501,7 @@ const AddAccountModal = ({ isOpen, onClose, onSuccess, accountToEdit }) => {
             </div>
 
             {/* Shipping */}
-            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+            <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
               <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
                 <span className="w-1.5 h-4 bg-emerald-500 rounded-full"></span>
                 Shipping Address

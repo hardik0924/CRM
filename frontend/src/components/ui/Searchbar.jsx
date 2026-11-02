@@ -75,23 +75,23 @@ const SearchBar = () => {
 
   const getIcon = (type) => {
     switch (type) {
-      case 'contact': return <User size={16} className="text-blue-500" />;
-      case 'account': return <Building2 size={16} className="text-emerald-500" />;
-      case 'opportunity': return <Briefcase size={16} className="text-purple-500" />;
-      case 'project': return <LayoutGrid size={16} className="text-orange-500" />;
+      case 'contact': return <User size={16} className="text-vsph-core-blue" />;
+      case 'account': return <Building2 size={16} className="text-vsph-navy" />;
+      case 'opportunity': return <Briefcase size={16} className="text-vsph-core-blue" />;
+      case 'project': return <LayoutGrid size={16} className="text-vsph-navy" />;
       default: return <Search size={16} className="text-slate-400" />;
     }
   };
 
   return (
     <div className="flex-1 max-w-3xl mx-8 hidden md:block relative" ref={dropdownRef}>
-      <div className="flex items-center bg-white/10 rounded-full h-9 border border-white/10 text-sm focus-within:ring-1 focus-within:ring-blue-400/50 focus-within:bg-white/15 transition-all">
+      <div className="flex items-center bg-vsph-navy/10 rounded-full h-9 border border-vsph-core-blue/20 text-sm focus-within:ring-1 focus-within:ring-vsph-core-blue/50 focus-within:bg-vsph-navy/20 transition-all">
         
         {/* Type Selector Button */}
         <div className="relative h-full" ref={typeDropdownRef}>
           <button 
             onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-            className="flex items-center gap-1.5 px-4 hover:bg-white/5 h-full rounded-l-full text-gray-200 transition-colors whitespace-nowrap cursor-pointer"
+            className="flex items-center gap-1.5 px-4 hover:bg-vsph-core-blue/10 h-full rounded-l-full text-vsph-light-blue/80 transition-colors whitespace-nowrap cursor-pointer"
           >
             Search: {searchType}
             <ChevronDown size={14} className={`transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`} />
@@ -99,7 +99,7 @@ const SearchBar = () => {
           
           {/* Type Dropdown */}
           {showTypeDropdown && (
-            <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden z-50">
+            <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg border border-slate-200 overflow-hidden z-50">
               {['All', 'Contacts', 'Accounts', 'Opportunities', 'Projects'].map((type) => (
                 <div
                   key={type}
@@ -107,7 +107,7 @@ const SearchBar = () => {
                     setSearchType(type);
                     setShowTypeDropdown(false);
                   }}
-                  className={`px-4 py-2 text-sm cursor-pointer hover:bg-slate-50 ${searchType === type ? 'font-semibold text-blue-600 bg-blue-50/50' : 'text-slate-700'}`}
+                  className={`px-4 py-2 text-sm cursor-pointer hover:bg-vsph-light-blue/20 ${searchType === type ? 'font-semibold text-vsph-core-blue bg-vsph-light-blue/20' : 'text-slate-600'}`}
                 >
                   {type}
                 </div>
@@ -116,18 +116,18 @@ const SearchBar = () => {
           )}
         </div>
 
-        <div className="h-5 w-px bg-white/20"></div>
+        <div className="h-5 w-px bg-vsph-core-blue/20"></div>
         <input 
           type="text" 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => { if (query.length >= 2) setShowDropdown(true); }}
           placeholder="Search..." 
-          className="flex-1 bg-transparent border-none outline-none px-4 rounded-r-full text-white placeholder:text-gray-400 h-full w-full focus:ring-0"
+          className="flex-1 bg-transparent border-none outline-none px-4 rounded-r-full text-vsph-navy placeholder:text-vsph-light-blue/50 h-full w-full focus:ring-0"
         />
         {loading && (
           <div className="px-3">
-            <Loader2 size={14} className="text-white/50 animate-spin" />
+            <Loader2 size={14} className="text-vsph-core-blue animate-spin" />
           </div>
         )}
       </div>

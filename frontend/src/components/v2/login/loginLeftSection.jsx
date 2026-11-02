@@ -20,17 +20,16 @@ const LoginLeftSection = () => {
 
             {/* Top Logo / Brand Section */}
             <div className="relative z-10 flex items-center gap-3 animate-fade-in">
-                <img src="/ubslogo.png" alt="UBS Forums Logo" className="h-6 object-cover animate-none" />
+                <img src="/vsph-logo-white.png" alt="VSPH" className="h-14 w-auto object-cover animate-none" />
             </div>
 
             {/* Main Content Area */}
             <div className="relative z-10 mb-8 mt-auto animate-slide-up">
-                <h4 className="text-sm font-semibold tracking-widest text-indigo-400 mb-4 uppercase">UBS Forums CRM</h4>
                 <h1 className="text-4xl lg:text-5xl font-bold text-white leading-[1.15] mb-6 tracking-tight">
                     Your complete relationship management platform.
                 </h1>
                 <p className="text-lg text-slate-400 max-w-md leading-relaxed mb-10">
-                    Manage accounts, contacts, opportunities, and campaigns — all in one place. Built for the UBS Forums team.
+                    Manage accounts, contacts, opportunities, and campaigns — all in one place. Built for the VSPH team.
                 </p>
 
                 <ul className="space-y-4">

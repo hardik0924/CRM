@@ -18,10 +18,12 @@ import {
   CheckSquare,
   Sparkles,
   ChevronDown,
-  LogOut
+  LogOut,
+  Menu,
+  X,
 } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ open = false, onClose }) => {
   const location = useLocation();
   const [user, setUser] = useState(null);
 
@@ -54,13 +56,17 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 h-full bg-[#111827] flex flex-col relative z-20 font-sans">
+    <div className={`h-full bg-[#111827] flex flex-col font-sans overflow-hidden transition-all duration-300 fixed inset-y-0 left-0 z-40 ${open ? 'translate-x-0 w-64' : '-translate-x-full w-64'} md:static md:z-20 md:translate-x-0 ${open ? 'md:w-64' : 'md:w-0'}`}>
       
       {/* Brand Section */}
       <div className="h-[72px] flex items-center px-6 shrink-0 relative z-10">
-        <div className="flex items-center gap-2">
-          <img src="/ubslogo.png" alt="UBS Logo" className="h-4 object-contain" />
-          <span className="text-white font-bold tracking-wider text-sm uppercase">CRM</span>
+        <div className="flex items-center justify-between gap-2 w-full">
+          <img src="/vsph-logo-white.png" alt="VSPH Logo" className="h-12 w-auto object-contain" />
+          {open && (
+            <button onClick={onClose} className="p-1.5 rounded-md text-white/70 hover:text-white hover:bg-white/10" aria-label="Close menu">
+              <X size={20} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -77,6 +83,7 @@ const Sidebar = () => {
               <NavLink
                 key={item.name}
                 to={item.path}
+                onClick={onClose}
                 className={`flex items-center gap-4 px-4 py-2.5 rounded-lg transition-all duration-300 group ${
                   isActive 
                     ? 'bg-indigo-600 text-white' 
@@ -107,6 +114,7 @@ const Sidebar = () => {
               return (
                 <button
                   key={item.name}
+                  onClick={onClose}
                   className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-slate-300 hover:text-white transition-all duration-300 group"
                 >
                   <Icon size={18} className="text-slate-400 group-hover:text-white transition-colors duration-300" />

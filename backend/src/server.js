@@ -9,6 +9,8 @@ import searchRoutes from "./routes/search.routes.js";
 import callRoutes from "./routes/call.routes.js";
 import taskRoutes from "./routes/task.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import tenantRoutes from "./routes/tenant.routes.js";
+import { authMiddleware } from "./middleware/auth.middleware.js";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -21,6 +23,19 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/api/auth", authRoutes);
+
+// Auth middleware for all data routes (tenant isolation)
+app.use("/api/users", authMiddleware);
+app.use("/api/accounts", authMiddleware);
+app.use("/api/contacts", authMiddleware);
+app.use("/api/opportunities", authMiddleware);
+app.use("/api/projects", authMiddleware);
+app.use("/api/search", authMiddleware);
+app.use("/api/calls", authMiddleware);
+app.use("/api/tasks", authMiddleware);
+app.use("/api/dashboard", authMiddleware);
+app.use("/api/tenants", tenantRoutes);
+
 app.use("/api/users", userRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/contacts", contactRoutes);
@@ -43,7 +58,7 @@ server.on('error', (error) => {
   if (error.code === 'EADDRINUSE') {
     console.error(`❌ Port ${port} is already in use!`);
     console.error(`This usually happens if another terminal is running the server, or nodemon restarted too quickly.`);
-    process.exit(1); // Force a crash so nodemon doesn't say "clean exit"
+    process.exit(1);
   } else {
     console.error('❌ Server error:', error);
   }

@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { getTenantFilter } from "../middleware/auth.middleware.js";
 
 export const getOpportunities = async (req, res) => {
   try {
@@ -6,7 +7,9 @@ export const getOpportunities = async (req, res) => {
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
-    const where = {};
+    const where = {
+      ...getTenantFilter(req),
+    };
     if (search) {
       where.OR = [{ opportunity_name: { contains: search } }];
     }
@@ -80,8 +83,21 @@ export const createOpportunity = async (req, res) => {
       });
     }
 
+    // Resolve tenant: client users always use their own tenant; superadmin may specify one
+    let tenantId = req.user.tenantFk;
+    if (req.user.role === "SUPER_ADMIN" && req.body.tenant_fk) {
+      tenantId = req.body.tenant_fk;
+    }
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        message: "No tenant context. Client users are auto-assigned; superadmin must provide tenant_fk.",
+      });
+    }
+
     // Clean up fields: remove empty strings, properly format dates
     const dataToSave = {
+      tenant_fk: tenantId,
       opportunity_name,
       opportunity_owner_fk,
       opportunity_close_date: new Date(opportunity_close_date),
@@ -161,7 +177,7 @@ export const updateOpportunity = async (req, res) => {
     }
 
     const updatedOpportunity = await prisma.opportunity.update({
-      where: { opportunity_id: id },
+      where: { opportunity_id: id, ...getTenantFilter(req) },
       data: dataToSave,
     });
 

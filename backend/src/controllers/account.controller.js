@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { account_type } from "@prisma/client";
+import { getTenantFilter } from "../middleware/auth.middleware.js";
 
 export const getAccountTypes = async (req, res) => {
   try {
@@ -20,6 +21,7 @@ export const getAccounts = async (req, res) => {
 
     const where = {
       account_deleted_at: null,
+      ...getTenantFilter(req),
     };
 
     if (search) {
@@ -79,7 +81,7 @@ export const getAccountById = async (req, res) => {
   try {
     const { id } = req.params;
     const account = await prisma.account.findUnique({
-      where: { account_id: id },
+      where: { account_id: id, ...getTenantFilter(req) },
       include: {
         owner: {
           select: { user_name: true, user_email: true },
@@ -159,7 +161,20 @@ export const createAccount = async (req, res) => {
     //   account_type = "";
     // }
 
+    // Resolve tenant: client users always use their own tenant; superadmin may specify one
+    let tenantId = req.user.tenantFk;
+    if (req.user.role === "SUPER_ADMIN" && req.body.tenant_fk) {
+      tenantId = req.body.tenant_fk;
+    }
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        message: "No tenant context. Client users are auto-assigned; superadmin must provide tenant_fk.",
+      });
+    }
+
     const lastAccount = await prisma.account.findFirst({
+      where: { tenant_fk: tenantId },
       orderBy: { account_created_at: "desc" },
       select: { account_code: true },
     });
@@ -218,6 +233,7 @@ export const createAccount = async (req, res) => {
 
     const newAccount = await prisma.account.create({
       data: {
+        tenant_fk: tenantId,
         account_code: generatedCode,
         account_name,
         account_owner_fk,
@@ -375,7 +391,7 @@ export const updateAccount = async (req, res) => {
     }
 
     const updatedAccount = await prisma.account.update({
-      where: { account_id: id },
+      where: { account_id: id, ...getTenantFilter(req) },
       data: dataToUpdate,
     });
 
@@ -414,6 +430,7 @@ export const deleteAccounts = async (req, res) => {
     await prisma.account.updateMany({
       where: {
         account_id: { in: ids },
+        ...getTenantFilter(req),
       },
       data: {
         account_deleted_at: new Date(),

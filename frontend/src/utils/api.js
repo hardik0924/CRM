@@ -1,12 +1,21 @@
 const BASE_URL = import.meta.env.VITE_API_URL;
 
+const getAuthHeaders = () => {
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  const userId = localStorage.getItem("vsph_user_id");
+  if (userId) {
+    headers["x-user-id"] = userId;
+  }
+  return headers;
+};
+
 export const api = {
   post: async (endpoint, data) => {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data),
     });
     return response.json();
@@ -15,9 +24,7 @@ export const api = {
   get: async (endpoint) => {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
     });
     return response.json();
   },
@@ -25,9 +32,7 @@ export const api = {
   put: async (endpoint, data) => {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data),
     });
     return response.json();
@@ -36,9 +41,7 @@ export const api = {
   delete: async (endpoint, data) => {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: data ? JSON.stringify(data) : undefined,
     });
     return response.json();

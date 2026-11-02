@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Clock, 
-  Bell, 
-  Grid
+import {
+  Search,
+  Clock,
+  Bell,
+  Grid,
+  Menu,
 } from 'lucide-react';
 
-const Navbar = () => {
+const Navbar = ({ onToggleSidebar }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -28,6 +29,17 @@ const Navbar = () => {
   return (
     <header className="h-[72px] flex items-center justify-between px-6 bg-white border-b border-slate-100 sticky top-0 z-30 shrink-0">
       
+      {/* Left: Sidebar toggle (visible on all screens) */}
+      <div className="flex items-center gap-4 mr-4">
+        <button
+          onClick={onToggleSidebar}
+          className="p-2 rounded-md text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+          aria-label="Toggle navigation menu"
+        >
+          <Menu size={24} />
+        </button>
+      </div>
+
       {/* Search Bar */}
       <div className="flex-1 max-w-3xl">
         <div className="relative group flex items-center">

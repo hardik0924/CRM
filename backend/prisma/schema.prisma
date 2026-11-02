@@ -6,6 +6,30 @@ datasource db {
   provider = "mysql"
 }
 
+model tenant {
+  tenant_id        String   @id @default(uuid())
+  tenant_name      String
+  tenant_code      String   @unique
+  tenant_status    Status   @default(ACTIVE)
+  tenant_plan      String   @default("STARTER")
+  tenant_created_at DateTime @default(now())
+  tenant_updated_at DateTime @updatedAt
+
+  tenant_users     user[]
+  tenant_accounts  account[] @relation("tenant_accounts")
+  tenant_contacts  contact[] @relation("tenant_contacts")
+  tenant_opportunities opportunity[] @relation("tenant_opportunities")
+  tenant_projects  project[] @relation("tenant_projects")
+  tenant_tasks     task[] @relation("tenant_tasks")
+  tenant_calls     call[] @relation("tenant_calls")
+  tenant_campaigns campaign[] @relation("tenant_campaigns")
+  tenant_industries industry[] @relation("tenant_industries")
+
+  @@index([tenant_status])
+  @@index([tenant_code])
+  @@map("tenants")
+}
+
 model user {
   user_id         String     @id @default(uuid())
   user_email      String     @unique
@@ -17,6 +41,9 @@ model user {
   user_created_at DateTime   @default(now())
   user_updated_at DateTime   @updatedAt
   user_deleted_at DateTime?
+
+  tenant_fk       String?
+  tenant          tenant?    @relation(fields: [tenant_fk], references: [tenant_id])
 
   user_accounts       account[]     @relation("account")
   user_contacts       contact[]     @relation("contact_user")
@@ -30,12 +57,16 @@ model user {
   @@index([user_deleted_at])
   @@index([user_role, user_department])
   @@index([user_name])
+  @@index([tenant_fk])
   @@map("users")
 }
 
 model account {
   account_id   String @id @default(uuid())
   account_code String @unique
+
+  tenant_fk    String
+  tenant       tenant @relation("tenant_accounts", fields: [tenant_fk], references: [tenant_id])
 
   account_owner_fk String
   owner            user   @relation("account", fields: [account_owner_fk], references: [user_id])
@@ -73,12 +104,16 @@ model account {
   @@index([account_industry_fk])
   @@index([account_parent_fk])
   @@index([account_name])
+  @@index([tenant_fk])
   @@map("accounts")
 }
 
 model industry {
   industry_id   String @id @default(uuid())
   industry_name String @unique
+
+  tenant_fk     String
+  tenant        tenant @relation("tenant_industries", fields: [tenant_fk], references: [tenant_id])
 
   industry_status Boolean @default(true)
 
@@ -92,11 +127,15 @@ model industry {
   @@index([industry_name])
   @@index([industry_status])
   @@index([industry_deleted_at])
+  @@index([tenant_fk])
   @@map("industries")
 }
 
 model contact {
   contact_id String @id @default(uuid())
+
+  tenant_fk    String
+  tenant       tenant @relation("tenant_contacts", fields: [tenant_fk], references: [tenant_id])
 
   contact_user_fk String?
   user            user?   @relation("contact_user", fields: [contact_user_fk], references: [user_id])
@@ -167,11 +206,16 @@ model contact {
 
   @@index([contact_user_fk])
   @@index([contact_account_fk])
+  @@index([tenant_fk])
   @@map("contacts")
 }
 
 model opportunity {
   opportunity_id       String @id @default(uuid())
+
+  tenant_fk            String
+  tenant               tenant @relation("tenant_opportunities", fields: [tenant_fk], references: [tenant_id])
+
   opportunity_owner_fk String
   opportunity_owner    user   @relation(fields: [opportunity_owner_fk], references: [user_id])
 
@@ -212,11 +256,15 @@ model opportunity {
   @@index([opportunity_contact_fk])
   @@index([opportunity_project_id])
   @@index([opportunity_campaign_id])
+  @@index([tenant_fk])
   @@map("opportunities")
 }
 
 model project {
   project_id   String  @id @default(uuid())
+
+  tenant_fk    String
+  tenant       tenant @relation("tenant_projects", fields: [tenant_fk], references: [tenant_id])
 
   project_type type?
 
@@ -236,18 +284,22 @@ model project {
   @@index([project_location])
   @@index([project_date])
   @@index([project_is_active])
+  @@index([tenant_fk])
   @@map("projects")
 }
 
 model call {
   call_id      String  @id @default(uuid())
 
+  tenant_fk    String
+  tenant       tenant @relation("tenant_calls", fields: [tenant_fk], references: [tenant_id])
+
   call_user_fk String?
   user         user?   @relation("call_user", fields: [call_user_fk], references: [user_id])
 
   call_contact_fk String?
   contact contact? @relation("call_contact", fields: [call_contact_fk], references: [contact_id])
-  
+   
   call_subject     String?
   call_description String?
 
@@ -259,11 +311,15 @@ model call {
 
   @@index([call_user_fk])
   @@index([call_contact_fk])
+  @@index([tenant_fk])
   @@map("calls")
 }
 
 model task {
   task_id      String  @id @default(uuid())
+
+  tenant_fk    String
+  tenant       tenant @relation("tenant_tasks", fields: [tenant_fk], references: [tenant_id])
 
   task_user_fk String?
   user         user?   @relation("task_user", fields: [task_user_fk], references: [user_id])
@@ -281,11 +337,16 @@ model task {
   task_deleted_at DateTime?
 
   @@index([task_user_fk])
+  @@index([tenant_fk])
   @@map("tasks")
 }
 
 model campaign {
   campaign_id      String  @id @default(uuid())
+
+  tenant_fk        String
+  tenant           tenant @relation("tenant_campaigns", fields: [tenant_fk], references: [tenant_id])
+
   campaign_user_fk String?
   user             user?   @relation("campaign_user", fields: [campaign_user_fk], references: [user_id])
 
@@ -293,6 +354,7 @@ model campaign {
   opportunities opportunity[]
 
   @@index([campaign_user_fk])
+  @@index([tenant_fk])
   @@map("campaigns")
 }
 

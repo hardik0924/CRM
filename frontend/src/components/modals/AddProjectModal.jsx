@@ -133,16 +133,16 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, projectToEdit }) => {
         type="button"
         variant="secondary"
         onClick={onClose}
-        className="text-slate-600 hover:bg-slate-100"
+        className="text-vsph-navy hover:bg-vsph-grey"
       >
         Cancel
       </Button>
       <Button
         type="submit"
         form="add-project-form"
-        variant="default"
+        variant="primary"
         disabled={loading}
-        className="bg-[#0066cc] hover:bg-[#0055b3] min-w-[120px] shadow-sm"
+        className="min-w-[120px]"
       >
         {loading ? (
           <div className="flex items-center gap-2">
@@ -175,9 +175,9 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, projectToEdit }) => {
 
         <div className="space-y-6 p-6 max-h-[70vh] overflow-y-auto">
           {/* Section 1: Core Details */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+          <div className="bg-vsph-grey p-5 rounded-lg border border-slate-200">
             <h3 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-blue-500 rounded-full"></span>
+              <span className="w-1.5 h-4 bg-vsph-core-blue rounded-full"></span>
               Core Details
             </h3>
 
