@@ -31,6 +31,7 @@ const LoginForm = ({ role, title, subtitle }) => {
                 localStorage.setItem("vsph_tenant_id", user.tenantId || "");
                 localStorage.setItem("vsph_tenant_name", user.tenantName || "");
                 localStorage.setItem("vsph_tenant_code", user.tenantCode || "");
+                localStorage.setItem("vsph_user_modules", JSON.stringify(user.modules ?? null));
 
                 if (user.role === "SUPER_ADMIN") {
                     navigate("/superadmin");

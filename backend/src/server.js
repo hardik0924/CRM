@@ -13,7 +13,7 @@ import tenantRoutes from "./routes/tenant.routes.js";
 import integrationRoutes from "./routes/integration.routes.js";
 import invitationRoutes from "./routes/invitation.routes.js";
 import organizationRoutes from "./routes/organization.routes.js";
-import { authMiddleware } from "./middleware/auth.middleware.js";
+import { authMiddleware, requireModule } from "./middleware/auth.middleware.js";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -36,13 +36,13 @@ app.use("/api/organization", organizationRoutes);
 
 // Auth middleware for all data routes (tenant isolation + entitlement)
 app.use("/api/users", authMiddleware);
-app.use("/api/accounts", authMiddleware);
-app.use("/api/contacts", authMiddleware);
-app.use("/api/opportunities", authMiddleware);
-app.use("/api/projects", authMiddleware);
+app.use("/api/accounts", authMiddleware, requireModule("ACCOUNTS"));
+app.use("/api/contacts", authMiddleware, requireModule("CONTACTS"));
+app.use("/api/opportunities", authMiddleware, requireModule("OPPORTUNITIES"));
+app.use("/api/projects", authMiddleware, requireModule("PROJECTS"));
 app.use("/api/search", authMiddleware);
 app.use("/api/calls", authMiddleware);
-app.use("/api/tasks", authMiddleware);
+app.use("/api/tasks", authMiddleware, requireModule("TASKS"));
 app.use("/api/dashboard", authMiddleware);
 app.use("/api/tenants", tenantRoutes);
 

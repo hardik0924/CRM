@@ -38,6 +38,7 @@ const Login = () => {
         localStorage.setItem("vsph_tenant_id", user.tenantId || "");
         localStorage.setItem("vsph_tenant_name", user.tenantName || "");
         localStorage.setItem("vsph_tenant_code", user.tenantCode || "");
+        localStorage.setItem("vsph_user_modules", JSON.stringify(user.modules ?? null));
 
         // Superadmin → client management panel; Client → CRM dashboard
         if (user.role === "SUPER_ADMIN") {

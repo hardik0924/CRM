@@ -1,4 +1,3 @@
-import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import DashboardLayout from './layouts/DashboardLayout'
 import Dashboard from './pages/Dashboard'
@@ -25,6 +24,8 @@ import SuperadminDashboard from './pages/superadmin/SuperadminDashboard'
 import TenantManagement from './pages/superadmin/TenantManagement'
 import TenantUsers from './pages/superadmin/TenantUsers'
 import UsersManagement from './pages/superadmin/UsersManagement'
+import ModuleGuard from './components/ModuleGuard'
+
 
 const App = () => {
   return (
@@ -52,12 +53,12 @@ const App = () => {
       {/* V2 Client Dashboard */}
       <Route path="/v2" element={<DashboardV2Layout />}>
         <Route path="/v2/dashboard" element={<DashboardV2 />} />
-        <Route path="/v2/contacts" element={<Contacts />} />
-        <Route path="/v2/accounts" element={<Accounts />} />
-        <Route path="/v2/opportunities" element={<Opportunities />} />
-        <Route path="/v2/projects" element={<Projects />} />
-        <Route path="/v2/campaigns" element={<Campaigns />} />
-        <Route path="/v2/tasks" element={<Tasks />} />
+        <Route path="/v2/contacts" element={<ModuleGuard code="CONTACTS"><Contacts /></ModuleGuard>} />
+        <Route path="/v2/accounts" element={<ModuleGuard code="ACCOUNTS"><Accounts /></ModuleGuard>} />
+        <Route path="/v2/opportunities" element={<ModuleGuard code="OPPORTUNITIES"><Opportunities /></ModuleGuard>} />
+        <Route path="/v2/projects" element={<ModuleGuard code="PROJECTS"><Projects /></ModuleGuard>} />
+        <Route path="/v2/campaigns" element={<ModuleGuard code="CAMPAIGNS"><Campaigns /></ModuleGuard>} />
+        <Route path="/v2/tasks" element={<ModuleGuard code="TASKS"><Tasks /></ModuleGuard>} />
         <Route path="/v2/team" element={<Team />} />
       </Route>
 

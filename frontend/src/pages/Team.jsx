@@ -4,6 +4,8 @@ import {
 } from 'lucide-react'
 import Button from '../components/ui/Button'
 import InviteEmployeeModal from '../components/modals/InviteEmployeeModal'
+import EmployeeAccessModal from '../components/modals/EmployeeAccessModal'
+import { moduleLabel } from '../utils/modules'
 import { api } from '../utils/api'
 import toast from 'react-hot-toast'
 
@@ -18,6 +20,7 @@ const Team = () => {
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(canManage)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [accessFor, setAccessFor] = useState(null)
   const [devLink, setDevLink] = useState('')
   const [busyId, setBusyId] = useState(null)
 
@@ -89,6 +92,13 @@ const Team = () => {
 
   const input = 'h-9 px-2.5 rounded-lg border border-slate-200 text-xs bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue'
 
+  const accessLabel = (employee) => {
+    if (employee.user_is_tenant_owner || employee.modules === null) return 'All modules'
+    if (!employee.modules?.length) return 'Dashboard only'
+    const labels = employee.modules.map(moduleLabel)
+    return labels.length <= 2 ? labels.join(', ') : `${labels.slice(0, 2).join(', ')} +${labels.length - 2}`
+  }
+
   return (
     <div className="flex flex-col h-full bg-vsph-grey animate-fade-in">
       <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-200 shrink-0">
@@ -126,12 +136,13 @@ const Team = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-left text-sm">
+            <table className="w-full min-w-[980px] text-left text-sm">
               <thead>
                 <tr className="bg-[#f8fafc] text-[#475569] text-xs">
                   <th className="px-5 py-3 font-semibold">Employee</th>
                   <th className="px-5 py-3 font-semibold">Role</th>
                   <th className="px-5 py-3 font-semibold">Department</th>
+                  <th className="px-5 py-3 font-semibold">Module access</th>
                   <th className="px-5 py-3 font-semibold">Status</th>
                   <th className="px-5 py-3 font-semibold text-right">Actions</th>
                 </tr>
@@ -139,14 +150,14 @@ const Team = () => {
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="py-14 text-center text-slate-500">
+                    <td colSpan="6" className="py-14 text-center text-slate-500">
                       <Loader2 size={24} className="animate-spin text-vsph-core-blue mx-auto mb-2" />
                       Loading employees...
                     </td>
                   </tr>
                 ) : employees.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="py-14 text-center text-slate-500">
+                    <td colSpan="6" className="py-14 text-center text-slate-500">
                       <Mail size={24} className="text-slate-300 mx-auto mb-3" />
                       No employees yet. Invite your first team member.
                     </td>
@@ -193,6 +204,19 @@ const Team = () => {
                         </td>
                         <td className="px-5 py-4 text-slate-600 text-xs">
                           {employee.user_department?.replace(/_/g, ' ') || '—'}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-600">{accessLabel(employee)}</span>
+                            {!employee.user_is_tenant_owner && (
+                              <button
+                                onClick={() => setAccessFor(employee)}
+                                className="text-[11px] font-semibold text-vsph-core-blue hover:underline"
+                              >
+                                Manage
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="px-5 py-4">
                           {pending ? (
@@ -253,12 +277,21 @@ const Team = () => {
         </div>
 
         <p className="text-xs text-slate-500 mt-4">
-          Employees only see this organization's CRM data. Platform-level roles cannot be granted here.
+          Employees only see this organization's CRM data, and only the modules you assign. Platform-level roles cannot be granted here.
         </p>
       </div>
 
       {inviteOpen && (
         <InviteEmployeeModal isOpen onClose={() => setInviteOpen(false)} onSaved={fetchEmployees} />
+      )}
+
+      {accessFor && (
+        <EmployeeAccessModal
+          isOpen
+          employee={accessFor}
+          onClose={() => setAccessFor(null)}
+          onSaved={fetchEmployees}
+        />
       )}
     </div>
   )

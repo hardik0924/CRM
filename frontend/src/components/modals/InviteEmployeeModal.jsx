@@ -2,15 +2,19 @@ import { useState } from 'react'
 import { Check, Copy, Loader2 } from 'lucide-react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
+import ModulePicker from '../ModulePicker'
+import { CRM_MODULES } from '../../utils/modules'
 import { api } from '../../utils/api'
 
 const ROLES = ['USER', 'ADMIN', 'SALES', 'DATA', 'PRODUCTION', 'SPONSORSHIP', 'OPERATION']
 const DEPARTMENTS = ['SALES', 'MARKETING', 'FINANCE', 'IT', 'HUMAN_RESOURCES']
+const ALL_MODULES = CRM_MODULES.map((m) => m.code)
 
 const empty = { name: '', email: '', role: 'USER', department: 'SALES' }
 
 const InviteEmployeeModal = ({ isOpen = true, onClose, onSaved }) => {
   const [form, setForm] = useState(empty)
+  const [modules, setModules] = useState(ALL_MODULES)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [devLink, setDevLink] = useState('')
@@ -23,7 +27,7 @@ const InviteEmployeeModal = ({ isOpen = true, onClose, onSaved }) => {
     setError('')
     setSaving(true)
     try {
-      const res = await api.post('/api/organization/employees/invite', form)
+      const res = await api.post('/api/organization/employees/invite', { ...form, modules })
       if (!res.success) throw new Error(res.message || 'Could not create the invitation.')
       if (res.data?.devInvitationUrl) {
         setDevLink(res.data.devInvitationUrl)
@@ -110,6 +114,12 @@ const InviteEmployeeModal = ({ isOpen = true, onClose, onSaved }) => {
                 {DEPARTMENTS.map((d) => <option key={d} value={d}>{d.replace(/_/g, ' ')}</option>)}
               </select>
             </div>
+          </div>
+
+          <div>
+            <p className={label}>Module access</p>
+            <ModulePicker value={modules} onChange={setModules} />
+            <p className="text-xs text-slate-500 mt-2">Dashboard is always available. You can change this later.</p>
           </div>
 
           <p className="text-xs text-slate-500">

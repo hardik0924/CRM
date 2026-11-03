@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { checkCrmAccess } from "../services/entitlement.service.js";
+import { parseModuleAccess } from "../lib/modules.js";
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
@@ -79,6 +80,7 @@ export const login = async (req, res) => {
       tenantId: user.tenant_fk || null,
       tenantName: user.tenant?.tenant_name || null,
       tenantCode: user.tenant?.tenant_code || null,
+      modules: parseModuleAccess(user.user_module_access),
     },
   });
 };

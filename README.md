@@ -52,7 +52,7 @@ A client sees **only their own organization's data**. A superadmin sees **everyt
 3. The central platform calls the CRM provisioning API with an authenticated, idempotent request.
 4. CRM creates or links the organization, stores the CRM entitlement, and creates a pending administrator account plus a single-use invitation.
 5. The administrator receives an invitation link, sets their own password, and signs in to the CRM.
-6. From **Team** in the CRM, the administrator invites employees and assigns CRM roles.
+6. From **Team** in the CRM, the administrator invites employees, assigns CRM roles and grants module access.
 
 > The normal commercial path starts at **apps.vsph.in**. The CRM control center remains available for internal support only.
 
@@ -62,14 +62,15 @@ A client sees **only their own organization's data**. A superadmin sees **everyt
 - They land on `/v2/dashboard` and only ever see their tenant's data.
 
 ### 4. Client uses the CRM
-- Sidebar navigation: Home (dashboard), Contacts, Accounts, Opportunities, Projects, Campaigns, Tasks, **Team** (administrators only), Calendar, Reports, Settings.
-- The sidebar is **collapsible**: hamburger at top-left collapses/expands it on desktop; on narrow screens it becomes a mobile drawer with an X and backdrop.
+- Sidebar navigation: Dashboard, Contacts, Accounts, Opportunities, Projects, Campaigns, Tasks, **Team** (administrators only).
+- Employees only see the modules their administrator granted them. The dashboard is always available.
 - **Sign out** button at the bottom of the sidebar clears the session and returns to the login page.
 
 ### 5. Client administrator manages employees
 - Open **Team** in the sidebar.
-- **Invite employee**: email, role, department. The employee gets a single-use link, not a password.
-- Change roles, deactivate/re-activate, and resend invitations.
+- **Invite employee**: email, role, department, and module access. The employee gets a single-use link, not a password.
+- Change roles, assign modules, deactivate/re-activate, and resend invitations.
+- Module access is enforced by the API (`MODULE_ACCESS_DENIED`), not just hidden in the sidebar. `null` means all modules, which is also what legacy users and the organization owner keep.
 - Backend rules: only the organization's `ADMIN`/owner can manage employees; cross-tenant access, `SUPER_ADMIN` grants, self-deactivation and self role changes are rejected server-side.
 
 ### 6. Entitlement enforces access

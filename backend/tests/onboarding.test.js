@@ -13,6 +13,12 @@ import {
 } from "../src/lib/onboarding.logic.js";
 import { getTenantFilter } from "../src/middleware/auth.middleware.js";
 import { validateClientRole } from "../src/middleware/tenantAdmin.middleware.js";
+import {
+  canAccessModule,
+  parseModuleAccess,
+  serializeModuleAccess,
+  validateModules,
+} from "../src/lib/modules.js";
 
 const SECRET = "test-secret";
 const nowSeconds = 1_800_000_000;
@@ -159,4 +165,26 @@ test("client roles cannot include platform SUPER_ADMIN", () => {
   assert.equal(validateClientRole("SUPER_ADMIN").ok, false);
   assert.equal(validateClientRole("ADMIN").ok, true);
   assert.equal(validateClientRole(undefined).ok, true);
+});
+
+test("module access is per employee and fail-closed", () => {
+  assert.equal(parseModuleAccess(null), null);
+  assert.deepEqual(parseModuleAccess(""), []);
+  assert.deepEqual(parseModuleAccess("CONTACTS, tasks"), ["CONTACTS", "TASKS"]);
+  assert.deepEqual(parseModuleAccess("CONTACTS,NOT_A_MODULE"), ["CONTACTS"]);
+
+  assert.equal(canAccessModule({ role: "USER", modules: null }, "ACCOUNTS"), true);
+  assert.equal(canAccessModule({ role: "USER", modules: ["CONTACTS"] }, "CONTACTS"), true);
+  assert.equal(canAccessModule({ role: "USER", modules: ["CONTACTS"] }, "ACCOUNTS"), false);
+  assert.equal(canAccessModule({ role: "USER", modules: [] }, "TASKS"), false);
+  assert.equal(canAccessModule({ role: "SUPER_ADMIN", modules: [] }, "TASKS"), true);
+});
+
+test("module assignment rejects unknown modules and stores a stable list", () => {
+  assert.equal(validateModules(undefined).modules, null);
+  assert.deepEqual(validateModules(["CONTACTS", "TASKS"]).modules, ["CONTACTS", "TASKS"]);
+  assert.equal(validateModules(["CONTACTS", "HACK"]).ok, false);
+  assert.equal(validateModules("CONTACTS").ok, false);
+  assert.equal(serializeModuleAccess(["CONTACTS", "CONTACTS", "TASKS"]), "CONTACTS,TASKS");
+  assert.equal(serializeModuleAccess([]), "");
 });

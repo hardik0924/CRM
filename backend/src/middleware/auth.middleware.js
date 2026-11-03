@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { checkCrmAccess } from "../services/entitlement.service.js";
+import { canAccessModule, parseModuleAccess } from "../lib/modules.js";
 
 export const authMiddleware = async (req, res, next) => {
   const userId = req.headers["x-user-id"];
@@ -46,8 +47,20 @@ export const authMiddleware = async (req, res, next) => {
     tenantName: user.tenant?.tenant_name || null,
     tenantCode: user.tenant?.tenant_code || null,
     isTenantOwner: Boolean(user.user_is_tenant_owner),
+    modules: parseModuleAccess(user.user_module_access),
   };
 
+  next();
+};
+
+export const requireModule = (code) => (req, res, next) => {
+  if (!canAccessModule(req.user, code)) {
+    return res.status(403).json({
+      success: false,
+      code: "MODULE_ACCESS_DENIED",
+      message: "Your organization administrator has not granted you access to this module.",
+    });
+  }
   next();
 };
 

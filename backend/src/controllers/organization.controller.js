@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { isClientRole, isEmail } from "../lib/onboarding.logic.js";
+import { parseModuleAccess, serializeModuleAccess, validateModules } from "../lib/modules.js";
 import {
   createInvitation,
   inviteUrlFor,
@@ -34,6 +35,7 @@ export const listEmployees = async (req, res) => {
           user_department: true,
           user_status: true,
           user_is_tenant_owner: true,
+          user_module_access: true,
           user_created_at: true,
         },
         orderBy: [{ user_is_tenant_owner: "desc" }, { user_created_at: "asc" }],
@@ -55,6 +57,8 @@ export const listEmployees = async (req, res) => {
       success: true,
       data: users.map((user) => ({
         ...user,
+        user_module_access: undefined,
+        modules: parseModuleAccess(user.user_module_access),
         pendingInvitation: byEmail.get(user.user_email) || null,
       })),
     });
@@ -65,7 +69,7 @@ export const listEmployees = async (req, res) => {
 };
 
 export const inviteEmployee = async (req, res) => {
-  const { email, name, role = "USER", department = "SALES" } = req.body || {};
+  const { email, name, role = "USER", department = "SALES", modules } = req.body || {};
   const normalizedEmail = String(email || "").trim().toLowerCase();
 
   if (!isEmail(normalizedEmail)) {
@@ -76,6 +80,10 @@ export const inviteEmployee = async (req, res) => {
       success: false,
       message: "Invalid role. Client users cannot be granted platform roles.",
     });
+  }
+  const moduleCheck = validateModules(modules);
+  if (!moduleCheck.ok) {
+    return res.status(400).json({ success: false, message: moduleCheck.message });
   }
 
   const warnings = [];
@@ -105,6 +113,7 @@ export const inviteEmployee = async (req, res) => {
               user_name: name || existing.user_name,
               user_role: role,
               user_department: department,
+              user_module_access: serializeModuleAccess(moduleCheck.modules),
               tenant_fk: req.user.tenantFk,
             },
           })
@@ -116,6 +125,7 @@ export const inviteEmployee = async (req, res) => {
               user_status: false,
               user_role: role,
               user_department: department,
+              user_module_access: serializeModuleAccess(moduleCheck.modules),
               tenant_fk: req.user.tenantFk,
             },
           });
@@ -208,13 +218,17 @@ export const resendEmployeeInvitation = async (req, res) => {
 
 export const updateEmployee = async (req, res) => {
   const { userId } = req.params;
-  const { user_name, user_role, user_department, user_status } = req.body || {};
+  const { user_name, user_role, user_department, user_status, modules } = req.body || {};
 
   if (user_role !== undefined && !isClientRole(user_role)) {
     return res.status(400).json({
       success: false,
       message: "Invalid role. Client users cannot be granted platform roles.",
     });
+  }
+  const moduleCheck = validateModules(modules);
+  if (!moduleCheck.ok) {
+    return res.status(400).json({ success: false, message: moduleCheck.message });
   }
 
   try {
@@ -239,6 +253,10 @@ export const updateEmployee = async (req, res) => {
     if (user_role !== undefined) data.user_role = user_role;
     if (user_department !== undefined) data.user_department = user_department;
     if (user_status !== undefined) data.user_status = Boolean(user_status);
+    // The owner always keeps full module access.
+    if (modules !== undefined && !target.user_is_tenant_owner) {
+      data.user_module_access = serializeModuleAccess(moduleCheck.modules);
+    }
 
     const updated = await prisma.user.update({ where: { user_id: userId }, data });
 
@@ -260,6 +278,7 @@ export const updateEmployee = async (req, res) => {
         user_department: updated.user_department,
         user_status: updated.user_status,
         user_is_tenant_owner: updated.user_is_tenant_owner,
+        modules: parseModuleAccess(updated.user_module_access),
       },
     });
   } catch (error) {
