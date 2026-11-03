@@ -6,6 +6,7 @@ import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddOpportunityModal from "../components/modals/AddOpportunityModal";
+import OppDetailView from "../components/OppDetailView";
 import toast from "react-hot-toast";
 
 const STAGE_COLORS = {
@@ -32,6 +33,7 @@ const Opportunities = () => {
   const [limit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [opportunityToEdit, setOpportunityToEdit] = useState(null);
+  const [viewOpportunityId, setViewOpportunityId] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => fetchOpportunities(), 300);
@@ -255,7 +257,7 @@ const Opportunities = () => {
                           />
                         </td>
                         <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
-                          onClick={(e) => { e.stopPropagation(); setOpportunityToEdit(opp); setIsAddModalOpen(true); }}
+                          onClick={(e) => { e.stopPropagation(); setViewOpportunityId(opp.opportunity_id); }}
                         >
                           {opp.opportunity_name}
                         </td>
@@ -336,6 +338,13 @@ const Opportunities = () => {
         onSuccess={fetchOpportunities}
         opportunityToEdit={opportunityToEdit}
       />
+      {viewOpportunityId && (
+        <OppDetailView
+          isOpen={!!viewOpportunityId}
+          onClose={() => setViewOpportunityId(null)}
+          opportunityId={viewOpportunityId}
+        />
+      )}
     </div>
   );
 };

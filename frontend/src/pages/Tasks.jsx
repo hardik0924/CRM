@@ -6,6 +6,7 @@ import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddTaskModal from "../components/modals/AddTaskModal";
+import TaskDetailView from "../components/TaskDetailView";
 import toast from "react-hot-toast";
 
 const PRIORITY_COLORS = {
@@ -28,6 +29,7 @@ const Tasks = () => {
   const [limit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
+  const [viewTaskId, setViewTaskId] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => fetchTasks(), 300);
@@ -232,7 +234,7 @@ const Tasks = () => {
                           />
                         </td>
                         <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
-                          onClick={(e) => { e.stopPropagation(); setTaskToEdit(task); setIsAddModalOpen(true); }}
+                          onClick={(e) => { e.stopPropagation(); setViewTaskId(task.task_id); }}
                         >
                           {task.task_subject || "-"}
                         </td>
@@ -310,6 +312,13 @@ const Tasks = () => {
         onSuccess={fetchTasks}
         taskToEdit={taskToEdit}
       />
+      {viewTaskId && (
+        <TaskDetailView
+          isOpen={!!viewTaskId}
+          onClose={() => setViewTaskId(null)}
+          taskId={viewTaskId}
+        />
+      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddProjectModal from "../components/modals/AddProjectModal";
+import ProjectDetailView from "../components/ProjectDetailView";
 import toast from "react-hot-toast";
 
 const Projects = () => {
@@ -19,6 +20,7 @@ const Projects = () => {
   const [limit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState(null);
+  const [viewProjectId, setViewProjectId] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => fetchProjects(), 300);
@@ -228,7 +230,7 @@ const Projects = () => {
                           />
                         </td>
                         <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
-                          onClick={(e) => { e.stopPropagation(); setProjectToEdit(proj); setIsAddModalOpen(true); }}
+                          onClick={(e) => { e.stopPropagation(); setViewProjectId(proj.project_id); }}
                         >
                           {proj.project_name || "-"}
                         </td>
@@ -305,6 +307,13 @@ const Projects = () => {
         onSuccess={fetchProjects}
         projectToEdit={projectToEdit}
       />
+      {viewProjectId && (
+        <ProjectDetailView
+          isOpen={!!viewProjectId}
+          onClose={() => setViewProjectId(null)}
+          projectId={viewProjectId}
+        />
+      )}
     </div>
   );
 };

@@ -53,19 +53,30 @@ export const getOpportunities = async (req, res) => {
   }
 };
 
-// // GET /api/opportunities/:id
-// export const getOpportunityById = async (req, res) => {
-//   try {
-//     const { id } = req.params;
+// GET /api/opportunities/:id
+export const getOpportunityById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-//     // TODO: fetch unique opportunity with prisma.opportunity.findUnique
+    const opportunity = await prisma.opportunity.findUnique({
+      where: { opportunity_id: id, ...getTenantFilter(req) },
+      include: {
+        opportunity_owner: { select: { user_name: true } },
+        opportunity_account: { select: { account_name: true } },
+        opportunity_contact: { select: { contact_firstname: true, contact_lastname: true } },
+      },
+    });
 
-//     res.status(200).json({ success: true, data: {} });
-//   } catch (error) {
-//     console.error("Error fetching opportunity:", error);
-//     res.status(500).json({ success: false, message: "Server Error", error: error.message });
-//   }
-// };
+    if (!opportunity) {
+      return res.status(404).json({ success: false, message: "Opportunity not found" });
+    }
+
+    res.status(200).json({ success: true, data: opportunity });
+  } catch (error) {
+    console.error("Error fetching opportunity:", error);
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
 
 // // POST /api/opportunities
 // POST /api/opportunities

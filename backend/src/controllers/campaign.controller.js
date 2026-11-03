@@ -75,6 +75,29 @@ export const createCampaign = async (req, res) => {
   }
 };
 
+// GET /api/campaigns/:id
+export const getCampaignById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { campaign_id: id, ...getTenantFilter(req) },
+      include: {
+        user: { select: { user_name: true } },
+      },
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ success: false, message: "Campaign not found" });
+    }
+
+    res.status(200).json({ success: true, data: campaign });
+  } catch (error) {
+    console.error("Error fetching campaign:", error);
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+
 export const updateCampaign = async (req, res) => {
   try {
     const { id } = req.params;

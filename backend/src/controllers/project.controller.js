@@ -106,6 +106,26 @@ export const createProject = async (req, res) => {
   }
 };
 
+// GET /api/projects/:id
+export const getProjectById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const project = await prisma.project.findUnique({
+      where: { project_id: id, ...getTenantFilter(req) },
+    });
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    res.status(200).json({ success: true, data: project });
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+
 // PUT /api/projects/:id
 export const updateProject = async (req, res) => {
   try {

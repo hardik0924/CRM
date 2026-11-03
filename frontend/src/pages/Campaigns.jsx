@@ -6,6 +6,7 @@ import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddCampaignModal from "../components/modals/AddCampaignModal";
+import CampaignDetailView from "../components/CampaignDetailView";
 import toast from "react-hot-toast";
 
 const label = (value) =>
@@ -22,6 +23,7 @@ const Campaigns = () => {
   const [limit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [campaignToEdit, setCampaignToEdit] = useState(null);
+  const [viewCampaignId, setViewCampaignId] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => fetchCampaigns(), 300);
@@ -218,7 +220,7 @@ const Campaigns = () => {
                           />
                         </td>
                         <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
-                          onClick={(e) => { e.stopPropagation(); setCampaignToEdit(campaign); setIsAddModalOpen(true); }}
+                          onClick={(e) => { e.stopPropagation(); setViewCampaignId(campaign.campaign_id); }}
                         >
                           {campaign.campaign_name || "-"}
                         </td>
@@ -290,6 +292,13 @@ const Campaigns = () => {
         onSuccess={fetchCampaigns}
         campaignToEdit={campaignToEdit}
       />
+      {viewCampaignId && (
+        <CampaignDetailView
+          isOpen={!!viewCampaignId}
+          onClose={() => setViewCampaignId(null)}
+          campaignId={viewCampaignId}
+        />
+      )}
     </div>
   );
 };
