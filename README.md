@@ -44,7 +44,7 @@ A client sees **only their own organization's data**. A superadmin sees **everyt
 ### 1. Platform login
 - Everyone starts at `/` — a VSPH-branded login page with a role picker.
 - **Superadmin login** → routed to `/superadmin`.
-- **Client login** → routed to `/v2/dashboard`.
+- **CRM login** → routed to `/v2/dashboard`.
 
 ### 2. Central platform onboards a new client
 1. The VSPH Owner signs in to **apps.vsph.in** and creates the client organization.
@@ -56,8 +56,8 @@ A client sees **only their own organization's data**. A superadmin sees **everyt
 
 > The normal commercial path starts at **apps.vsph.in**. The CRM control center remains available for internal support only.
 
-### 3. Client signs in
-- The client user uses the same `/` login page -> **Client login**.
+### 3. Client administrator and employees sign in
+- - Client administrators and employees use the same `/` login page -> **CRM login**.
 - Login succeeds only if the user exists, is **active**, the password is set, the user belongs to a tenant, and the organization has an **ACTIVE CRM entitlement**.
 - They land on `/v2/dashboard` and only ever see their tenant's data.
 

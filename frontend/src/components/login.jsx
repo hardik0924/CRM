@@ -71,8 +71,8 @@ const Login = () => {
     },
     {
       value: "client",
-      title: "Client Login",
-      subtitle: "Access your CRM workspace",
+      title: "CRM Login",
+      subtitle: "For client administrators and employees",
       icon: Building2Icon,
       color: "text-vsph-navy",
       bg: "bg-vsph-grey",
@@ -186,12 +186,12 @@ const Login = () => {
               </div>
 
               <h1 className="text-vsph-navy text-2xl font-bold tracking-tight mb-1">
-                {role === "superadmin" ? "Superadmin login" : "Client login"}
+                {role === "superadmin" ? "Superadmin login" : "CRM login"}
               </h1>
               <p className="text-slate-500 text-sm mb-6">
                 {role === "superadmin"
                   ? "Create and manage client accounts"
-                  : "Access your CRM workspace"}
+                  : "Client administrators and employees sign in here"}
               </p>
 
               {error && (

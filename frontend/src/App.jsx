@@ -36,9 +36,9 @@ const App = () => {
       <Route path="/v2/login" element={<LoginV2Layout />}>
         <Route index element={<LoginV2 />} />
         <Route path="superadmin" element={<LoginV2Form role="superadmin" title="Superadmin login" subtitle="Create and manage client accounts" />} />
-        <Route path="client" element={<LoginV2Form role="client" title="Client login" subtitle="Access your CRM workspace" />} />
-        <Route path="admin" element={<LoginV2Form role="admin" title="Admin login" subtitle="Access the dashboard as an administrator" />} />
-        <Route path="employee" element={<LoginV2Form role="employee" title="Employee login" subtitle="Access your employee portal and tasks" />} />
+        <Route path="client" element={<LoginV2Form role="client" title="CRM login" subtitle="Client administrators and employees sign in here" />} />
+        <Route path="admin" element={<LoginV2Form role="admin" title="Administrator login" subtitle="Access the CRM as an administrator" />} />
+        <Route path="employee" element={<LoginV2Form role="employee" title="Employee login" subtitle="Access your CRM workspace and tasks" />} />
       </Route>
 
       {/* Superadmin Portal */}

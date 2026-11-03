@@ -85,7 +85,7 @@ const AcceptInvite = () => {
                 to="/v2/login/client"
                 className="inline-flex mt-6 h-11 px-5 items-center rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4]"
               >
-                Go to client login
+                Go to CRM login
               </Link>
             </div>
           ) : error && !invitation?.usable ? (

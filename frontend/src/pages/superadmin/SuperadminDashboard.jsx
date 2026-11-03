@@ -85,9 +85,9 @@ const SuperadminDashboard = () => {
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
           {[
-            { step: '01', title: 'Set up clients', text: 'Create an organization and choose a plan.' },
-            { step: '02', title: 'Add client users', text: 'Give each person a login and a CRM role.' },
-            { step: '03', title: 'Client signs in', text: 'They use the client login and see only their data.' },
+            { step: '01', title: 'Onboard at apps.vsph.in', text: 'Create the organization and assign CRM.' },
+            { step: '02', title: 'First admin invited', text: 'CRM sends a single-use invitation.' },
+            { step: '03', title: 'Client team signs in', text: 'Administrators and employees use the CRM login.' },
           ].map((s) => (
             <div key={s.step} className="rounded-lg bg-[#16416F] border border-[#35618A] p-4">
               <span className="text-[11px] font-bold text-[#99D4EF]">{s.step}</span>
@@ -207,7 +207,7 @@ const SuperadminDashboard = () => {
 
           <div className="mt-5 pt-4 border-t border-slate-100">
             <p className="text-xs text-slate-500 leading-relaxed">
-              Clients sign in from the same page with <strong className="text-vsph-navy">Client login</strong>.
+              Client administrators and employees sign in from the same page with <strong className="text-vsph-navy">CRM login</strong>.
               Their CRM only shows their own organization's data.
             </p>
             <button

@@ -18,8 +18,8 @@ const Login = () => {
         {
             to: "/v2/login/client",
             role: "client",
-            title: "Client login",
-            subtitle: "Access your CRM workspace",
+            title: "CRM login",
+            subtitle: "For client administrators and employees",
             icon: Building2Icon,
             color: "text-vsph-navy",
             bg: "bg-vsph-grey",

@@ -194,7 +194,7 @@ Success (`200`):
    (minimum 8 characters).
 4. CRM validates the token hash, single-use status and expiry, activates the
    user, marks the invitation `ACCEPTED`.
-5. The user signs in at the normal client login.
+5. The user signs in at the normal CRM login.
 
 Rules:
 
