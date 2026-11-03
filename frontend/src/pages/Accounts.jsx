@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  Download, Plus, Search, Eye, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Edit2, Loader2, Trash2, Briefcase,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
@@ -47,32 +47,9 @@ const Accounts = () => {
       }
     } catch (error) {
       console.error("Failed to fetch accounts", error);
+      toast.error("Failed to load accounts");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (account) => {
-    if (!window.confirm(`Delete account "${account.account_name}"?`)) return;
-    const res = await api.delete("/api/accounts", { ids: [account.account_id] });
-    if (res.success) {
-      toast.success("Account deleted");
-      fetchAccounts();
-    } else {
-      toast.error(res.message || "Could not delete account");
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedRows.length} selected account(s)?`)) return;
-    const res = await api.delete("/api/accounts", { ids: selectedRows });
-    if (res.success) {
-      toast.success("Accounts deleted");
-      setSelectedRows([]);
-      setSelectAll(false);
-      fetchAccounts();
-    } else {
-      toast.error(res.message || "Could not delete accounts");
     }
   };
 
@@ -97,13 +74,52 @@ const Accounts = () => {
     }
   };
 
+  const handleDelete = async (account) => {
+    if (!window.confirm(`Delete account "${account.account_name}"?`)) return;
+    const res = await api.delete("/api/accounts", { ids: [account.account_id] });
+    if (res.success) {
+      toast.success("Account deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchAccounts();
+    } else {
+      toast.error(res.message || "Could not delete account");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected account(s)?`)) return;
+    const res = await api.delete("/api/accounts", { ids: selectedRows });
+    if (res.success) {
+      toast.success("Accounts deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchAccounts();
+    } else {
+      toast.error(res.message || "Could not delete accounts");
+    }
+  };
+
+  const statusBadge = (status) => {
+    const variants = {
+      ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-100",
+      INACTIVE: "bg-rose-50 text-rose-700 border-rose-100",
+      SUSPENDED: "bg-amber-50 text-amber-700 border-amber-100",
+    };
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${variants[status] || variants.ACTIVE}`}>
+        {status ? status.replace(/_/g, " ") : "—"}
+      </span>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full bg-vsph-grey animate-fade-in relative overflow-hidden">
       <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-200 shrink-0 z-10">
         <div className="flex flex-col gap-1">
           <h1 className="text-vsph-navy text-2xl font-bold tracking-tight">Accounts</h1>
           <p className="text-slate-500 text-sm font-medium mt-0.5">
-            Total records: {totalRecords}
+            Manage your organization's accounts and clients
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -116,6 +132,7 @@ const Accounts = () => {
               { label: "Employees", value: (row) => row.account_employees_size },
               { label: "Industry", value: (row) => row.account_industry || row.industry?.industry_name },
               { label: "City", value: (row) => row.account_city },
+              { label: "Status", value: (row) => row.account_account_status },
             ])}
             className="gap-2 font-medium text-slate-600 border border-slate-200"
           >
@@ -160,12 +177,12 @@ const Accounts = () => {
       </div>
 
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
-        <div className="card flex-1 flex flex-col overflow-hidden">
+        <div className="card flex-1 flex flex-col overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm">
           <div className="overflow-auto flex-1">
             <table className="w-full text-left text-sm border-collapse" style={{ tableLayout: "fixed" }}>
               <thead className="sticky top-0 z-10 bg-vsph-grey shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                 <tr>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
                     <input
                       type="checkbox"
                       className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
@@ -173,18 +190,18 @@ const Accounts = () => {
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Account ID</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-80 min-w-[240px]">Account name</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Employee size</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-64 min-w-[192px]">Industry</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">City</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-80 min-w-[240px]">Account Name</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Code</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Industry</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Location</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-40 min-w-[128px] text-center">Status</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="py-16 text-center text-slate-500">
+                    <td colSpan="7" className="py-24 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
                         <p className="text-sm font-medium">Loading accounts&hellip;</p>
@@ -193,8 +210,17 @@ const Accounts = () => {
                   </tr>
                 ) : accountsData.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="py-16 text-center text-slate-500 font-medium">
-                      No accounts found.
+                    <td colSpan="7" className="py-24 text-center text-slate-500 font-medium">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Briefcase size={48} className="text-slate-200 mx-auto" />
+                        <p>No accounts found.</p>
+                        <button
+                          onClick={() => setIsAddModalOpen(true)}
+                          className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
+                        >
+                          Add your first account
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -202,7 +228,6 @@ const Accounts = () => {
                     <tr
                       key={acc.account_id}
                       className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(acc.account_id) ? "bg-vsph-light-blue/30" : ""}`}
-                      onClick={() => setViewAccountId(acc.account_id)}
                     >
                       <td className="border-b border-slate-100 px-6 py-4 text-center">
                         <input
@@ -212,30 +237,23 @@ const Accounts = () => {
                           onChange={(e) => { e.stopPropagation(); toggleRow(acc.account_id); }}
                         />
                       </td>
-                      <td className="border-b border-slate-100 px-6 py-4 text-xs text-slate-500 font-mono truncate">
-                        {acc.account_code || "-"}
-                      </td>
                       <td className="border-b border-slate-100 px-6 py-4 font-medium text-vsph-navy hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue">
                         {acc.account_name}
                       </td>
-                      <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
-                        {acc.account_employees_size || "-"}
+                      <td className="border-b border-slate-100 px-6 py-4 text-xs text-slate-500 font-mono truncate">
+                        {acc.account_code || "-"}
                       </td>
                       <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
-                        {acc.account_industry || "-"}
+                        {acc.account_industry || acc.industry?.industry_name || "-"}
                       </td>
                       <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
                         {acc.account_city || "-"}
                       </td>
+                      <td className="border-b border-slate-100 px-6 py-4 text-center">
+                        {statusBadge(acc.account_account_status)}
+                      </td>
                       <td className={`px-6 py-4 text-center sticky right-0 group-hover:bg-vsph-light-blue/20 shadow-[-1px_0_0_rgba(0,0,0,0.05)] ${selectedRows.includes(acc.account_id) ? "bg-vsph-light-blue/30" : "bg-white"}`}>
                         <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                          <button
-                            className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
-                            title="View"
-                            onClick={(e) => { e.stopPropagation(); setViewAccountId(acc.account_id); }}
-                          >
-                            <Eye size={16} />
-                          </button>
                           <button
                             className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
                             title="Edit"
@@ -292,11 +310,13 @@ const Accounts = () => {
         onSuccess={fetchAccounts}
         accountToEdit={accountToEdit}
       />
-      <AccountDetailView
-        isOpen={!!viewAccountId}
-        onClose={() => setViewAccountId(null)}
-        accountId={viewAccountId}
-      />
+      {viewAccountId && (
+        <AccountDetailView
+          isOpen={!!viewAccountId}
+          onClose={() => setViewAccountId(null)}
+          accountId={viewAccountId}
+        />
+      )}
     </div>
   );
 };

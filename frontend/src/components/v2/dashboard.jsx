@@ -10,6 +10,8 @@ import {
   ArrowRight,
   Loader2,
   Sparkles,
+  Megaphone,
+  Layers,
 } from "lucide-react";
 import { api } from "../../utils/api";
 import { hasModule } from "../../utils/modules";
@@ -66,7 +68,7 @@ const DashboardV2 = () => {
           value: metrics.callsToday,
           hint: "Logged by you",
           icon: Phone,
-          tone: "bg-vsph-core-blue/10 text-vsph-core-blue",
+          tone: "bg-vsph-core-blue/10 text-vsph-core-blue border-vsph-core-blue/20",
         },
         {
           key: "won",
@@ -74,7 +76,7 @@ const DashboardV2 = () => {
           value: metrics.oppsWonThisMonth,
           hint: "Closed won by you",
           icon: Trophy,
-          tone: "bg-emerald-50 text-emerald-600",
+          tone: "bg-emerald-50 text-emerald-600 border-emerald-100",
         },
         metrics.accounts !== null && {
           key: "accounts",
@@ -82,7 +84,7 @@ const DashboardV2 = () => {
           value: metrics.accounts,
           hint: "Active records",
           icon: Briefcase,
-          tone: "bg-vsph-navy/10 text-vsph-navy",
+          tone: "bg-vsph-navy/10 text-vsph-navy border-vsph-navy/20",
         },
         metrics.contacts !== null && {
           key: "contacts",
@@ -90,7 +92,7 @@ const DashboardV2 = () => {
           value: metrics.contacts,
           hint: "Active records",
           icon: Users,
-          tone: "bg-vsph-light-blue/20 text-vsph-core-blue",
+          tone: "bg-vsph-light-blue/20 text-vsph-core-blue border-vsph-light-blue/20",
         },
         metrics.openOpportunities !== null && {
           key: "open",
@@ -98,7 +100,7 @@ const DashboardV2 = () => {
           value: metrics.openOpportunities,
           hint: "In pipeline",
           icon: TrendingUp,
-          tone: "bg-amber-50 text-amber-600",
+          tone: "bg-amber-50 text-amber-600 border-amber-100",
         },
         metrics.myOpenTasks !== null && {
           key: "tasks",
@@ -106,13 +108,22 @@ const DashboardV2 = () => {
           value: metrics.myOpenTasks,
           hint: "Assigned to you",
           icon: ListChecks,
-          tone: "bg-rose-50 text-rose-600",
+          tone: "bg-rose-50 text-rose-600 border-rose-100",
         },
       ].filter(Boolean)
     : [];
 
   const totalPipeline = metrics?.pipeline?.reduce((sum, row) => sum + row.count, 0) || 0;
   const hasRecent = (metrics?.recentOpportunities?.length || 0) + (metrics?.recentTasks?.length || 0) > 0;
+
+  const quickActions = [
+    { label: "New Contact", path: "/v2/contacts", icon: Users, module: "CONTACTS", color: "bg-vsph-core-blue/10 text-vsph-core-blue" },
+    { label: "New Account", path: "/v2/accounts", icon: Briefcase, module: "ACCOUNTS", color: "bg-vsph-navy/10 text-vsph-navy" },
+    { label: "New Opportunity", path: "/v2/opportunities", icon: TrendingUp, module: "OPPORTUNITIES", color: "bg-amber-50 text-amber-600" },
+    { label: "New Task", path: "/v2/tasks", icon: ListChecks, module: "TASKS", color: "bg-rose-50 text-rose-600" },
+    { label: "New Campaign", path: "/v2/campaigns", icon: Megaphone, module: "CAMPAIGNS", color: "bg-vsph-light-blue/20 text-vsph-core-blue" },
+    { label: "New Project", path: "/v2/projects", icon: Layers, module: "PROJECTS", color: "bg-vsph-grey text-vsph-navy" },
+  ];
 
   return (
     <div className="min-h-full bg-vsph-grey p-4 sm:p-6 lg:p-8 font-sans">
@@ -134,7 +145,8 @@ const DashboardV2 = () => {
             >
               <Sparkles size={16} /> Open contacts
             </Link>
-          )}        </div>
+          )}
+        </div>
 
         {error && (
           <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
@@ -148,7 +160,7 @@ const DashboardV2 = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {cards.map((card) => (
-                <div key={card.key} className="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
+                <div key={card.key} className="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4 hover:shadow-md transition-shadow">
                   <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${card.tone}`}>
                     <card.icon size={20} />
                   </div>
@@ -161,8 +173,9 @@ const DashboardV2 = () => {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-5">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Pipeline */}
+              <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-bold text-vsph-navy">Pipeline</h2>
                   <span className="text-xs text-slate-500">{totalPipeline} opportunities</span>
@@ -195,7 +208,25 @@ const DashboardV2 = () => {
                 )}
               </div>
 
-              <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+              {/* Quick actions */}
+              <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 p-5">
+                <h2 className="font-bold text-vsph-navy mb-4">Quick actions</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {quickActions.filter((a) => hasModule(a.module)).map((action) => (
+                    <Link
+                      key={action.label}
+                      to={action.path}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border border-slate-200 text-sm text-vsph-navy font-medium hover:bg-vsph-grey hover:text-vsph-core-blue transition-colors ${action.color}`}
+                    >
+                      <action.icon size={16} />
+                      {action.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent activity */}
+              <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-bold text-vsph-navy">Recent activity</h2>
                   {metrics.recentOpportunities && (

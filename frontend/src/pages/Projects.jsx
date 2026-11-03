@@ -1,17 +1,12 @@
 import { useState, useEffect } from "react";
 import {
-  Download, Plus, Search, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Edit2, Loader2, Trash2, Layers,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddProjectModal from "../components/modals/AddProjectModal";
 import toast from "react-hot-toast";
-
-const PROJECT_TYPE_COLORS = {
-  INBOUND: "bg-vsph-light-blue/20 text-vsph-core-blue",
-  OUTBOUND: "bg-vsph-grey text-vsph-navy",
-};
 
 const Projects = () => {
   const [totalRecords, setTotalRecords] = useState(0);
@@ -43,33 +38,9 @@ const Projects = () => {
       }
     } catch (error) {
       console.error("Failed to fetch projects", error);
-      toast.error("Failed to fetch projects");
+      toast.error("Failed to load projects");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (project) => {
-    if (!window.confirm(`Delete project "${project.project_name || project.project_location}"?`)) return;
-    const res = await api.post("/api/projects/delete", { ids: [project.project_id] });
-    if (res.success) {
-      toast.success("Project deleted");
-      fetchProjects();
-    } else {
-      toast.error(res.message || "Could not delete project");
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedRows.length} selected project(s)?`)) return;
-    const res = await api.post("/api/projects/delete", { ids: selectedRows });
-    if (res.success) {
-      toast.success("Projects deleted");
-      setSelectedRows([]);
-      setSelectAll(false);
-      fetchProjects();
-    } else {
-      toast.error(res.message || "Could not delete projects");
     }
   };
 
@@ -94,13 +65,51 @@ const Projects = () => {
     }
   };
 
+  const handleDelete = async (project) => {
+    if (!window.confirm(`Delete project "${project.project_name || project.project_location}"?`)) return;
+    const res = await api.post("/api/projects/delete", { ids: [project.project_id] });
+    if (res.success) {
+      toast.success("Project deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchProjects();
+    } else {
+      toast.error(res.message || "Could not delete project");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected project(s)?`)) return;
+    const res = await api.post("/api/projects/delete", { ids: selectedRows });
+    if (res.success) {
+      toast.success("Projects deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchProjects();
+    } else {
+      toast.error(res.message || "Could not delete projects");
+    }
+  };
+
+  const statusBadge = (status) => {
+    const variants = {
+      ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-100",
+      INACTIVE: "bg-rose-50 text-rose-700 border-rose-100",
+    };
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${variants[status] || variants.INACTIVE}`}>
+        {status ? status.replace(/_/g, " ") : "—"}
+      </span>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full bg-vsph-grey animate-fade-in relative overflow-hidden">
       <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-200 shrink-0 z-10">
         <div className="flex flex-col gap-1">
           <h1 className="text-vsph-navy text-2xl font-bold tracking-tight">Projects</h1>
           <p className="text-slate-500 text-sm font-medium mt-0.5">
-            Total records: {totalRecords}
+            Manage your delivery projects and initiatives
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -157,12 +166,12 @@ const Projects = () => {
       </div>
 
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
-        <div className="card flex-1 flex flex-col overflow-hidden">
+        <div className="card flex-1 flex flex-col overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm">
           <div className="overflow-auto flex-1">
             <table className="w-full text-left text-sm border-collapse" style={{ tableLayout: "fixed" }}>
               <thead className="sticky top-0 z-10 bg-vsph-grey shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                 <tr>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
                     <input
                       type="checkbox"
                       className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
@@ -170,18 +179,18 @@ const Projects = () => {
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-80 min-w-[240px]">Project name</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-56 min-w-[168px]">Type</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Location</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Date</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Status</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-80 min-w-[240px]">Project Name</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Type</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Location</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Date</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-40 min-w-[128px] text-center">Status</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="py-16 text-center text-slate-500">
+                    <td colSpan="7" className="py-24 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
                         <p className="text-sm font-medium">Loading projects&hellip;</p>
@@ -190,8 +199,17 @@ const Projects = () => {
                   </tr>
                 ) : projectsData.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="py-16 text-center text-slate-500 font-medium">
-                      No projects found.
+                    <td colSpan="7" className="py-24 text-center text-slate-500 font-medium">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Layers size={48} className="text-slate-200 mx-auto" />
+                        <p>No projects found.</p>
+                        <button
+                          onClick={() => setIsAddModalOpen(true)}
+                          className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
+                        >
+                          Add your first project
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -208,11 +226,11 @@ const Projects = () => {
                           onChange={(e) => { e.stopPropagation(); toggleRow(proj.project_id); }}
                         />
                       </td>
-                      <td className="border-b border-slate-100 px-6 py-4 font-medium text-vsph-navy hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue">
+                      <td className="border-b border-slate-100 px-6 py-4 font-medium text-vsph-navy truncate">
                         {proj.project_name || "-"}
                       </td>
                       <td className="border-b border-slate-100 px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${PROJECT_TYPE_COLORS[proj.project_type] || "bg-vsph-grey text-slate-600"}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${proj.project_type === "INBOUND" ? "bg-vsph-light-blue/20 text-vsph-core-blue" : "bg-vsph-grey text-vsph-navy"}`}>
                           {proj.project_type?.replace(/_/g, " ") || "-"}
                         </span>
                       </td>
@@ -222,10 +240,8 @@ const Projects = () => {
                       <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
                         {proj.project_date ? new Date(proj.project_date).toLocaleDateString() : "-"}
                       </td>
-                      <td className="border-b border-slate-100 px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${proj.project_is_active === "ACTIVE" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
-                          {proj.project_is_active || "-"}
-                        </span>
+                      <td className="border-b border-slate-100 px-6 py-4 text-center">
+                        {statusBadge(proj.project_is_active)}
                       </td>
                       <td className={`px-6 py-4 text-center sticky right-0 group-hover:bg-vsph-light-blue/20 shadow-[-1px_0_0_rgba(0,0,0,0.05)] ${selectedRows.includes(proj.project_id) ? "bg-vsph-light-blue/30" : "bg-white"}`}>
                         <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">

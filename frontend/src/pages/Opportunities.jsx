@@ -1,12 +1,21 @@
 import { useState, useEffect } from "react";
 import {
-  Download, Plus, Search, Filter, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Filter, Edit2, Loader2, Trash2, TrendingUp,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddOpportunityModal from "../components/modals/AddOpportunityModal";
 import toast from "react-hot-toast";
+
+const STAGE_COLORS = {
+  PITCH_DONE: "bg-vsph-core-blue text-white",
+  FOLLOW_UP: "bg-vsph-light-blue text-vsph-navy",
+  CONTRACT_OUT: "bg-amber-400 text-white",
+  CLOSED_WON: "bg-emerald-500 text-white",
+  CLOSED_LOST: "bg-rose-500 text-white",
+  UNASSIGNED: "bg-slate-300 text-slate-600",
+};
 
 const Opportunities = () => {
   const [totalRecords, setTotalRecords] = useState(0);
@@ -39,33 +48,9 @@ const Opportunities = () => {
       }
     } catch (error) {
       console.error("Failed to fetch opportunities", error);
+      toast.error("Failed to load opportunities");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (opportunity) => {
-    if (!window.confirm(`Delete opportunity "${opportunity.opportunity_name}"?`)) return;
-    const res = await api.delete(`/api/opportunities/${opportunity.opportunity_id}`);
-    if (res.success) {
-      toast.success("Opportunity deleted");
-      fetchOpportunities();
-    } else {
-      toast.error(res.message || "Could not delete opportunity");
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedRows.length} selected opportunity(ies)?`)) return;
-    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/opportunities/${id}`)));
-    if (results.every((res) => res.success)) {
-      toast.success("Opportunities deleted");
-      setSelectedRows([]);
-      setSelectAll(false);
-      fetchOpportunities();
-    } else {
-      toast.error("Some opportunities could not be deleted");
-      fetchOpportunities();
     }
   };
 
@@ -90,12 +75,31 @@ const Opportunities = () => {
     }
   };
 
-  const STAGE_COLORS = {
-    PITCH_DONE: "bg-vsph-light-blue/20 text-vsph-core-blue",
-    FOLLOW_UP: "bg-vsph-grey text-vsph-navy",
-    CONTRACT_OUT: "bg-amber-50 text-amber-700",
-    CLOSED_WON: "bg-emerald-50 text-emerald-700",
-    CLOSED_LOST: "bg-rose-50 text-rose-700",
+  const handleDelete = async (opportunity) => {
+    if (!window.confirm(`Delete opportunity "${opportunity.opportunity_name}"?`)) return;
+    const res = await api.delete(`/api/opportunities/${opportunity.opportunity_id}`);
+    if (res.success) {
+      toast.success("Opportunity deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchOpportunities();
+    } else {
+      toast.error(res.message || "Could not delete opportunity");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected opportunity(ies)?`)) return;
+    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/opportunities/${id}`)));
+    if (results.every((res) => res.success)) {
+      toast.success("Opportunities deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchOpportunities();
+    } else {
+      toast.error("Some opportunities could not be deleted");
+      fetchOpportunities();
+    }
   };
 
   return (
@@ -104,7 +108,7 @@ const Opportunities = () => {
         <div className="flex flex-col gap-1">
           <h1 className="text-vsph-navy text-2xl font-bold tracking-tight">Opportunities</h1>
           <p className="text-slate-500 text-sm font-medium mt-0.5">
-            Total records: {totalRecords}
+            Track your sales pipeline and close more deals
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -178,12 +182,12 @@ const Opportunities = () => {
       </div>
 
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
-        <div className="card flex-1 flex flex-col overflow-hidden">
+        <div className="card flex-1 flex flex-col overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm">
           <div className="overflow-auto flex-1">
             <table className="w-full text-left text-sm border-collapse" style={{ tableLayout: "fixed" }}>
               <thead className="sticky top-0 z-10 bg-vsph-grey shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                 <tr>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
                     <input
                       type="checkbox"
                       className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
@@ -191,17 +195,18 @@ const Opportunities = () => {
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-80 min-w-[240px]">Opportunity</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Stage</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-40 min-w-[120px]">Close date</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-56 min-w-[168px]">Owner</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-80 min-w-[240px]">Opportunity Name</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Stage</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Close Date</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Owner</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Account</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="py-16 text-center text-slate-500">
+                    <td colSpan="7" className="py-24 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
                         <p className="text-sm font-medium">Loading opportunities&hellip;</p>
@@ -210,15 +215,24 @@ const Opportunities = () => {
                   </tr>
                 ) : opportunitiesData.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="py-16 text-center text-slate-500 font-medium">
-                      No opportunities found.
+                    <td colSpan="7" className="py-24 text-center text-slate-500 font-medium">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <TrendingUp size={48} className="text-slate-200 mx-auto" />
+                        <p>No opportunities found.</p>
+                        <button
+                          onClick={() => setIsAddModalOpen(true)}
+                          className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
+                        >
+                          Add your first opportunity
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (
                   opportunitiesData.map((opp) => (
                     <tr
                       key={opp.opportunity_id}
-                      className={`hover:bg-vsph-light-blue/20 group transition-colors ${selectedRows.includes(opp.opportunity_id) ? "bg-vsph-light-blue/30" : ""}`}
+                      className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(opp.opportunity_id) ? "bg-vsph-light-blue/30" : ""}`}
                     >
                       <td className="border-b border-slate-100 px-6 py-4 text-center">
                         <input
@@ -241,6 +255,9 @@ const Opportunities = () => {
                       </td>
                       <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
                         {opp.opportunity_owner?.user_name || "-"}
+                      </td>
+                      <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
+                        {opp.opportunity_account?.account_name || "-"}
                       </td>
                       <td className={`px-6 py-4 text-center sticky right-0 group-hover:bg-vsph-light-blue/20 shadow-[-1px_0_0_rgba(0,0,0,0.05)] ${selectedRows.includes(opp.opportunity_id) ? "bg-vsph-light-blue/30" : "bg-white"}`}>
                         <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">

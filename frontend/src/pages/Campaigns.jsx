@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  Download, Plus, Search, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Edit2, Loader2, Trash2, Megaphone,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
@@ -38,34 +38,9 @@ const Campaigns = () => {
       }
     } catch (error) {
       console.error("Failed to fetch campaigns", error);
-      toast.error("Failed to fetch campaigns");
+      toast.error("Failed to load campaigns");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (campaign) => {
-    if (!window.confirm(`Delete campaign "${campaign.campaign_name || "Untitled"}"?`)) return;
-    const res = await api.delete(`/api/campaigns/${campaign.campaign_id}`);
-    if (res.success) {
-      toast.success("Campaign deleted");
-      fetchCampaigns();
-    } else {
-      toast.error(res.message || "Could not delete campaign");
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedRows.length} selected campaign(s)?`)) return;
-    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/campaigns/${id}`)));
-    if (results.every((res) => res.success)) {
-      toast.success("Campaigns deleted");
-      setSelectedRows([]);
-      setSelectAll(false);
-      fetchCampaigns();
-    } else {
-      toast.error("Some campaigns could not be deleted");
-      fetchCampaigns();
     }
   };
 
@@ -90,13 +65,40 @@ const Campaigns = () => {
     }
   };
 
+  const handleDelete = async (campaign) => {
+    if (!window.confirm(`Delete campaign "${campaign.campaign_name || "Untitled"}"?`)) return;
+    const res = await api.delete(`/api/campaigns/${campaign.campaign_id}`);
+    if (res.success) {
+      toast.success("Campaign deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchCampaigns();
+    } else {
+      toast.error(res.message || "Could not delete campaign");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected campaign(s)?`)) return;
+    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/campaigns/${id}`)));
+    if (results.every((res) => res.success)) {
+      toast.success("Campaigns deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchCampaigns();
+    } else {
+      toast.error("Some campaigns could not be deleted");
+      fetchCampaigns();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-vsph-grey animate-fade-in relative overflow-hidden">
       <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-200 shrink-0 z-10">
         <div className="flex flex-col gap-1">
           <h1 className="text-vsph-navy text-2xl font-bold tracking-tight">Campaigns</h1>
           <p className="text-slate-500 text-sm font-medium mt-0.5">
-            Total records: {totalRecords}
+            Run marketing campaigns and track engagement
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -152,12 +154,12 @@ const Campaigns = () => {
       </div>
 
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
-        <div className="card flex-1 flex flex-col overflow-hidden">
+        <div className="card flex-1 flex flex-col overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm">
           <div className="overflow-auto flex-1">
             <table className="w-full text-left text-sm border-collapse" style={{ tableLayout: "fixed" }}>
               <thead className="sticky top-0 z-10 bg-vsph-grey shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                 <tr>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
                     <input
                       type="checkbox"
                       className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
@@ -165,17 +167,17 @@ const Campaigns = () => {
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-80 min-w-[240px]">Campaign name</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-64 min-w-[192px]">Owner</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Contacts</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Opportunities</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-80 min-w-[240px]">Campaign Name</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Owner</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Contacts</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Opportunities</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="py-16 text-center text-slate-500">
+                    <td colSpan="6" className="py-24 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
                         <p className="text-sm font-medium">Loading campaigns&hellip;</p>
@@ -184,8 +186,17 @@ const Campaigns = () => {
                   </tr>
                 ) : campaignsData.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="py-16 text-center text-slate-500 font-medium">
-                      No campaigns found.
+                    <td colSpan="6" className="py-24 text-center text-slate-500 font-medium">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Megaphone size={48} className="text-slate-200 mx-auto" />
+                        <p>No campaigns found.</p>
+                        <button
+                          onClick={() => setIsAddModalOpen(true)}
+                          className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
+                        >
+                          Add your first campaign
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  Download, Plus, Search, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Edit2, Loader2, Trash2, ListChecks,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
@@ -9,9 +9,9 @@ import AddTaskModal from "../components/modals/AddTaskModal";
 import toast from "react-hot-toast";
 
 const PRIORITY_COLORS = {
-  NORMAL: "bg-vsph-grey text-vsph-navy",
-  HIGH: "bg-rose-50 text-rose-700",
-  LOW: "bg-emerald-50 text-emerald-700",
+  HIGH: "bg-rose-50 text-rose-700 border-rose-100",
+  NORMAL: "bg-vsph-grey text-vsph-navy border-slate-200",
+  LOW: "bg-emerald-50 text-emerald-700 border-emerald-100",
 };
 
 const Tasks = () => {
@@ -44,34 +44,9 @@ const Tasks = () => {
       }
     } catch (error) {
       console.error("Failed to fetch tasks", error);
-      toast.error("Failed to fetch tasks");
+      toast.error("Failed to load tasks");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (task) => {
-    if (!window.confirm(`Delete task "${task.task_subject || "Untitled"}"?`)) return;
-    const res = await api.delete(`/api/tasks/${task.task_id}`);
-    if (res.success !== false) {
-      toast.success("Task deleted");
-      fetchTasks();
-    } else {
-      toast.error(res.message || "Could not delete task");
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedRows.length} selected task(s)?`)) return;
-    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/tasks/${id}`)));
-    if (results.every((res) => res.success)) {
-      toast.success("Tasks deleted");
-      setSelectedRows([]);
-      setSelectAll(false);
-      fetchTasks();
-    } else {
-      toast.error("Some tasks could not be deleted");
-      fetchTasks();
     }
   };
 
@@ -96,13 +71,40 @@ const Tasks = () => {
     }
   };
 
+  const handleDelete = async (task) => {
+    if (!window.confirm(`Delete task "${task.task_subject || "Untitled"}"?`)) return;
+    const res = await api.delete(`/api/tasks/${task.task_id}`);
+    if (res.success !== false) {
+      toast.success("Task deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchTasks();
+    } else {
+      toast.error(res.message || "Could not delete task");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected task(s)?`)) return;
+    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/tasks/${id}`)));
+    if (results.every((res) => res.success)) {
+      toast.success("Tasks deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchTasks();
+    } else {
+      toast.error("Some tasks could not be deleted");
+      fetchTasks();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-vsph-grey animate-fade-in relative overflow-hidden">
       <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-200 shrink-0 z-10">
         <div className="flex flex-col gap-1">
           <h1 className="text-vsph-navy text-2xl font-bold tracking-tight">Tasks</h1>
           <p className="text-slate-500 text-sm font-medium mt-0.5">
-            Total records: {totalRecords}
+            Manage your to-dos and follow-ups
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -158,12 +160,12 @@ const Tasks = () => {
       </div>
 
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
-        <div className="card flex-1 flex flex-col overflow-hidden">
+        <div className="card flex-1 flex flex-col overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm">
           <div className="overflow-auto flex-1">
             <table className="w-full text-left text-sm border-collapse" style={{ tableLayout: "fixed" }}>
               <thead className="sticky top-0 z-10 bg-vsph-grey shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                 <tr>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
                     <input
                       type="checkbox"
                       className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
@@ -171,17 +173,17 @@ const Tasks = () => {
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-80 min-w-[240px]">Subject</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Priority</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-64 min-w-[192px]">Due date</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-56 min-w-[168px]">Assigned to</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-80 min-w-[240px]">Subject</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-40 min-w-[120px]">Priority</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Due Date</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Assigned to</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="py-16 text-center text-slate-500">
+                    <td colSpan="6" className="py-24 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
                         <p className="text-sm font-medium">Loading tasks&hellip;</p>
@@ -190,8 +192,17 @@ const Tasks = () => {
                   </tr>
                 ) : tasksData.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="py-16 text-center text-slate-500 font-medium">
-                      No tasks found.
+                    <td colSpan="6" className="py-24 text-center text-slate-500 font-medium">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <ListChecks size={48} className="text-slate-200 mx-auto" />
+                        <p>No tasks found.</p>
+                        <button
+                          onClick={() => setIsAddModalOpen(true)}
+                          className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
+                        >
+                          Add your first task
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -212,9 +223,13 @@ const Tasks = () => {
                         {task.task_subject || "-"}
                       </td>
                       <td className="border-b border-slate-100 px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${PRIORITY_COLORS[task.task_priority] || "bg-vsph-grey text-slate-600"}`}>
-                          {task.task_priority?.replace(/_/g, " ") || "-"}
-                        </span>
+                        {task.task_priority ? (
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${PRIORITY_COLORS[task.task_priority] || "bg-vsph-grey text-slate-600"}`}>
+                            {task.task_priority?.replace(/_/g, " ") || "-"}
+                          </span>
+                        ) : (
+                          "-"
+                        )}
                       </td>
                       <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
                         {task.task_due_date ? new Date(task.task_due_date).toLocaleDateString() : "-"}

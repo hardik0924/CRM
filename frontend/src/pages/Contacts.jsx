@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Download, Plus, Search, Eye, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Eye, Edit2, Loader2, Trash2, Users,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
@@ -9,6 +9,11 @@ import { exportCsv } from "../utils/csv";
 import AddContactModal from "../components/modals/AddContactModal";
 import ConDetailView from "../components/ConDetailView";
 import toast from "react-hot-toast";
+
+const formatName = (c) =>
+  [c.contact_salutation, c.contact_firstname, c.contact_lastname, c.contact_suffix]
+    .filter(Boolean)
+    .join(" ") || "—";
 
 const Contacts = () => {
   const [totalRecords, setTotalRecords] = useState(0);
@@ -45,34 +50,9 @@ const Contacts = () => {
       }
     } catch (error) {
       console.error("Failed to fetch contacts", error);
+      toast.error("Failed to load contacts");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (contact) => {
-    const name = [contact.contact_firstname, contact.contact_lastname].filter(Boolean).join(" ") || "this contact";
-    if (!window.confirm(`Delete ${name}?`)) return;
-    const res = await api.delete(`/api/contacts/${contact.contact_id}`);
-    if (res.success) {
-      toast.success("Contact deleted");
-      fetchContacts();
-    } else {
-      toast.error(res.message || "Could not delete contact");
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedRows.length} selected contact(s)?`)) return;
-    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/contacts/${id}`)));
-    if (results.every((res) => res.success)) {
-      toast.success("Contacts deleted");
-      setSelectedRows([]);
-      setSelectAll(false);
-      fetchContacts();
-    } else {
-      toast.error("Some contacts could not be deleted");
-      fetchContacts();
     }
   };
 
@@ -97,10 +77,33 @@ const Contacts = () => {
     }
   };
 
-  const formatName = (c) =>
-    [c.contact_firstname, c.contact_middlename, c.contact_lastname]
-      .filter(Boolean)
-      .join(" ") || "-";
+  const handleDelete = async (contact) => {
+    const name = [contact.contact_firstname, contact.contact_lastname].filter(Boolean).join(" ") || "this contact";
+    if (!window.confirm(`Delete ${name}?`)) return;
+    const res = await api.delete(`/api/contacts/${contact.contact_id}`);
+    if (res.success) {
+      toast.success("Contact deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchContacts();
+    } else {
+      toast.error(res.message || "Could not delete contact");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected contact(s)?`)) return;
+    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/contacts/${id}`)));
+    if (results.every((res) => res.success)) {
+      toast.success("Contacts deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchContacts();
+    } else {
+      toast.error("Some contacts could not be deleted");
+      fetchContacts();
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-vsph-grey animate-fade-in relative overflow-hidden">
@@ -108,7 +111,7 @@ const Contacts = () => {
         <div className="flex flex-col gap-1">
           <h1 className="text-vsph-navy text-2xl font-bold tracking-tight">Contacts</h1>
           <p className="text-slate-500 text-sm font-medium mt-0.5">
-            Total records: {totalRecords}
+            Manage your organization's contacts and relationships
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -166,12 +169,12 @@ const Contacts = () => {
       </div>
 
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
-        <div className="card flex-1 flex flex-col overflow-hidden">
+        <div className="card flex-1 flex flex-col overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm">
           <div className="overflow-auto flex-1">
             <table className="w-full text-left text-sm border-collapse" style={{ tableLayout: "fixed" }}>
               <thead className="sticky top-0 z-10 bg-vsph-grey shadow-[0_1px_0_rgba(0,0,0,0.05)]">
                 <tr>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
                     <input
                       type="checkbox"
                       className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
@@ -179,20 +182,19 @@ const Contacts = () => {
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-64 min-w-[192px]">Name</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Contact ID</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-64 min-w-[192px]">Account</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Title</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-72 min-w-[216px]">Email</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Owner</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-48 min-w-[144px]">Call status</th>
-                  <th className="border-b border-slate-200 px-6 py-4 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-80 min-w-[240px]">Contact Name</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Code</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-64 min-w-[192px]">Account</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-56 min-w-[168px]">Email</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Owner</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-40 min-w-[128px] text-center">Call Status</th>
+                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan="9" className="py-16 text-center text-slate-500">
+                    <td colSpan="8" className="py-24 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
                         <p className="text-sm font-medium">Loading contacts&hellip;</p>
@@ -201,22 +203,31 @@ const Contacts = () => {
                   </tr>
                 ) : contactsData.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="py-16 text-center text-slate-500 font-medium">
-                      No contacts found.
+                    <td colSpan="8" className="py-24 text-center text-slate-500 font-medium">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Users size={48} className="text-slate-200 mx-auto" />
+                        <p>No contacts found.</p>
+                        <button
+                          onClick={() => setIsAddModalOpen(true)}
+                          className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
+                        >
+                          Add your first contact
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (
                   contactsData.map((contact) => (
                     <tr
                       key={contact.contact_id}
-                      className={`hover:bg-vsph-light-blue/20 group transition-colors ${selectedRows.includes(contact.contact_id) ? "bg-vsph-light-blue/30" : ""}`}
+                      className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(contact.contact_id) ? "bg-vsph-light-blue/30" : ""}`}
                     >
                       <td className="border-b border-slate-100 px-6 py-4 text-center">
                         <input
                           type="checkbox"
                           className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
                           checked={selectedRows.includes(contact.contact_id)}
-                          onChange={() => toggleRow(contact.contact_id)}
+                          onChange={(e) => { e.stopPropagation(); toggleRow(contact.contact_id); }}
                         />
                       </td>
                       <td
@@ -238,15 +249,12 @@ const Contacts = () => {
                         {contact.account?.account_name || "-"}
                       </td>
                       <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
-                        {contact.contact_title || "-"}
-                      </td>
-                      <td className="border-b border-slate-100 px-6 py-4 text-vsph-core-blue hover:underline cursor-pointer truncate group-hover:text-vsph-navy">
                         {contact.contact_professional_email || contact.contact_personal_email || "-"}
                       </td>
                       <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
                         {contact.contact_owner?.user_name || "-"}
                       </td>
-                      <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
+                      <td className="border-b border-slate-100 px-6 py-4 text-center">
                         {contact.contact_call_status ? (
                           <span className="px-2 py-1 bg-vsph-light-blue/20 text-vsph-core-blue text-xs rounded font-medium">
                             {contact.contact_call_status.replace(/_/g, " ")}
@@ -314,17 +322,19 @@ const Contacts = () => {
         </div>
       </div>
 
-      <ConDetailView
-        isOpen={!!viewContactId}
-        onClose={() => setViewContactId(null)}
-        contactId={viewContactId}
-      />
       <AddContactModal
         isOpen={isAddModalOpen}
         onClose={() => { setIsAddModalOpen(false); setContactToEdit(null); }}
         onSuccess={fetchContacts}
         contactToEdit={contactToEdit}
       />
+      {viewContactId && (
+        <ConDetailView
+          isOpen={!!viewContactId}
+          onClose={() => setViewContactId(null)}
+          contactId={viewContactId}
+        />
+      )}
     </div>
   );
 };
