@@ -215,6 +215,7 @@ model contact {
   contact_account_shipping_address shipping[]    @relation("shipping_contact")
   opportunities                    opportunity[]
   contact_calls                    call[]        @relation("call_contact")
+  tasks                            task[]        @relation("contact_tasks")
 
   @@index([contact_user_fk])
   @@index([contact_account_fk])
@@ -339,6 +340,9 @@ model task {
   task_call_fk String?
   call         call?   @relation("call_task", fields: [task_call_fk], references: [call_id])
 
+  task_contact_fk String?
+  contact         contact? @relation("contact_tasks", fields: [task_contact_fk], references: [contact_id])
+
   task_subject     String?
   task_description String?
   task_priority    priority? @default(NORMAL)
@@ -349,6 +353,7 @@ model task {
   task_deleted_at DateTime?
 
   @@index([task_user_fk])
+  @@index([task_contact_fk])
   @@index([tenant_fk])
   @@map("tasks")
 }
@@ -362,11 +367,17 @@ model campaign {
   campaign_user_fk String?
   user             user?   @relation("campaign_user", fields: [campaign_user_fk], references: [user_id])
 
+  campaign_name       String?
+  campaign_created_at DateTime  @default(now())
+  campaign_updated_at DateTime  @updatedAt
+  campaign_deleted_at DateTime?
+
   contacts      contact[]
   opportunities opportunity[]
 
   @@index([campaign_user_fk])
   @@index([tenant_fk])
+  @@index([campaign_deleted_at])
   @@map("campaigns")
 }
 

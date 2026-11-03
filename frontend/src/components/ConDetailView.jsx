@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../utils/api";
 import {
   MoreHorizontal,
@@ -9,11 +9,8 @@ import {
   CheckCircle,
   Bell,
   Save,
-  Link,
   Clock,
   ChevronDown,
-  ChevronRight,
-  Building2,
   User,
 } from "lucide-react";
 import Button from "./ui/Button";
@@ -83,7 +80,8 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
         .then(([contactRes, callsRes, tasksRes]) => {
           if (contactRes.success) setContactData(contactRes.data);
           if (Array.isArray(callsRes)) setCallsList(callsRes);
-          if (Array.isArray(tasksRes)) setTasksList(tasksRes);
+          if (tasksRes.success) setTasksList(tasksRes.data || []);
+          else if (Array.isArray(tasksRes)) setTasksList(tasksRes);
         })
         .catch((error) =>
           console.error("Error fetching contact details:", error),

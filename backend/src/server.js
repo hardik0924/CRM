@@ -8,6 +8,7 @@ import projectRoutes from "./routes/project.routes.js";
 import searchRoutes from "./routes/search.routes.js";
 import callRoutes from "./routes/call.routes.js";
 import taskRoutes from "./routes/task.routes.js";
+import campaignRoutes from "./routes/campaign.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import tenantRoutes from "./routes/tenant.routes.js";
 import integrationRoutes from "./routes/integration.routes.js";
@@ -43,6 +44,7 @@ app.use("/api/projects", authMiddleware, requireModule("PROJECTS"));
 app.use("/api/search", authMiddleware);
 app.use("/api/calls", authMiddleware);
 app.use("/api/tasks", authMiddleware, requireModule("TASKS"));
+app.use("/api/campaigns", authMiddleware, requireModule("CAMPAIGNS"));
 app.use("/api/dashboard", authMiddleware);
 app.use("/api/tenants", tenantRoutes);
 
@@ -54,6 +56,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/calls", callRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/campaigns", campaignRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {

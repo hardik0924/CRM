@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './sidebar'
 import Navbar from './navbar'
@@ -7,20 +7,20 @@ const DashboardV2Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0B1120] font-sans">
+    <div className="flex h-screen w-screen overflow-hidden bg-vsph-grey font-sans">
       {/* Left Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-[#0B1120]/80 md:hidden"
+          className="fixed inset-0 z-30 bg-vsph-navy/70 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#0B1120] relative z-10">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-vsph-grey relative z-10">
         {/* Top Navbar */}
         <Navbar onToggleSidebar={() => setSidebarOpen((o) => !o)} />
 

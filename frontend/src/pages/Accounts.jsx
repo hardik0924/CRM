@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
-  Download, Upload, Plus, Search, Filter, Eye, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Eye, Edit2, Loader2, Trash2,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
+import { exportCsv } from "../utils/csv";
 import AddAccountModal from "../components/modals/AddAccountModal";
 import AccountDetailView from "../components/AccDetailView";
+import toast from "react-hot-toast";
 
 const Accounts = () => {
   const [totalRecords, setTotalRecords] = useState(0);
@@ -16,11 +18,11 @@ const Accounts = () => {
   const [accountsData, setAccountsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [accountToEdit, setAccountToEdit] = useState(null);
   const [viewAccountId, setViewAccountId] = useState(null);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const accountId = searchParams.get("account_id");
@@ -47,6 +49,30 @@ const Accounts = () => {
       console.error("Failed to fetch accounts", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (account) => {
+    if (!window.confirm(`Delete account "${account.account_name}"?`)) return;
+    const res = await api.delete("/api/accounts", { ids: [account.account_id] });
+    if (res.success) {
+      toast.success("Account deleted");
+      fetchAccounts();
+    } else {
+      toast.error(res.message || "Could not delete account");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected account(s)?`)) return;
+    const res = await api.delete("/api/accounts", { ids: selectedRows });
+    if (res.success) {
+      toast.success("Accounts deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchAccounts();
+    } else {
+      toast.error(res.message || "Could not delete accounts");
     }
   };
 
@@ -81,10 +107,18 @@ const Accounts = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
-            <Upload size={16} className="text-slate-500" /> Import
-          </Button>
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => exportCsv("accounts.csv", accountsData, [
+              { label: "Code", value: (row) => row.account_code },
+              { label: "Name", value: (row) => row.account_name },
+              { label: "Employees", value: (row) => row.account_employees_size },
+              { label: "Industry", value: (row) => row.account_industry || row.industry?.industry_name },
+              { label: "City", value: (row) => row.account_city },
+            ])}
+            className="gap-2 font-medium text-slate-600 border border-slate-200"
+          >
             <Download size={16} className="text-slate-500" /> Export
           </Button>
           <Button
@@ -113,13 +147,15 @@ const Accounts = () => {
         </div>
         <div className="flex items-center gap-3 text-sm">
           {selectedRows.length > 0 && (
-            <span className="text-vsph-navy font-semibold bg-vsph-light-blue/20 px-3 py-1.5 rounded-md border border-vsph-light-blue/30">
-              {selectedRows.length} selected
-            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkDelete}
+              className="gap-2 font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50"
+            >
+              <Trash2 size={16} /> Delete selected ({selectedRows.length})
+            </Button>
           )}
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
-            <Filter size={16} /> Filters
-          </Button>
         </div>
       </div>
 
@@ -210,7 +246,7 @@ const Accounts = () => {
                           <button
                             className="p-2 bg-rose-50 hover:bg-rose-100 rounded text-rose-500 hover:text-rose-600 transition-colors"
                             title="Delete"
-                            onClick={(e) => { e.stopPropagation(); }}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(acc); }}
                           >
                             <Trash2 size={16} />
                           </button>

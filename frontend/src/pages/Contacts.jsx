@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Download, Upload, Plus, Search, Filter, Eye, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Eye, Edit2, Loader2, Trash2,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
+import { exportCsv } from "../utils/csv";
 import AddContactModal from "../components/modals/AddContactModal";
 import ConDetailView from "../components/ConDetailView";
+import toast from "react-hot-toast";
 
 const Contacts = () => {
   const [totalRecords, setTotalRecords] = useState(0);
@@ -16,11 +18,11 @@ const Contacts = () => {
   const [contactsData, setContactsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [contactToEdit, setContactToEdit] = useState(null);
   const [viewContactId, setViewContactId] = useState(null);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,6 +47,32 @@ const Contacts = () => {
       console.error("Failed to fetch contacts", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (contact) => {
+    const name = [contact.contact_firstname, contact.contact_lastname].filter(Boolean).join(" ") || "this contact";
+    if (!window.confirm(`Delete ${name}?`)) return;
+    const res = await api.delete(`/api/contacts/${contact.contact_id}`);
+    if (res.success) {
+      toast.success("Contact deleted");
+      fetchContacts();
+    } else {
+      toast.error(res.message || "Could not delete contact");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected contact(s)?`)) return;
+    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/contacts/${id}`)));
+    if (results.every((res) => res.success)) {
+      toast.success("Contacts deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchContacts();
+    } else {
+      toast.error("Some contacts could not be deleted");
+      fetchContacts();
     }
   };
 
@@ -84,10 +112,19 @@ const Contacts = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
-            <Upload size={16} className="text-slate-500" /> Import
-          </Button>
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => exportCsv("contacts.csv", contactsData, [
+              { label: "Code", value: (row) => row.contact_code },
+              { label: "First name", value: (row) => row.contact_firstname },
+              { label: "Last name", value: (row) => row.contact_lastname },
+              { label: "Account", value: (row) => row.account?.account_name },
+              { label: "Email", value: (row) => row.contact_professional_email || row.contact_personal_email },
+              { label: "Owner", value: (row) => row.contact_owner?.user_name },
+            ])}
+            className="gap-2 font-medium text-slate-600 border border-slate-200"
+          >
             <Download size={16} className="text-slate-500" /> Export
           </Button>
           <Button
@@ -116,13 +153,15 @@ const Contacts = () => {
         </div>
         <div className="flex items-center gap-3 text-sm">
           {selectedRows.length > 0 && (
-            <span className="text-vsph-navy font-semibold bg-vsph-light-blue/20 px-3 py-1.5 rounded-md border border-vsph-light-blue/30">
-              {selectedRows.length} selected
-            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkDelete}
+              className="gap-2 font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50"
+            >
+              <Trash2 size={16} /> Delete selected ({selectedRows.length})
+            </Button>
           )}
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
-            <Filter size={16} /> Filters
-          </Button>
         </div>
       </div>
 
@@ -193,7 +232,7 @@ const Contacts = () => {
                         className="border-b border-slate-100 px-6 py-4 text-vsph-core-blue hover:underline cursor-pointer truncate group-hover:text-vsph-navy"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (contact.contact_account_fk) navigate(`/accounts?account_id=${contact.contact_account_fk}`);
+                          if (contact.contact_account_fk) navigate(`/v2/accounts?account_id=${contact.contact_account_fk}`);
                         }}
                       >
                         {contact.account?.account_name || "-"}
@@ -233,7 +272,7 @@ const Contacts = () => {
                             <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); }}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(contact); }}
                             className="p-2 bg-rose-50 hover:bg-rose-100 rounded text-rose-500 hover:text-rose-600 transition-colors"
                             title="Delete"
                           >

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import {
-  Download, Upload, Plus, Search, Filter, Eye, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Edit2, Loader2, Trash2,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
+import { exportCsv } from "../utils/csv";
 import AddProjectModal from "../components/modals/AddProjectModal";
 import toast from "react-hot-toast";
 
@@ -20,7 +21,7 @@ const Projects = () => {
   const [projectsData, setProjectsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState(null);
 
@@ -45,6 +46,30 @@ const Projects = () => {
       toast.error("Failed to fetch projects");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (project) => {
+    if (!window.confirm(`Delete project "${project.project_name || project.project_location}"?`)) return;
+    const res = await api.post("/api/projects/delete", { ids: [project.project_id] });
+    if (res.success) {
+      toast.success("Project deleted");
+      fetchProjects();
+    } else {
+      toast.error(res.message || "Could not delete project");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected project(s)?`)) return;
+    const res = await api.post("/api/projects/delete", { ids: selectedRows });
+    if (res.success) {
+      toast.success("Projects deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchProjects();
+    } else {
+      toast.error(res.message || "Could not delete projects");
     }
   };
 
@@ -79,10 +104,18 @@ const Projects = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
-            <Upload size={16} className="text-slate-500" /> Import
-          </Button>
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => exportCsv("projects.csv", projectsData, [
+              { label: "Name", value: (row) => row.project_name },
+              { label: "Type", value: (row) => row.project_type },
+              { label: "Location", value: (row) => row.project_location },
+              { label: "Date", value: (row) => row.project_date && new Date(row.project_date).toLocaleDateString() },
+              { label: "Status", value: (row) => row.project_is_active },
+            ])}
+            className="gap-2 font-medium text-slate-600 border border-slate-200"
+          >
             <Download size={16} className="text-slate-500" /> Export
           </Button>
           <Button
@@ -111,13 +144,15 @@ const Projects = () => {
         </div>
         <div className="flex items-center gap-3 text-sm">
           {selectedRows.length > 0 && (
-            <span className="text-vsph-navy font-semibold bg-vsph-light-blue/20 px-3 py-1.5 rounded-md border border-vsph-light-blue/30">
-              {selectedRows.length} selected
-            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkDelete}
+              className="gap-2 font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50"
+            >
+              <Trash2 size={16} /> Delete selected ({selectedRows.length})
+            </Button>
           )}
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
-            <Filter size={16} /> Filters
-          </Button>
         </div>
       </div>
 
@@ -196,13 +231,6 @@ const Projects = () => {
                         <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
                           <button
                             className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
-                            title="View"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
                             title="Edit"
                             onClick={(e) => { e.stopPropagation(); setProjectToEdit(proj); setIsAddModalOpen(true); }}
                           >
@@ -211,7 +239,7 @@ const Projects = () => {
                           <button
                             className="p-2 bg-rose-50 hover:bg-rose-100 rounded text-rose-500 hover:text-rose-600 transition-colors"
                             title="Delete"
-                            onClick={(e) => { e.stopPropagation(); }}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(proj); }}
                           >
                             <Trash2 size={16} />
                           </button>

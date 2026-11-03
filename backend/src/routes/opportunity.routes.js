@@ -3,6 +3,7 @@ import {
   getOpportunities,
   createOpportunity,
   updateOpportunity,
+  deleteOpportunity,
 } from "../controllers/opportunity.controller.js";
 
 const router = express.Router();
@@ -10,8 +11,6 @@ const router = express.Router();
 router.get("/", getOpportunities);
 router.post("/", createOpportunity);
 router.put("/:id", updateOpportunity);
-// router.get('/:id', getOpportunityById);
-// router.patch('/:id', updateOpportunity);
-// router.delete('/:id', deleteOpportunity);
+router.delete("/:id", deleteOpportunity);
 
 export default router;

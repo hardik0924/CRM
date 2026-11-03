@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
-  Download, Upload, Plus, Search, Filter, Eye, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Filter, Edit2, Loader2, Trash2,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
+import { exportCsv } from "../utils/csv";
 import AddOpportunityModal from "../components/modals/AddOpportunityModal";
+import toast from "react-hot-toast";
 
 const Opportunities = () => {
   const [totalRecords, setTotalRecords] = useState(0);
@@ -16,11 +17,9 @@ const Opportunities = () => {
   const [opportunitiesData, setOpportunitiesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(20);
-  const navigate = useNavigate();
+  const [limit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [opportunityToEdit, setOpportunityToEdit] = useState(null);
-  const [viewOpportunityId, setViewOpportunityId] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => fetchOpportunities(), 300);
@@ -32,7 +31,7 @@ const Opportunities = () => {
       setLoading(true);
       const query = `?page=${currentPage}&limit=${limit}${
         searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ""
-      }`;
+      }${stageFilter !== "All stages" ? `&stage=${stageFilter}` : ""}`;
       const response = await api.get(`/api/opportunities${query}`);
       if (response.success) {
         setOpportunitiesData(response.data);
@@ -42,6 +41,31 @@ const Opportunities = () => {
       console.error("Failed to fetch opportunities", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (opportunity) => {
+    if (!window.confirm(`Delete opportunity "${opportunity.opportunity_name}"?`)) return;
+    const res = await api.delete(`/api/opportunities/${opportunity.opportunity_id}`);
+    if (res.success) {
+      toast.success("Opportunity deleted");
+      fetchOpportunities();
+    } else {
+      toast.error(res.message || "Could not delete opportunity");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected opportunity(ies)?`)) return;
+    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/opportunities/${id}`)));
+    if (results.every((res) => res.success)) {
+      toast.success("Opportunities deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchOpportunities();
+    } else {
+      toast.error("Some opportunities could not be deleted");
+      fetchOpportunities();
     }
   };
 
@@ -84,10 +108,18 @@ const Opportunities = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
-            <Upload size={16} className="text-slate-500" /> Import
-          </Button>
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => exportCsv("opportunities.csv", opportunitiesData, [
+              { label: "Name", value: (row) => row.opportunity_name },
+              { label: "Stage", value: (row) => row.opportunity_stage },
+              { label: "Close date", value: (row) => row.opportunity_close_date && new Date(row.opportunity_close_date).toLocaleDateString() },
+              { label: "Owner", value: (row) => row.opportunity_owner?.user_name },
+              { label: "Account", value: (row) => row.opportunity_account?.account_name },
+            ])}
+            className="gap-2 font-medium text-slate-600 border border-slate-200"
+          >
             <Download size={16} className="text-slate-500" /> Export
           </Button>
           <Button
@@ -116,9 +148,14 @@ const Opportunities = () => {
         </div>
         <div className="flex items-center gap-3 text-sm">
           {selectedRows.length > 0 && (
-            <span className="text-vsph-navy font-semibold bg-vsph-light-blue/20 px-3 py-1.5 rounded-md border border-vsph-light-blue/30">
-              {selectedRows.length} selected
-            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkDelete}
+              className="gap-2 font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50"
+            >
+              <Trash2 size={16} /> Delete selected ({selectedRows.length})
+            </Button>
           )}
           <div className="relative">
             <select
@@ -126,12 +163,12 @@ const Opportunities = () => {
               onChange={(e) => setStageFilter(e.target.value)}
               className="px-3 py-2 border border-slate-200 rounded-md text-sm bg-white focus:ring-2 focus:ring-vsph-core-blue"
             >
-              <option>All stages</option>
-              <option>Pitch done</option>
-              <option>Follow up</option>
-              <option>Contract out</option>
-              <option>Closed won</option>
-              <option>Closed lost</option>
+              <option value="All stages">All stages</option>
+              <option value="PITCH_DONE">Pitch done</option>
+              <option value="FOLLOW_UP">Follow up</option>
+              <option value="CONTRACT_OUT">Contract out</option>
+              <option value="CLOSED_WON">Closed won</option>
+              <option value="CLOSED_LOST">Closed lost</option>
             </select>
             <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none">
               <Filter size={16} className="text-slate-400" />
@@ -181,8 +218,7 @@ const Opportunities = () => {
                   opportunitiesData.map((opp) => (
                     <tr
                       key={opp.opportunity_id}
-                      className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(opp.opportunity_id) ? "bg-vsph-light-blue/30" : ""}`}
-                      onClick={() => setViewOpportunityId(opp.opportunity_id)}
+                      className={`hover:bg-vsph-light-blue/20 group transition-colors ${selectedRows.includes(opp.opportunity_id) ? "bg-vsph-light-blue/30" : ""}`}
                     >
                       <td className="border-b border-slate-100 px-6 py-4 text-center">
                         <input
@@ -210,13 +246,6 @@ const Opportunities = () => {
                         <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
                           <button
                             className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
-                            title="View"
-                            onClick={(e) => { e.stopPropagation(); setViewOpportunityId(opp.opportunity_id); }}
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
                             title="Edit"
                             onClick={(e) => { e.stopPropagation(); setOpportunityToEdit(opp); setIsAddModalOpen(true); }}
                           >
@@ -225,7 +254,7 @@ const Opportunities = () => {
                           <button
                             className="p-2 bg-rose-50 hover:bg-rose-100 rounded text-rose-500 hover:text-rose-600 transition-colors"
                             title="Delete"
-                            onClick={(e) => { e.stopPropagation(); }}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(opp); }}
                           >
                             <Trash2 size={16} />
                           </button>

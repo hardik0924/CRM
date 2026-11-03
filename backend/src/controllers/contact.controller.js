@@ -8,9 +8,10 @@ export const getContacts = async (req, res) => {
     const skip = (page - 1) * limit;
     const search = req.query.search || "";
 
-    // Search by name, code, or email
+    // Search by name, code, or email. Soft-deleted rows never come back.
     const where = search
       ? {
+          contact_deleted_at: null,
           OR: [
             { contact_firstname: { contains: search } },
             { contact_lastname: { contains: search } },
@@ -19,7 +20,7 @@ export const getContacts = async (req, res) => {
           ],
           ...getTenantFilter(req),
         }
-      : getTenantFilter(req);
+      : { contact_deleted_at: null, ...getTenantFilter(req) };
 
     // Fetch data and count in parallel
     const [contacts, total] = await Promise.all([
@@ -511,6 +512,27 @@ export const getContactById = async (req, res) => {
     res.status(200).json({ success: true, data: contact });
   } catch (error) {
     console.error("Error fetching contact:", error);
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+
+// DELETE /api/contacts/:id (soft delete)
+export const deleteContact = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await prisma.contact.updateMany({
+      where: { contact_id: id, contact_deleted_at: null, ...getTenantFilter(req) },
+      data: { contact_deleted_at: new Date() },
+    });
+
+    if (!deleted.count) {
+      return res.status(404).json({ success: false, message: "Contact not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Contact deleted" });
+  } catch (error) {
+    console.error("Error deleting contact:", error);
     res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };

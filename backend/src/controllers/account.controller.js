@@ -231,12 +231,16 @@ export const createAccount = async (req, res) => {
       }
     }
 
+    // Owner is required by the schema; default to the signed-in user so the
+    // "New account" form works when a user forgets to pick one.
+    const resolvedOwnerId = account_owner_fk || req.user.id;
+
     const newAccount = await prisma.account.create({
       data: {
         tenant_fk: tenantId,
         account_code: generatedCode,
         account_name,
-        account_owner_fk,
+        account_owner_fk: resolvedOwnerId,
         account_type: account_type || undefined,
         account_phone,
         account_email,

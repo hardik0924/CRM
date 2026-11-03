@@ -1,570 +1,248 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Phone,
   Trophy,
-  IndianRupee,
   Briefcase,
-  Calendar,
-  Filter,
-  ChevronDown,
-  ArrowUp,
-  Minus,
-  Check,
-  UserPlus,
+  Users,
+  TrendingUp,
+  ListChecks,
+  ArrowRight,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
+import { api } from "../../utils/api";
+import { hasModule } from "../../utils/modules";
+
+const STAGE_COLORS = {
+  PITCH_DONE: "bg-vsph-core-blue",
+  FOLLOW_UP: "bg-vsph-light-blue",
+  CONTRACT_OUT: "bg-amber-400",
+  CLOSED_WON: "bg-emerald-500",
+  CLOSED_LOST: "bg-rose-400",
+  UNASSIGNED: "bg-slate-300",
+};
+
+const PRIORITY_COLORS = {
+  HIGH: "bg-rose-50 text-rose-700",
+  NORMAL: "bg-vsph-grey text-vsph-navy",
+  LOW: "bg-emerald-50 text-emerald-700",
+};
+
+const label = (value) =>
+  (value || "-").replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
 const DashboardV2 = () => {
-  const [user, setUser] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const userName = localStorage.getItem("vsph_user_name") || "there";
+  const userRole = (localStorage.getItem("vsph_user_role") || "USER").replace(/_/g, " ");
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    api
+      .get("/api/dashboard/metrics")
+      .then((res) => {
+        if (res.success) setMetrics(res.data);
+        else setError(res.message || "Could not load dashboard data.");
+      })
+      .catch(() => setError("Could not reach the CRM API."))
+      .finally(() => setLoading(false));
   }, []);
 
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const cards = metrics
+    ? [
+        {
+          key: "calls",
+          label: "Calls today",
+          value: metrics.callsToday,
+          hint: "Logged by you",
+          icon: Phone,
+          tone: "bg-vsph-core-blue/10 text-vsph-core-blue",
+        },
+        {
+          key: "won",
+          label: "Won this month",
+          value: metrics.oppsWonThisMonth,
+          hint: "Closed won by you",
+          icon: Trophy,
+          tone: "bg-emerald-50 text-emerald-600",
+        },
+        metrics.accounts !== null && {
+          key: "accounts",
+          label: "Accounts",
+          value: metrics.accounts,
+          hint: "Active records",
+          icon: Briefcase,
+          tone: "bg-vsph-navy/10 text-vsph-navy",
+        },
+        metrics.contacts !== null && {
+          key: "contacts",
+          label: "Contacts",
+          value: metrics.contacts,
+          hint: "Active records",
+          icon: Users,
+          tone: "bg-vsph-light-blue/20 text-vsph-core-blue",
+        },
+        metrics.openOpportunities !== null && {
+          key: "open",
+          label: "Open opportunities",
+          value: metrics.openOpportunities,
+          hint: "In pipeline",
+          icon: TrendingUp,
+          tone: "bg-amber-50 text-amber-600",
+        },
+        metrics.myOpenTasks !== null && {
+          key: "tasks",
+          label: "My open tasks",
+          value: metrics.myOpenTasks,
+          hint: "Assigned to you",
+          icon: ListChecks,
+          tone: "bg-rose-50 text-rose-600",
+        },
+      ].filter(Boolean)
+    : [];
+
+  const totalPipeline = metrics?.pipeline?.reduce((sum, row) => sum + row.count, 0) || 0;
+  const hasRecent = (metrics?.recentOpportunities?.length || 0) + (metrics?.recentTasks?.length || 0) > 0;
+
   return (
-    <div className="flex flex-col min-h-full p-8 bg-[#f8fafc] space-y-6 font-sans">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-2">
-        <div>
-          <h1 className="text-[28px] font-bold text-slate-800 tracking-tight">
-            Good morning, {user ? user.user_name || user.name : "Onsite System"}
-          </h1>
-          <p className="text-[15px] text-slate-500 mt-1">
-            Here's what's happening with your business today.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
-            <Calendar size={16} className="text-slate-400" />
-            Jul 6 - Jul 12, 2026
-            <ChevronDown size={14} className="text-slate-400 ml-1" />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
-            <Filter size={16} className="text-slate-400" />
-            Filters
-            <ChevronDown size={14} className="text-slate-400 ml-1" />
-          </button>
-        </div>
-      </div>
-
-      {/* Row 1: Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {/* Card 1 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0">
-            <Phone size={22} strokeWidth={2.5} />
+    <div className="min-h-full bg-vsph-grey p-4 sm:p-6 lg:p-8 font-sans">
+      <div className="max-w-[1400px] mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold text-vsph-core-blue uppercase tracking-wider">{today}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-vsph-navy tracking-tight mt-1">
+              Welcome back, {userName}
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Signed in as {userRole}. Here is your workspace at a glance.
+            </p>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-500 mb-1">
-              Calls Today
-            </span>
-            <span className="text-3xl font-bold text-slate-800 mb-2">42</span>
-            <div className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-              <ArrowUp size={14} strokeWidth={3} /> 12%{" "}
-              <span className="text-slate-400 font-medium ml-0.5">
-                vs yesterday
-              </span>
-            </div>
-          </div>
-        </div>
+          {hasModule("CONTACTS") && (
+            <Link
+              to="/v2/contacts"
+              className="inline-flex items-center gap-2 self-start sm:self-auto h-10 px-4 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-vsph-navy transition-colors"
+            >
+              <Sparkles size={16} /> Open contacts
+            </Link>
+          )}        </div>
 
-        {/* Card 2 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
-            <Trophy size={22} strokeWidth={2.5} />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-500 mb-1">
-              Won This Month
-            </span>
-            <span className="text-3xl font-bold text-slate-800 mb-2">12</span>
-            <div className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-              <ArrowUp size={14} strokeWidth={3} /> 20%{" "}
-              <span className="text-slate-400 font-medium ml-0.5">
-                vs last month
-              </span>
-            </div>
-          </div>
-        </div>
+        {error && (
+          <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
+        )}
 
-        {/* Card 3 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500 shrink-0">
-            <IndianRupee size={22} strokeWidth={2.5} />
+        {loading ? (
+          <div className="flex items-center justify-center py-24 text-slate-500">
+            <Loader2 size={26} className="animate-spin text-vsph-core-blue mr-3" /> Loading dashboard...
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-500 mb-1">
-              Revenue Closed
-            </span>
-            <span className="text-3xl font-bold text-slate-800 mb-2">
-              ₹8.40 L
-            </span>
-            <div className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-              <ArrowUp size={14} strokeWidth={3} /> 18%{" "}
-              <span className="text-slate-400 font-medium ml-0.5">
-                vs last month
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 4 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
-            <Briefcase size={22} strokeWidth={2.5} />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-500 mb-1">
-              Active Opportunities
-            </span>
-            <span className="text-3xl font-bold text-slate-800 mb-2">21</span>
-            <div className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-              <Minus size={14} strokeWidth={3} className="text-slate-400" /> No
-              change
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pipeline Overview */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-slate-800">Pipeline Overview</h3>
-            <button className="text-xs font-semibold text-slate-500 flex items-center gap-1 hover:text-slate-700">
-              This Month <ChevronDown size={14} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-8 px-4 py-2">
-            {/* Mock Funnel Graphic */}
-            <div className="flex-1 flex flex-col items-center gap-1 relative">
-              <div className="w-full h-12 bg-indigo-500 rounded-sm"></div>
-              <div className="w-[85%] h-10 bg-purple-500 rounded-sm"></div>
-              <div className="w-[65%] h-10 bg-emerald-500 rounded-sm"></div>
-              <div className="w-[45%] h-10 bg-blue-500 rounded-sm"></div>
-              <div className="w-[30%] h-10 bg-red-400 rounded-sm"></div>
-
-              <div className="mt-4 bg-indigo-50 text-indigo-600 font-bold text-xs py-2 px-6 rounded-lg w-full text-center">
-                Conversion Rate: 19%
-              </div>
-            </div>
-
-            {/* Funnel Legend */}
-            <div className="flex-1 space-y-4">
-              <div className="border-b border-slate-100 pb-2">
-                <div className="text-xs font-medium text-slate-500">
-                  Total Opportunities
-                </div>
-                <div className="text-xl font-bold text-slate-800">78</div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <div className="flex items-center gap-2 text-slate-600 font-medium">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500"></div>{" "}
-                    Qualification
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {cards.map((card) => (
+                <div key={card.key} className="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
+                  <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${card.tone}`}>
+                    <card.icon size={20} />
                   </div>
-                  <div className="font-semibold text-slate-800">
-                    23{" "}
-                    <span className="text-slate-400 text-xs font-medium">
-                      (29%)
-                    </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{card.label}</p>
+                    <p className="text-3xl font-bold text-vsph-navy leading-tight mt-1">{card.value}</p>
+                    <p className="text-xs text-slate-400 mt-1">{card.hint}</p>
                   </div>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <div className="flex items-center gap-2 text-slate-600 font-medium">
-                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>{" "}
-                    Proposal
-                  </div>
-                  <div className="font-semibold text-slate-800">
-                    18{" "}
-                    <span className="text-slate-400 text-xs font-medium">
-                      (23%)
-                    </span>
-                  </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold text-vsph-navy">Pipeline</h2>
+                  <span className="text-xs text-slate-500">{totalPipeline} opportunities</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <div className="flex items-center gap-2 text-slate-600 font-medium">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>{" "}
-                    Negotiation
+
+                {!metrics.pipeline ? (
+                  <p className="text-sm text-slate-500">You do not have access to opportunities.</p>
+                ) : metrics.pipeline.length === 0 ? (
+                  <p className="text-sm text-slate-500">No opportunities yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {metrics.pipeline.map((row) => {
+                      const percent = totalPipeline ? Math.round((row.count / totalPipeline) * 100) : 0;
+                      return (
+                        <div key={row.stage}>
+                          <div className="flex justify-between text-xs mb-1.5">
+                            <span className="font-medium text-slate-600">{label(row.stage)}</span>
+                            <span className="text-slate-500">{row.count}</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${STAGE_COLORS[row.stage] || "bg-slate-400"}`}
+                              style={{ width: `${Math.max(percent, row.count ? 4 : 0)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="font-semibold text-slate-800">
-                    15{" "}
-                    <span className="text-slate-400 text-xs font-medium">
-                      (19%)
-                    </span>
-                  </div>
+                )}
+              </div>
+
+              <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold text-vsph-navy">Recent activity</h2>
+                  {metrics.recentOpportunities && (
+                    <Link to="/v2/opportunities" className="text-xs font-semibold text-vsph-core-blue hover:underline inline-flex items-center gap-1">
+                      View all <ArrowRight size={13} />
+                    </Link>
+                  )}
                 </div>
-                <div className="flex justify-between text-sm">
-                  <div className="flex items-center gap-2 text-slate-600 font-medium">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>{" "}
-                    Closed Won
+
+                {!hasRecent ? (
+                  <p className="text-sm text-slate-500">No activity to show yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {metrics.recentOpportunities?.map((opp) => (
+                      <div key={opp.opportunity_id} className="flex items-center justify-between gap-3 border-b border-slate-100 last:border-0 pb-3 last:pb-0">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-vsph-navy truncate">{opp.opportunity_name}</p>
+                          <p className="text-xs text-slate-500 truncate">
+                            {opp.opportunity_account?.account_name || "No account"} · {opp.opportunity_owner?.user_name || "Unassigned"}
+                          </p>
+                        </div>
+                        <span className="text-[11px] font-semibold px-2 py-1 rounded bg-vsph-grey text-vsph-navy shrink-0">
+                          {label(opp.opportunity_stage)}
+                        </span>
+                      </div>
+                    ))}
+
+                    {metrics.recentTasks?.map((task) => (
+                      <div key={task.task_id} className="flex items-center justify-between gap-3 border-b border-slate-100 last:border-0 pb-3 last:pb-0">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-vsph-navy truncate">{task.task_subject || "Untitled task"}</p>
+                          <p className="text-xs text-slate-500 truncate">
+                            {task.user?.user_name || "Unassigned"}
+                            {task.task_due_date ? ` · due ${new Date(task.task_due_date).toLocaleDateString()}` : ""}
+                          </p>
+                        </div>
+                        <span className={`text-[11px] font-semibold px-2 py-1 rounded shrink-0 ${PRIORITY_COLORS[task.task_priority] || "bg-vsph-grey text-slate-600"}`}>
+                          {label(task.task_priority)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="font-semibold text-slate-800">
-                    12{" "}
-                    <span className="text-slate-400 text-xs font-medium">
-                      (15%)
-                    </span>
-                  </div>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <div className="flex items-center gap-2 text-slate-600 font-medium">
-                    <div className="w-2 h-2 rounded-full bg-red-400"></div>{" "}
-                    Closed Lost
-                  </div>
-                  <div className="font-semibold text-slate-800">
-                    10{" "}
-                    <span className="text-slate-400 text-xs font-medium">
-                      (13%)
-                    </span>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Monthly Trend */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-slate-800">Monthly Trend</h3>
-            <button className="text-xs font-semibold text-slate-500 flex items-center gap-1 hover:text-slate-700">
-              6 Months <ChevronDown size={14} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-              <div className="w-2 h-2 rounded-full bg-indigo-500"></div> Deals
-            </div>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>{" "}
-              Revenue (₹)
-            </div>
-          </div>
-
-          <div className="flex-1 relative flex items-end justify-between px-2 pb-6 mt-10">
-            {/* Mock Y-Axis left */}
-            <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[10px] font-medium text-slate-400 w-6">
-              <span>80</span>
-              <span>60</span>
-              <span>40</span>
-              <span>20</span>
-              <span>0</span>
-            </div>
-            {/* Mock Y-Axis right */}
-            <div className="absolute right-0 top-0 bottom-6 flex flex-col justify-between text-[10px] font-medium text-slate-400 text-right w-8">
-              <span className="absolute -top-4 right-0 text-[9px]">
-                Revenue
-              </span>
-              <span>₹20L</span>
-              <span>₹15L</span>
-              <span>₹10L</span>
-              <span>₹5L</span>
-              <span>₹0</span>
-            </div>
-
-            {/* Mock bars & line points */}
-            <div className="w-full h-[180px] ml-8 mr-10 relative flex justify-between items-end border-b border-slate-100">
-              {/* SVG Line Mock (Absolute overlay) */}
-              <svg
-                className="absolute inset-0 w-full h-full"
-                preserveAspectRatio="none"
-                viewBox="0 0 100 100"
-              >
-                <polyline
-                  points="5,70 23,35 41,50 59,20 77,30 95,25"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-
-              {/* Data points */}
-              <div className="w-8 flex flex-col items-center justify-end h-full relative z-10 group">
-                <span className="absolute -top-4 text-[10px] font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  ₹12.5L
-                </span>
-                <div className="w-2 h-2 bg-emerald-500 rounded-full border-2 border-white absolute bottom-[28%] -mb-1"></div>
-                <div className="w-full bg-indigo-100 rounded-t-sm h-[20%] group-hover:bg-indigo-200 transition-colors"></div>
-                <span className="absolute -bottom-6 text-[11px] font-medium text-slate-500 w-16 text-center">
-                  Feb 2026
-                </span>
-                <span className="absolute bottom-[20%] text-[10px] font-bold text-indigo-600 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  12
-                </span>
-              </div>
-
-              <div className="w-8 flex flex-col items-center justify-end h-full relative z-10 group">
-                <span className="absolute -top-12 text-[10px] font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  ₹18.3L
-                </span>
-                <div className="w-2 h-2 bg-emerald-500 rounded-full border-2 border-white absolute bottom-[63%] -mb-1"></div>
-                <div className="w-full bg-indigo-100 rounded-t-sm h-[30%] group-hover:bg-indigo-200 transition-colors"></div>
-                <span className="absolute -bottom-6 text-[11px] font-medium text-slate-500 w-16 text-center">
-                  Mar 2026
-                </span>
-                <span className="absolute bottom-[30%] text-[10px] font-bold text-indigo-600 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  18
-                </span>
-              </div>
-
-              <div className="w-8 flex flex-col items-center justify-end h-full relative z-10 group">
-                <span className="absolute -top-1 text-[10px] font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  ₹15.7L
-                </span>
-                <div className="w-2 h-2 bg-emerald-500 rounded-full border-2 border-white absolute bottom-[48%] -mb-1"></div>
-                <div className="w-full bg-indigo-100 rounded-t-sm h-[35%] group-hover:bg-indigo-200 transition-colors"></div>
-                <span className="absolute -bottom-6 text-[11px] font-medium text-slate-500 w-16 text-center">
-                  Apr 2026
-                </span>
-                <span className="absolute bottom-[35%] text-[10px] font-bold text-indigo-600 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  22
-                </span>
-              </div>
-
-              <div className="w-8 flex flex-col items-center justify-end h-full relative z-10 group">
-                <span className="absolute -top-[70px] text-[10px] font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  ₹38.05L
-                </span>
-                <div className="w-2 h-2 bg-emerald-500 rounded-full border-2 border-white absolute bottom-[78%] -mb-1"></div>
-                <div className="w-full bg-indigo-100 rounded-t-sm h-[28%] group-hover:bg-indigo-200 transition-colors"></div>
-                <span className="absolute -bottom-6 text-[11px] font-medium text-slate-500 w-16 text-center">
-                  May 2026
-                </span>
-                <span className="absolute bottom-[28%] text-[10px] font-bold text-indigo-600 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  17
-                </span>
-              </div>
-
-              <div className="w-8 flex flex-col items-center justify-end h-full relative z-10 group">
-                <span className="absolute -top-[50px] text-[10px] font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  ₹8.40Cr
-                </span>
-                <div className="w-2 h-2 bg-emerald-500 rounded-full border-2 border-white absolute bottom-[68%] -mb-1"></div>
-                <div className="w-full bg-indigo-100 rounded-t-sm h-[35%] group-hover:bg-indigo-200 transition-colors"></div>
-                <span className="absolute -bottom-6 text-[11px] font-medium text-slate-500 w-16 text-center">
-                  Jun 2026
-                </span>
-                <span className="absolute bottom-[35%] text-[10px] font-bold text-indigo-600 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  20
-                </span>
-              </div>
-
-              <div className="w-8 flex flex-col items-center justify-end h-full relative z-10 group">
-                <span className="absolute -top-[60px] text-[10px] font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  ₹65.83L
-                </span>
-                <div className="w-2 h-2 bg-emerald-500 rounded-full border-2 border-white absolute bottom-[73%] -mb-1"></div>
-                <div className="w-full bg-indigo-100 rounded-t-sm h-[42%] group-hover:bg-indigo-200 transition-colors"></div>
-                <span className="absolute -bottom-6 text-[11px] font-medium text-slate-500 w-16 text-center">
-                  Jul 2026
-                </span>
-                <span className="absolute bottom-[42%] text-[10px] font-bold text-indigo-600 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  24
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3: Tables & Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* Top Projects */}
-        <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800">Top Projects</h3>
-            <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">
-              View All
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  <th className="px-6 py-3 font-semibold">Project</th>
-                  <th className="px-6 py-3 font-semibold">Won</th>
-                  <th className="px-6 py-3 font-semibold">Value</th>
-                  <th className="px-6 py-3 font-semibold">Stage</th>
-                  <th className="px-6 py-3 font-semibold">Close Date</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm font-medium text-slate-700">
-                <tr className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-                    23rd Edition Future of L&D Summit
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">1</td>
-                  <td className="px-6 py-4 text-slate-800 font-bold">
-                    ₹40,000
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-md">
-                      Negotiation
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">Jul 25, 2026</td>
-                </tr>
-                <tr className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                    12th Edition DevOps Conclave
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">1</td>
-                  <td className="px-6 py-4 text-slate-800 font-bold">
-                    ₹4.00 L
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-md">
-                      Proposal
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">Jul 18, 2026</td>
-                </tr>
-                <tr className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    SaaS Tech Summit & Awards
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">1</td>
-                  <td className="px-6 py-4 text-slate-800 font-bold">
-                    ₹2.00 L
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-md">
-                      Qualification
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">Aug 02, 2026</td>
-                </tr>
-                <tr className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-orange-400"></div>
-                    AI & Automation Forum
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">0</td>
-                  <td className="px-6 py-4 text-slate-800 font-bold">
-                    ₹1.25 L
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-md">
-                      Qualification
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">Aug 10, 2026</td>
-                </tr>
-                <tr className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    Digital Workplace Summit
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">0</td>
-                  <td className="px-6 py-4 text-slate-800 font-bold">
-                    ₹90,000
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-md">
-                      Proposal
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">Aug 15, 2026</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Recent Activities */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800">Recent Activities</h3>
-            <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">
-              View All
-            </button>
-          </div>
-
-          <div className="p-6 space-y-6">
-            {/* Activity 1 */}
-            <div className="flex items-start gap-4">
-              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-                <Phone size={16} strokeWidth={2.5} />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-slate-800">
-                  Call with TechNova Solutions
-                </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Discussed partnership opportunities
-                </p>
-              </div>
-              <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
-                10:30 AM
-              </span>
-            </div>
-
-            {/* Activity 2 */}
-            <div className="flex items-start gap-4">
-              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                <Check size={16} strokeWidth={3} />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-slate-800">
-                  Opportunity won
-                </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  CloudTech Solutions - ₹2.50 L
-                </p>
-              </div>
-              <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
-                Yesterday
-              </span>
-            </div>
-
-            {/* Activity 3 */}
-            <div className="flex items-start gap-4">
-              <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
-                <Calendar size={16} strokeWidth={2.5} />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-slate-800">
-                  Meeting scheduled
-                </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Product demo with InfiniSys
-                </p>
-              </div>
-              <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
-                Jul 10, 2026
-              </span>
-            </div>
-
-            {/* Activity 4 */}
-            <div className="flex items-start gap-4">
-              <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                <UserPlus size={16} strokeWidth={2.5} />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-slate-800">
-                  New contact added
-                </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Rahul Sharma from Accenture
-                </p>
-              </div>
-              <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
-                Jul 9, 2026
-              </span>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

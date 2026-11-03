@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import {
-  Download, Upload, Plus, Search, Filter, Eye, Edit2, Loader2, Trash2,
+  Download, Plus, Search, Edit2, Loader2, Trash2,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
+import { exportCsv } from "../utils/csv";
 import AddTaskModal from "../components/modals/AddTaskModal";
 import toast from "react-hot-toast";
 
@@ -21,7 +22,7 @@ const Tasks = () => {
   const [tasksData, setTasksData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit] = useState(20);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
 
@@ -46,6 +47,31 @@ const Tasks = () => {
       toast.error("Failed to fetch tasks");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (task) => {
+    if (!window.confirm(`Delete task "${task.task_subject || "Untitled"}"?`)) return;
+    const res = await api.delete(`/api/tasks/${task.task_id}`);
+    if (res.success !== false) {
+      toast.success("Task deleted");
+      fetchTasks();
+    } else {
+      toast.error(res.message || "Could not delete task");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedRows.length} selected task(s)?`)) return;
+    const results = await Promise.all(selectedRows.map((id) => api.delete(`/api/tasks/${id}`)));
+    if (results.every((res) => res.success)) {
+      toast.success("Tasks deleted");
+      setSelectedRows([]);
+      setSelectAll(false);
+      fetchTasks();
+    } else {
+      toast.error("Some tasks could not be deleted");
+      fetchTasks();
     }
   };
 
@@ -80,10 +106,17 @@ const Tasks = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
-            <Upload size={16} className="text-slate-500" /> Import
-          </Button>
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => exportCsv("tasks.csv", tasksData, [
+              { label: "Subject", value: (row) => row.task_subject },
+              { label: "Priority", value: (row) => row.task_priority },
+              { label: "Due date", value: (row) => row.task_due_date && new Date(row.task_due_date).toLocaleDateString() },
+              { label: "Assigned to", value: (row) => row.user?.user_name },
+            ])}
+            className="gap-2 font-medium text-slate-600 border border-slate-200"
+          >
             <Download size={16} className="text-slate-500" /> Export
           </Button>
           <Button
@@ -112,13 +145,15 @@ const Tasks = () => {
         </div>
         <div className="flex items-center gap-3 text-sm">
           {selectedRows.length > 0 && (
-            <span className="text-vsph-navy font-semibold bg-vsph-light-blue/20 px-3 py-1.5 rounded-md border border-vsph-light-blue/30">
-              {selectedRows.length} selected
-            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkDelete}
+              className="gap-2 font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50"
+            >
+              <Trash2 size={16} /> Delete selected ({selectedRows.length})
+            </Button>
           )}
-          <Button variant="ghost" size="sm" className="gap-2 font-medium text-slate-600 border border-slate-200">
-            <Filter size={16} /> Filters
-          </Button>
         </div>
       </div>
 
@@ -191,13 +226,6 @@ const Tasks = () => {
                         <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
                           <button
                             className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
-                            title="View"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
                             title="Edit"
                             onClick={(e) => { e.stopPropagation(); setTaskToEdit(task); setIsAddModalOpen(true); }}
                           >
@@ -206,7 +234,7 @@ const Tasks = () => {
                           <button
                             className="p-2 bg-rose-50 hover:bg-rose-100 rounded text-rose-500 hover:text-rose-600 transition-colors"
                             title="Delete"
-                            onClick={(e) => { e.stopPropagation(); }}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(task); }}
                           >
                             <Trash2 size={16} />
                           </button>
