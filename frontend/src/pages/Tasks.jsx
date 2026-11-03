@@ -231,7 +231,9 @@ const Tasks = () => {
                             onChange={(e) => { e.stopPropagation(); toggleRow(task.task_id); }}
                           />
                         </td>
-                        <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue">
+                        <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
+                          onClick={(e) => { e.stopPropagation(); setTaskToEdit(task); setIsAddModalOpen(true); }}
+                        >
                           {task.task_subject || "-"}
                         </td>
                         <td className="border-b border-border px-6 py-4">

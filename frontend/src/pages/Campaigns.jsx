@@ -217,7 +217,9 @@ const Campaigns = () => {
                             onChange={(e) => { e.stopPropagation(); toggleRow(campaign.campaign_id); }}
                           />
                         </td>
-                        <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue">
+                        <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
+                          onClick={(e) => { e.stopPropagation(); setCampaignToEdit(campaign); setIsAddModalOpen(true); }}
+                        >
                           {campaign.campaign_name || "-"}
                         </td>
                         <td className="border-b border-border px-6 py-4 text-slate-600 truncate">

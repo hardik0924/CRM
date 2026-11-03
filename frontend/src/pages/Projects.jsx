@@ -227,7 +227,9 @@ const Projects = () => {
                             onChange={(e) => { e.stopPropagation(); toggleRow(proj.project_id); }}
                           />
                         </td>
-                        <td className="border-b border-border px-6 py-4 font-medium text-sidebar truncate">
+                        <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
+                          onClick={(e) => { e.stopPropagation(); setProjectToEdit(proj); setIsAddModalOpen(true); }}
+                        >
                           {proj.project_name || "-"}
                         </td>
                         <td className="border-b border-border px-6 py-4">
