@@ -238,7 +238,9 @@ const Accounts = () => {
                             onChange={(e) => { e.stopPropagation(); toggleRow(acc.account_id); }}
                           />
                         </td>
-                        <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue">
+                        <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
+                          onClick={(e) => { e.stopPropagation(); setViewAccountId(acc.account_id); }}
+                        >
                           {acc.account_name}
                         </td>
                         <td className="border-b border-border px-6 py-4 text-xs text-slate-500 font-mono truncate">
