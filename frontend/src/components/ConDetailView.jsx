@@ -649,7 +649,7 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                 </div>
 
                 {/* Right Column - Sidebar */}
-                <div className="w-full lg:w-[320px] xl:w-[380px] space-y-4 shrink-0">
+                <div className="w-full lg:w-[320px] xl:w-[380px] space-y-4 shrink-0 overflow-y-auto max-h-full">
                   {/* Activity Form Block */}
                   <div className="bg-white border border-slate-200 shadow-sm">
                     {/* Activity Tabs */}
