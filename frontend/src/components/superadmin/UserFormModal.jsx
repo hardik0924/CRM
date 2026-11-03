@@ -53,11 +53,11 @@ const UserFormModal = ({ isOpen, onClose, onSaved, tenants = [], tenantId, userT
 
     const targetTenant = tenantId || form.tenant_fk
     if (!targetTenant) {
-      setError('Select a client for this user.')
+      setError('Select an organization for this employee.')
       return
     }
     if (!userToEdit && !form.user_password) {
-      setError('A password is required for a new user.')
+      setError('A password is required for a new employee.')
       return
     }
 
@@ -67,12 +67,12 @@ const UserFormModal = ({ isOpen, onClose, onSaved, tenants = [], tenantId, userT
       if (userToEdit) {
         if (!payload.user_password) delete payload.user_password
         const res = await api.put(`/api/tenants/${targetTenant}/users/${userToEdit.user_id}`, payload)
-        if (!res.success) throw new Error(res.message || 'Could not update user')
-        toast.success('User updated')
+        if (!res.success) throw new Error(res.message || 'Could not update employee')
+        toast.success('Employee updated')
       } else {
         const res = await api.post(`/api/tenants/${targetTenant}/users`, payload)
-        if (!res.success) throw new Error(res.message || 'Could not create user')
-        toast.success('User created')
+        if (!res.success) throw new Error(res.message || 'Could not create employee')
+        toast.success('Employee created')
       }
       onSaved?.()
       onClose()
@@ -90,14 +90,14 @@ const UserFormModal = ({ isOpen, onClose, onSaved, tenants = [], tenantId, userT
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={userToEdit ? 'Edit user (internal support)' : 'Add client user (internal support)'}
+      title={userToEdit ? 'Edit employee' : 'Create employee'}
       widthClass="w-full max-w-2xl"
       footer={
         <>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="submit" form="client-user-form" variant="primary" disabled={saving} className="min-w-[140px]">
             {saving ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
-            {saving ? 'Saving...' : userToEdit ? 'Save changes' : 'Create user'}
+            {saving ? 'Saving...' : userToEdit ? 'Save changes' : 'Create employee'}
           </Button>
         </>
       }
@@ -111,9 +111,9 @@ const UserFormModal = ({ isOpen, onClose, onSaved, tenants = [], tenantId, userT
 
         {!fixedTenant && (
           <div>
-            <label className={label} htmlFor="tenant_fk">Client *</label>
+            <label className={label} htmlFor="tenant_fk">Organization *</label>
             <select id="tenant_fk" name="tenant_fk" value={form.tenant_fk} onChange={change} className={input} required>
-              <option value="">Select a client</option>
+              <option value="">Select an organization</option>
               {tenants.map((t) => (
                 <option key={t.tenant_id} value={t.tenant_id}>{t.tenant_name}</option>
               ))}
@@ -128,13 +128,13 @@ const UserFormModal = ({ isOpen, onClose, onSaved, tenants = [], tenantId, userT
           </div>
           <div>
             <label className={label} htmlFor="user_email">Email address *</label>
-            <input id="user_email" name="user_email" type="email" value={form.user_email} onChange={change} className={input} required placeholder="name@client.com" />
+            <input id="user_email" name="user_email" type="email" value={form.user_email} onChange={change} className={input} required placeholder="name@company.com" />
           </div>
           <div>
             <label className={label} htmlFor="user_password">
               Password {userToEdit ? '(leave blank to keep)' : '*'}
             </label>
-            <input id="user_password" name="user_password" type="text" value={form.user_password} onChange={change} className={input} placeholder={userToEdit ? 'Unchanged' : 'Set a login password'} required={!userToEdit} />
+            <input id="user_password" name="user_password" type="password" value={form.user_password} onChange={change} className={input} placeholder={userToEdit ? 'Unchanged' : 'Set a login password'} required={!userToEdit} autoComplete="new-password" />
           </div>
           <div>
             <label className={label} htmlFor="user_role">Role</label>

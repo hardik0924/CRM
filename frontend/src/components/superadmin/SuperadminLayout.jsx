@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation, Link, Navigate } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, Users, LogOut, PanelLeftClose, PanelLeftOpen,
-  Menu, X, Plus, ChevronRight, ShieldCheck,
+  Menu, X, UserPlus, ChevronRight, ShieldCheck,
 } from 'lucide-react'
 
 const NAV = [
   { name: 'Overview', icon: LayoutDashboard, path: '/superadmin', exact: true },
-  { name: 'Clients', icon: Building2, path: '/superadmin/tenants' },
-  { name: 'Users', icon: Users, path: '/superadmin/users' },
+  { name: 'Organizations', icon: Building2, path: '/superadmin/tenants' },
+  { name: 'Employees', icon: Users, path: '/superadmin/users' },
 ]
 
 const SuperadminLayout = () => {
@@ -55,8 +55,8 @@ const SuperadminLayout = () => {
           collapsed ? 'justify-center px-0 mx-2' : 'px-4'
         } ${
           active
-            ? 'bg-vsph-core-blue text-white'
-            : 'text-[#CFDEEF] hover:bg-[#163F72] hover:text-white'
+            ? 'bg-vsph-core-blue text-white shadow-lg shadow-vsph-core-blue/25'
+            : 'text-[#CFDEEF] hover:bg-white/10 hover:text-white'
         }`}
       >
         <item.icon size={20} className="shrink-0" />
@@ -79,7 +79,7 @@ const SuperadminLayout = () => {
       <aside
         className={`${
           collapsed ? 'md:w-[76px]' : 'md:w-64'
-        } fixed md:sticky top-0 z-40 md:z-0 h-full w-64 shrink-0 bg-vsph-navy text-white flex flex-col transition-all duration-300 ${
+        } fixed md:sticky top-0 z-40 md:z-0 h-full w-64 shrink-0 bg-gradient-to-b from-vsph-navy via-[#012B66] to-[#001B42] text-white flex flex-col transition-all duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
@@ -162,11 +162,11 @@ const SuperadminLayout = () => {
 
           <div className="flex items-center gap-3">
             <Link
-              to="/superadmin/tenants?new=1"
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-vsph-core-blue text-white text-xs font-semibold hover:bg-[#0054A4] transition-colors"
+              to="/superadmin/users?new=1"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-vsph-core-blue text-white text-xs font-semibold hover:bg-[#0054A4] transition-colors shadow-sm shadow-vsph-core-blue/20"
             >
-              <Plus size={16} />
-              <span className="hidden sm:inline">New client</span>
+              <UserPlus size={16} />
+              <span className="hidden sm:inline">Create employee</span>
             </Link>
             <span className="hidden xl:flex items-center gap-2 pl-3 border-l border-slate-200 text-xs text-slate-500">
               <ShieldCheck size={16} className="text-vsph-core-blue" />

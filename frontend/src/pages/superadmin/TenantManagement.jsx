@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import {
   Building2, Plus, Trash2, Edit3, Save, X, Search, Users, ArrowRight, Loader2,
+  UserPlus, ExternalLink,
 } from 'lucide-react'
 import { api } from '../../utils/api'
 import toast from 'react-hot-toast'
@@ -35,8 +36,8 @@ const TenantManagement = () => {
       const res = await api.get('/api/tenants')
       if (res.success) setTenants(res.data)
     } catch (err) {
-      console.error('Error fetching clients:', err)
-      toast.error('Could not load clients')
+      console.error('Error fetching organizations:', err)
+      toast.error('Could not load organizations')
     } finally {
       setLoading(false)
     }
@@ -72,9 +73,9 @@ const TenantManagement = () => {
         ? await api.put(`/api/tenants/${editing.tenant_id}`, formData)
         : await api.post('/api/tenants', formData)
 
-      if (!res.success) throw new Error(res.message || 'Could not save client')
+      if (!res.success) throw new Error(res.message || 'Could not save organization')
 
-      toast.success(editing ? 'Client updated' : 'Client created')
+      toast.success(editing ? 'Organization updated' : 'Organization created')
       const created = res.data
       closeForm()
       await fetchTenants()
@@ -82,21 +83,21 @@ const TenantManagement = () => {
         navigate(`/superadmin/tenants/${created.tenant_id}/users`)
       }
     } catch (err) {
-      toast.error(err.message || 'Could not save client')
+      toast.error(err.message || 'Could not save organization')
     } finally {
       setSaving(false)
     }
   }
 
   const deleteTenant = async (t) => {
-    if (!confirm(`Delete "${t.tenant_name}"? All users and CRM data for this client will be removed.`)) return
+    if (!confirm(`Delete "${t.tenant_name}"? All employees and CRM data for this organization will be removed.`)) return
     try {
       const res = await api.delete(`/api/tenants/${t.tenant_id}`)
-      if (!res.success) throw new Error(res.message || 'Could not delete client')
-      toast.success('Client deleted')
+      if (!res.success) throw new Error(res.message || 'Could not delete organization')
+      toast.success('Organization deleted')
       fetchTenants()
     } catch (err) {
-      toast.error(err.message || 'Could not delete client')
+      toast.error(err.message || 'Could not delete organization')
     }
   }
 
@@ -112,33 +113,32 @@ const TenantManagement = () => {
     <div className="animate-fade-in">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
         <div>
-          <p className="text-[11px] font-bold tracking-[0.14em] text-slate-400">PLATFORM / CLIENTS</p>
-          <h1 className="text-vsph-navy text-3xl font-semibold tracking-tight mt-1">Client organizations</h1>
+          <p className="text-[11px] font-bold tracking-[0.14em] text-slate-400">PLATFORM / ORGANIZATIONS</p>
+          <h1 className="text-vsph-navy text-3xl font-semibold tracking-tight mt-1">Organizations</h1>
           <p className="text-slate-500 text-sm mt-1">
-            Create a client, then add the people who can sign in to their CRM.
+            Every client workspace on the CRM. Add their people from the Employees page.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
+          <Link
+            to="/superadmin/users?new=1"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors shadow-sm shadow-vsph-core-blue/20"
+          >
+            <UserPlus size={18} /> Create employee
+          </Link>
           <a
             href={import.meta.env.VITE_CENTRAL_PLATFORM_URL || 'https://apps.vsph.in'}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors"
-          >
-            <Plus size={18} /> Onboard via apps.vsph.in
-          </a>
-          <button
-            onClick={openCreate}
             className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-vsph-navy text-vsph-navy text-sm font-semibold hover:bg-vsph-navy hover:text-white transition-colors"
-            title="Internal support only"
           >
-            Internal support
-          </button>
+            <ExternalLink size={16} /> apps.vsph.in
+          </a>
         </div>
       </div>
 
       {/* Centralized onboarding notice */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 rounded-xl bg-[#F7FBFF] border border-[#CFE1F1] p-6 mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 rounded-2xl bg-gradient-to-br from-[#F7FBFF] to-[#EAF4FD] border border-[#CFE1F1] p-6 mb-6">
         <div className="max-w-2xl">
           <p className="text-[11px] font-bold tracking-[0.14em] text-vsph-core-blue">CENTRALIZED ONBOARDING</p>
           <h2 className="text-vsph-navy text-xl font-semibold tracking-tight mt-2">New clients start at apps.vsph.in</h2>
@@ -149,19 +149,31 @@ const TenantManagement = () => {
             an existing setup.
           </p>
         </div>
-        <a
-          href={import.meta.env.VITE_CENTRAL_PLATFORM_URL || 'https://apps.vsph.in'}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-vsph-core-blue text-vsph-core-blue text-sm font-semibold hover:bg-vsph-core-blue hover:text-white transition-colors shrink-0"
-        >
-          Open central platform <ArrowRight size={16} />
-        </a>
+        <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0">
+          <a
+            href={import.meta.env.VITE_CENTRAL_PLATFORM_URL || 'https://apps.vsph.in'}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors"
+          >
+            Open central platform <ArrowRight size={16} />
+          </a>
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-slate-300 bg-white text-vsph-navy text-sm font-semibold hover:border-vsph-navy transition-colors"
+            title="Internal support only"
+          >
+            <Plus size={16} /> Internal support
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl">
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-slate-100">
-          <h2 className="text-vsph-navy text-lg font-semibold">Clients</h2>
+          <div>
+            <h2 className="text-vsph-navy text-lg font-semibold">All organizations</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Identity and CRM entitlement come from the central platform.</p>
+          </div>
           <div className="relative w-full sm:w-72">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -177,11 +189,11 @@ const TenantManagement = () => {
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead>
               <tr className="bg-[#f8fafc] text-[#475569] text-xs">
-                <th className="px-5 py-3 font-semibold">Client</th>
+                <th className="px-5 py-3 font-semibold">Organization</th>
                 <th className="px-5 py-3 font-semibold">Plan</th>
                 <th className="px-5 py-3 font-semibold">Status</th>
                 <th className="px-5 py-3 font-semibold">CRM access</th>
-                <th className="px-5 py-3 font-semibold">Users</th>
+                <th className="px-5 py-3 font-semibold">Employees</th>
                 <th className="px-5 py-3 font-semibold">Accounts</th>
                 <th className="px-5 py-3 font-semibold">Created</th>
                 <th className="px-5 py-3 font-semibold text-right">Actions</th>
@@ -192,15 +204,15 @@ const TenantManagement = () => {
                 <tr>
                   <td colSpan="8" className="py-14 text-center text-slate-500">
                     <Loader2 size={24} className="animate-spin text-vsph-core-blue mx-auto mb-2" />
-                    Loading clients...
+                    Loading organizations...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="py-14 text-center text-slate-500">
                     {tenants.length === 0
-                      ? 'No clients yet. New commercial clients are onboarded at apps.vsph.in.'
-                      : 'No clients match your search.'}
+                      ? 'No organizations yet. New commercial clients are onboarded at apps.vsph.in.'
+                      : 'No organizations match your search.'}
                   </td>
                 </tr>
               ) : (
@@ -264,14 +276,14 @@ const TenantManagement = () => {
                         <Link
                           to={`/superadmin/tenants/${t.tenant_id}/users`}
                           className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-vsph-navy hover:border-vsph-core-blue hover:text-vsph-core-blue transition-colors"
-                          title="Manage users"
+                          title="Manage employees"
                         >
-                          <Users size={15} /> Users
+                          <Users size={15} /> Employees
                         </Link>
-                        <button onClick={() => openEdit(t)} className="p-2 rounded-lg text-slate-500 hover:text-vsph-core-blue hover:bg-vsph-light-blue/20" title="Edit client">
+                        <button onClick={() => openEdit(t)} className="p-2 rounded-lg text-slate-500 hover:text-vsph-core-blue hover:bg-vsph-light-blue/20" title="Edit organization">
                           <Edit3 size={16} />
                         </button>
-                        <button onClick={() => deleteTenant(t)} className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50" title="Delete client">
+                        <button onClick={() => deleteTenant(t)} className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50" title="Delete organization">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -290,10 +302,10 @@ const TenantManagement = () => {
           <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
               <div>
-                <h2 className="text-vsph-navy text-lg font-semibold">{editing ? 'Edit client' : 'Internal support: new client'}</h2>
+                <h2 className="text-vsph-navy text-lg font-semibold">{editing ? 'Edit organization' : 'Internal support: new organization'}</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {editing
-                    ? 'Update the client organization. CRM access is controlled by platform entitlement.'
+                    ? 'Update the organization. CRM access is controlled by platform entitlement.'
                     : 'Commercial onboarding belongs at apps.vsph.in. Use this only for support or repair.'}
                 </p>
               </div>
@@ -304,17 +316,17 @@ const TenantManagement = () => {
 
             <form onSubmit={saveTenant} className="p-6 space-y-5 overflow-y-auto">
               <div>
-                <label className={label} htmlFor="tenant_name">Client name *</label>
+                <label className={label} htmlFor="tenant_name">Organization name *</label>
                 <input id="tenant_name" required value={formData.tenant_name}
                   onChange={(e) => setFormData({ ...formData, tenant_name: e.target.value })}
                   className={input} placeholder="e.g. Acme Industries" />
               </div>
               <div>
-                <label className={label} htmlFor="tenant_code">Client code *</label>
+                <label className={label} htmlFor="tenant_code">Organization code *</label>
                 <input id="tenant_code" required value={formData.tenant_code}
                   onChange={(e) => setFormData({ ...formData, tenant_code: e.target.value.toUpperCase() })}
                   className={`${input} font-mono`} placeholder="e.g. ACME001" />
-                <p className="text-xs text-slate-500 mt-1.5">A short unique code used to identify this client.</p>
+                <p className="text-xs text-slate-500 mt-1.5">A short unique code used to identify this organization.</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -342,7 +354,7 @@ const TenantManagement = () => {
                 </button>
                 <button type="submit" disabled={saving} className="h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] inline-flex items-center gap-2 disabled:opacity-60">
                   {saving ? <Loader2 size={16} className="animate-spin" /> : editing ? <Save size={16} /> : <Plus size={16} />}
-                  {editing ? 'Save changes' : 'Create client'}
+                  {editing ? 'Save changes' : 'Create organization'}
                 </button>
               </div>
             </form>

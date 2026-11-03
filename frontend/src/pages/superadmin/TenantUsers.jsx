@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   Users, Building2, ArrowLeft, Plus, Edit3, Trash2, Loader2, ShieldCheck,
-  Mail, LayoutGrid,
+  Mail, LayoutGrid, UserPlus,
 } from 'lucide-react'
 import { api } from '../../utils/api'
 import UserFormModal from '../../components/superadmin/UserFormModal'
@@ -29,8 +29,8 @@ const TenantUsers = () => {
       if (tRes.success) setTenant(tRes.data)
       if (uRes.success) setUsers(uRes.data)
     } catch (err) {
-      console.error('Error fetching client users:', err)
-      toast.error('Could not load client users')
+      console.error('Error fetching employees:', err)
+      toast.error('Could not load employees')
     } finally {
       setLoading(false)
     }
@@ -50,11 +50,11 @@ const TenantUsers = () => {
     if (!confirm(`Delete ${u.user_name}? They will no longer be able to sign in.`)) return
     try {
       const res = await api.delete(`/api/tenants/${id}/users/${u.user_id}`)
-      if (!res.success) throw new Error(res.message || 'Could not delete user')
-      toast.success('User deleted')
+      if (!res.success) throw new Error(res.message || 'Could not delete employee')
+      toast.success('Employee deleted')
       fetchTenantUsers()
     } catch (err) {
-      toast.error(err.message || 'Could not delete user')
+      toast.error(err.message || 'Could not delete employee')
     }
   }
 
@@ -62,7 +62,7 @@ const TenantUsers = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <Loader2 size={28} className="animate-spin text-vsph-core-blue" />
-        <p className="mt-3 text-sm text-vsph-navy">Loading client...</p>
+        <p className="mt-3 text-sm text-vsph-navy">Loading organization...</p>
       </div>
     )
   }
@@ -70,7 +70,7 @@ const TenantUsers = () => {
   return (
     <div className="animate-fade-in">
       <Link to="/superadmin/tenants" className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-vsph-core-blue mb-5">
-        <ArrowLeft size={16} /> Back to clients
+        <ArrowLeft size={16} /> Back to organizations
       </Link>
 
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mb-6">
@@ -80,7 +80,7 @@ const TenantUsers = () => {
           </span>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-vsph-navy text-3xl font-semibold tracking-tight">{tenant?.tenant_name || 'Client'}</h1>
+              <h1 className="text-vsph-navy text-3xl font-semibold tracking-tight">{tenant?.tenant_name || 'Organization'}</h1>
               <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
                 tenant?.tenant_status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
               }`}>
@@ -99,38 +99,38 @@ const TenantUsers = () => {
             </p>
           </div>
         </div>
-        <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors shrink-0">
-          <Plus size={17} /> Add user
+        <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors shrink-0 shadow-sm shadow-vsph-core-blue/20">
+          <UserPlus size={17} /> Create employee
         </button>
       </div>
 
       {tenant?.external_organization_id && (
         <div className="mb-6 rounded-xl bg-[#F7FBFF] border border-[#CFE1F1] p-4 text-sm text-slate-600">
           This organization is linked to <span className="font-semibold text-vsph-navy">apps.vsph.in</span>.
-          Manage its identity, subscription and CRM entitlement there. User actions here are internal support only.
+          Manage its identity, subscription and CRM entitlement there. Employee actions here are internal support only.
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold tracking-[0.12em] text-slate-400">USERS</p>
+              <p className="text-[11px] font-bold tracking-[0.12em] text-slate-400">EMPLOYEES</p>
               <p className="text-3xl font-semibold text-vsph-navy mt-1">{users.length}</p>
             </div>
             <Users size={22} className="text-vsph-core-blue" />
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold tracking-[0.12em] text-slate-400">ACTIVE USERS</p>
+              <p className="text-[11px] font-bold tracking-[0.12em] text-slate-400">ACTIVE</p>
               <p className="text-3xl font-semibold text-vsph-navy mt-1">{users.filter((u) => u.user_status).length}</p>
             </div>
             <ShieldCheck size={22} className="text-emerald-500" />
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold tracking-[0.12em] text-slate-400">CRM ACCOUNTS</p>
@@ -141,10 +141,10 @@ const TenantUsers = () => {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl">
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
         <div className="p-5 border-b border-slate-100">
-          <h2 className="text-vsph-navy text-lg font-semibold">Client users</h2>
-          <p className="text-sm text-slate-500 mt-0.5">People at this client who can sign in to the CRM.</p>
+          <h2 className="text-vsph-navy text-lg font-semibold">Employees</h2>
+          <p className="text-sm text-slate-500 mt-0.5">People at this organization who can sign in to the CRM.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
@@ -164,9 +164,9 @@ const TenantUsers = () => {
                   <td colSpan="6" className="py-14 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-3">
                       <Mail size={24} className="text-slate-300" />
-                      <p>No users yet. Add the first person who will sign in to this client's CRM.</p>
+                      <p>No employees yet. Create the first person who will sign in to this organization's CRM.</p>
                       <button onClick={openCreate} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-vsph-core-blue text-white text-xs font-semibold">
-                        <Plus size={15} /> Add user
+                        <Plus size={15} /> Create employee
                       </button>
                     </div>
                   </td>
@@ -196,10 +196,10 @@ const TenantUsers = () => {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button onClick={() => openEdit(u)} className="p-2 rounded-lg text-slate-500 hover:text-vsph-core-blue hover:bg-vsph-light-blue/20" title="Edit user">
+                        <button onClick={() => openEdit(u)} className="p-2 rounded-lg text-slate-500 hover:text-vsph-core-blue hover:bg-vsph-light-blue/20" title="Edit employee">
                           <Edit3 size={16} />
                         </button>
-                        <button onClick={() => deleteUser(u)} className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50" title="Delete user">
+                        <button onClick={() => deleteUser(u)} className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50" title="Delete employee">
                           <Trash2 size={16} />
                         </button>
                       </div>
