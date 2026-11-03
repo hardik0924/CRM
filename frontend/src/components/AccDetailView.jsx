@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../utils/api";
-import { Users, Target, MoreHorizontal, Edit2 } from "lucide-react";
+import { Users, Target, MoreHorizontal, Edit2, Menu } from "lucide-react";
 import Button from "./ui/Button";
+import AddContactModal from "./modals/AddContactModal";
+import AddOpportunityModal from "./modals/AddOpportunityModal";
 
 const AccountDetailView = ({ isOpen, onClose, accountId }) => {
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("Details");
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const [addOpportunityOpen, setAddOpportunityOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && accountId) {
@@ -29,7 +34,6 @@ const AccountDetailView = ({ isOpen, onClose, accountId }) => {
   if (!isOpen) return null;
 
   return (
-    // Absolute overlay background matching slate theme, constrained to parent container
     <div className="absolute inset-0 z-40 flex flex-col bg-slate-50 font-sans animate-fade-in">
       
       <div className="flex-1 overflow-y-auto bg-slate-50">
@@ -53,14 +57,53 @@ const AccountDetailView = ({ isOpen, onClose, accountId }) => {
                   <p className="text-[11px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">{accountData.account_code}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="secondary" size="sm" className="gap-2 text-blue-600 font-semibold border-slate-300">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => { setAddContactOpen(true); }}
+                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                  >
                     <Users size={16} /> New Contact
                   </Button>
-                  <Button variant="secondary" size="sm" className="gap-2 text-blue-600 font-semibold border-slate-300">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => { setAddOpportunityOpen(true); }}
+                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                  >
                     <Target size={16} /> New Opportunity
                   </Button>
-                  <Button variant="secondary" size="sm" className="border-slate-300 px-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => { setMoreMenuOpen(true); }}
+                    className="border-slate-300 px-2 relative"
+                  >
                     <MoreHorizontal size={16} className="text-slate-600" />
+                    {moreMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
+                        <button
+                          onClick={() => { setMoreMenuOpen(false); }}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                        >
+                          Edit Account
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete account "${accountData.account_name}"?`)) {
+                              api.delete("/api/accounts", { ids: [accountId] }).then((res) => {
+                                if (res.success) {
+                                  onClose();
+                                }
+                              });
+                            }
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        >
+                          Delete Account
+                        </button>
+                      </div>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -235,6 +278,37 @@ const AccountDetailView = ({ isOpen, onClose, accountId }) => {
           </div>
         )}
       </div>
+
+      {addContactOpen && (
+        <AddContactModal
+          isOpen={addContactOpen}
+          onClose={() => setAddContactOpen(false)}
+          onSuccess={() => {
+            setAddContactOpen(false);
+            // Refresh account data to show new contact
+            api.get(`/api/accounts/${accountId}`).then((res) => {
+              if (res.success) setAccountData(res.data);
+            });
+          }}
+          contactToEdit={null}
+          defaultAccountId={accountId}
+        />
+      )}
+
+      {addOpportunityOpen && (
+        <AddOpportunityModal
+          isOpen={addOpportunityOpen}
+          onClose={() => setAddOpportunityOpen(false)}
+          onSuccess={() => {
+            setAddOpportunityOpen(false);
+            api.get(`/api/accounts/${accountId}`).then((res) => {
+              if (res.success) setAccountData(res.data);
+            });
+          }}
+          opportunityToEdit={null}
+          defaultAccountId={accountId}
+        />
+      )}
     </div>
   );
 };

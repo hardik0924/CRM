@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "../utils/api";
 import { ListChecks, Users, Calendar, Edit2, MoreHorizontal, Clock } from "lucide-react";
 import Button from "./ui/Button";
+import AddContactModal from "./modals/AddContactModal";
 
 const PRIORITY_COLORS = {
   HIGH: "bg-rose-50 text-rose-700 border-rose-100",
@@ -13,6 +14,8 @@ const TaskDetailView = ({ isOpen, onClose, taskId }) => {
   const [taskData, setTaskData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("Details");
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && taskId) {
@@ -56,11 +59,45 @@ const TaskDetailView = ({ isOpen, onClose, taskId }) => {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="secondary" size="sm" className="gap-2 text-blue-600 font-semibold border-slate-300">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => { setAddContactOpen(true); }}
+                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                  >
                     <Users size={16} /> New Contact
                   </Button>
-                  <Button variant="secondary" size="sm" className="border-slate-300 px-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => { setMoreMenuOpen(true); }}
+                    className="border-slate-300 px-2 relative"
+                  >
                     <MoreHorizontal size={16} className="text-slate-600" />
+                    {moreMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
+                        <button
+                          onClick={() => { setMoreMenuOpen(false); }}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                        >
+                          Edit Task
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete task "${taskData.task_subject}"?`)) {
+                              api.delete(`/api/tasks/${taskId}`).then((res) => {
+                                if (res.success !== false) {
+                                  onClose();
+                                }
+                              });
+                            }
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        >
+                          Delete Task
+                        </button>
+                      </div>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -200,6 +237,15 @@ const TaskDetailView = ({ isOpen, onClose, taskId }) => {
           </div>
         )}
       </div>
+
+      {addContactOpen && (
+        <AddContactModal
+          isOpen={addContactOpen}
+          onClose={() => setAddContactOpen(false)}
+          onSuccess={() => setAddContactOpen(false)}
+          contactToEdit={null}
+        />
+      )}
     </div>
   );
 };
