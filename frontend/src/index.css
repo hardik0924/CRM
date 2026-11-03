@@ -2,186 +2,265 @@
 @import "tailwindcss";
 
 @theme {
+  /* ---- Design Tokens: VSPh CRM Design System ---- */
+  /* Colors */
+  --color-sidebar: #0B2545;
+  --color-sidebar-hover: #113056;
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-surface: #FFFFFF;
+  --color-page-bg: #F5F7FB;
+  --color-text-main: #172033;
+  --color-text-secondary: #64748B;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  --color-success: #16A34A;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
+
+  /* VSPh brand colors (preserved for brand elements) */
   --color-vsph-navy: #00255A;
   --color-vsph-core-blue: #0069C8;
   --color-vsph-light-blue: #50C0E8;
   --color-vsph-white: #FFFFFF;
   --color-vsph-grey: #F1F2F2;
   --color-vsph-black: #000000;
+
+  /* Typography */
   --font-sans: "Inter", "Arial", sans-serif;
+
+  /* Radii */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+
+  /* Spacing / component dimensions */
+  --input-height: 2.5rem;
+  --button-height: 2.5rem;
+  --table-row-height: 3rem;
 }
 
 * {
-    font-family: "Inter", "Arial", sans-serif;
+  font-family: var(--font-sans);
+}
+
+html, body {
+  background-color: var(--color-page-bg);
+  color: var(--color-text-main);
 }
 
 :root {
-    --vsph-navy: #00255A;
-    --vsph-core-blue: #0069C8;
-    --vsph-light-blue: #50C0E8;
-    --vsph-white: #FFFFFF;
-    --vsph-grey: #F1F2F2;
-    --vsph-black: #000000;
+  --sidebar: #0B2545;
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --surface: #FFFFFF;
+  --page-bg: #F5F7FB;
+  --text-main: #172033;
+  --text-secondary: #64748B;
+  --border: #E2E8F0;
+  --success: #16A34A;
+  --warning: #D97706;
+  --danger: #DC2626;
 }
 
 @layer utilities {
-    /* ---- VSPh Color utilities ---- */
-    .text-vsph-navy { color: #00255A; }
-    .text-vsph-core-blue { color: #0069C8; }
-    .text-vsph-light-blue { color: #50C0E8; }
-    .text-vsph-white { color: #FFFFFF; }
-    .text-vsph-grey { color: #F1F2F2; }
-    .bg-vsph-navy { background-color: #00255A; }
-    .bg-vsph-core-blue { background-color: #0069C8; }
-    .bg-vsph-light-blue { background-color: #50C0E8; }
-    .bg-vsph-white { background-color: #FFFFFF; }
-    .bg-vsph-grey { background-color: #F1F2F2; }
-    .border-vsph-navy { border-color: #00255A; }
-    .border-vsph-core-blue { border-color: #0069C8; }
-    .border-vsph-light-blue { border-color: #50C0E8; }
-    .ring-vsph-core-blue { --tw-ring-color: #0069C8; }
+  /* ============ Design Token Color Utilities ============ */
+  .bg-sidebar { background-color: var(--color-sidebar); }
+  .bg-surface { background-color: var(--color-surface); }
+  .bg-page-bg { background-color: var(--color-page-bg); }
+  .text-main { color: var(--color-text-main); }
+  .text-secondary { color: var(--color-text-secondary); }
+  .border-design { border-color: var(--color-border); }
 
-    /* ---- VSPh Cards: flat, grey, no shadows ---- */
-    .card {
-        @apply bg-vsph-grey rounded-lg border border-slate-200/70;
-    }
-    .card-hover {
-        @apply hover:bg-vsph-light-blue/30 transition-colors duration-200;
-    }
-    .card-navy {
-        @apply bg-vsph-navy text-white border border-vsph-navy;
-    }
+  /* VSPh brand utilities (preserved) */
+  .text-vsph-navy { color: #00255A; }
+  .text-vsph-core-blue { color: #0069C8; }
+  .text-vsph-light-blue { color: #50C0E8; }
+  .text-vsph-white { color: #FFFFFF; }
+  .text-vsph-grey { color: #F1F2F2; }
+  .bg-vsph-navy { background-color: #00255A; }
+  .bg-vsph-core-blue { background-color: #0069C8; }
+  .bg-vsph-light-blue { background-color: #50C0E8; }
+  .bg-vsph-white { background-color: #FFFFFF; }
+  .bg-vsph-grey { background-color: #F1F2F2; }
+  .border-vsph-navy { border-color: #00255A; }
+  .border-vsph-core-blue { border-color: #0069C8; }
+  .border-vsph-light-blue { border-color: #50C0E8; }
+  .ring-vsph-core-blue { --tw-ring-color: #0069C8; }
 
-    /* ---- VSPh Buttons ---- */
-    /* Primary: filled core-blue, white text */
-    .btn-primary {
-        @apply bg-vsph-core-blue text-white px-5 py-2.5 rounded-md text-sm font-medium
-            hover:bg-vsph-navy transition-all duration-200
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue focus-visible:ring-offset-2
-            active:scale-[0.98] min-h-[44px];
-    }
-    /* Secondary: outlined navy, navy text on light bg */
-    .btn-secondary {
-        @apply border-vsph-navy text-vsph-navy bg-white px-5 py-2.5 rounded-md text-sm font-medium
-            hover:bg-vsph-navy hover:text-white transition-all duration-200
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-navy focus-visible:ring-offset-2
-            active:scale-[0.98] min-h-[44px];
-    }
-    /* Ghost: subtle text button */
-    .btn-ghost {
-        @apply text-vsph-core-blue px-3 py-2 rounded-md text-sm font-medium
-            hover:bg-vsph-light-blue/20 transition-colors duration-200
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue
-            min-h-[44px];
-    }
+  /* ============ Cards ============ */
+  .card {
+    @apply bg-surface rounded-xl border border-vsph-light-blue/40 shadow-sm;
+  }
+  .card-hover {
+    @apply hover:shadow-md transition-shadow duration-200;
+  }
+  .card-navy {
+    @apply bg-vsph-navy text-white border border-vsph-navy;
+  }
 
-    /* ---- VSPh Inputs ---- */
-    input,
-    select,
-    textarea {
-        @apply w-full px-4 py-2.5 bg-white border border-slate-200 rounded-md
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue focus-visible:border-vsph-core-blue
-            transition-all duration-200 text-sm placeholder:text-slate-400 text-slate-900
-            min-h-[44px];
-    }
+  /* ============ Buttons ============ */
+  /* Primary: filled core-blue */
+  .btn-primary {
+    @apply bg-vsph-core-blue text-white px-5 py-2.5 rounded-md text-sm font-medium
+        hover:bg-vsph-navy transition-all duration-200
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue focus-visible:ring-offset-2
+        active:scale-[0.98] min-h-[44px] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  /* Secondary: outlined navy */
+  .btn-secondary {
+    @apply border-vsph-navy text-vsph-navy bg-surface px-5 py-2.5 rounded-md text-sm font-medium
+        hover:bg-vsph-navy hover:text-white transition-all duration-200
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-navy focus-visible:ring-offset-2
+        active:scale-[0.98] min-h-[44px] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  /* Ghost: subtle */
+  .btn-ghost {
+    @apply text-vsph-core-blue px-3 py-2 rounded-md text-sm font-medium
+        hover:bg-vsph-light-blue/20 transition-colors duration-200
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue
+        min-h-[44px] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  /* Danger: destructive */
+  .btn-danger {
+    @apply bg-rose-50 text-rose-600 border border-rose-100 px-5 py-2.5 rounded-md text-sm font-medium
+        hover:bg-rose-100 hover:text-rose-700 transition-all duration-200
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-100 focus-visible:ring-offset-2
+        active:scale-[0.98] min-h-[44px] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  /* Icon button */
+  .btn-icon {
+    @apply p-2 rounded-md text-slate-500 hover:text-vsph-core-blue hover:bg-vsph-light-blue/20 transition-colors
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue
+        min-h-[44px] min-w-[44px] disabled:opacity-50 disabled:pointer-events-none;
+  }
 
-    /* ---- VSPh Table ---- */
-    .table-modern {
-        @apply w-full text-left text-sm border-collapse;
-    }
-    .table-modern thead {
-        @apply text-xs font-semibold text-vsph-navy uppercase tracking-wider;
-    }
-    .table-modern thead th {
-        @apply px-6 py-4 bg-vsph-grey border-b border-slate-200;
-    }
-    .table-modern tbody {
-        @apply divide-y divide-slate-200;
-    }
-    .table-modern tbody tr {
-        @apply hover:bg-vsph-light-blue/20 transition-colors duration-150;
-    }
-    .table-modern tbody td {
-        @apply px-6 py-4 border-b border-slate-100 text-slate-700;
-    }
+  /* ============ Inputs ============ */
+  input,
+  select,
+  textarea {
+    @apply w-full px-4 py-2.5 bg-surface border border-slate-200 rounded-lg
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue focus-visible:border-vsph-core-blue
+        transition-all duration-200 text-sm placeholder:text-slate-400 text-slate-900
+        min-h-[44px] disabled:bg-slate-50 disabled:cursor-not-allowed;
+  }
 
-    /* ---- VSPh Badges ---- */
-    .badge {
-        @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium;
-    }
-    .badge-navy {
-        @apply bg-vsph-navy text-white;
-    }
-    .badge-core-blue {
-        @apply bg-vsph-core-blue text-white;
-    }
-    .badge-light-blue {
-        @apply bg-vsph-light-blue/20 text-vsph-core-blue;
-    }
-    .badge-success {
-        @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10;
-    }
-    .badge-warning {
-        @apply bg-amber-50 text-amber-700 ring-1 ring-amber-600/10;
-    }
-    .badge-danger {
-        @apply bg-rose-50 text-rose-700 ring-1 ring-rose-600/10;
-    }
+  /* ============ Tables ============ */
+  .table-modern {
+    @apply w-full text-left text-sm border-collapse;
+  }
+  .table-modern thead {
+    @apply text-xs font-semibold text-vsph-navy uppercase tracking-wider;
+  }
+  .table-modern thead th {
+    @apply px-6 py-3.5 bg-surface border-b border-vsph-light-blue/40;
+  }
+  .table-modern tbody {
+    @apply divide-y divide-vsph-light-blue/40;
+  }
+  .table-modern tbody tr {
+    @apply hover:bg-vsph-light-blue/30 transition-colors duration-150;
+  }
+  .table-modern tbody td {
+    @apply px-6 py-3.5 border-b border-vsph-light-blue/40 text-slate-700;
+  }
+  .table-modern tbody tr.selected {
+    @apply bg-vsph-light-blue/50;
+  }
 
-    /* ---- VSPh Page header ---- */
-    .page-header {
-        @apply mb-8;
-    }
-    .page-title {
-        @apply text-vsph-navy text-[60px] font-bold leading-[72px] tracking-tight;
-    }
-    .page-subtitle {
-        @apply text-slate-500 text-base mt-1;
-    }
-    .section-title {
-        @apply text-vsph-navy text-lg font-semibold tracking-tight mb-3;
-    }
+  /* Table container for responsive scrolling */
+  .table-container {
+    @apply overflow-x-auto;
+  }
 
-    /* ---- VSPh Animations ---- */
-    .animate-fade-in {
-        animation: fadeIn 0.4s ease-out;
-    }
-    .animate-slide-up {
-        animation: slideUp 0.4s ease-out;
-    }
+  /* ============ Badges ============ */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border;
+  }
+  .badge-navy { @apply bg-vsph-navy text-white border-transparent; }
+  .badge-core-blue { @apply bg-vsph-core-blue text-white border-transparent; }
+  .badge-light-blue { @apply bg-vsph-light-blue/20 text-vsph-core-blue border-transparent; }
+  .badge-success { @apply bg-emerald-50 text-emerald-700 border-emerald-100; }
+  .badge-warning { @apply bg-amber-50 text-amber-700 border-amber-100; }
+  .badge-danger { @apply bg-rose-50 text-rose-700 border-rose-100; }
+  .badge-secondary { @apply bg-vsph-grey text-vsph-navy border-transparent; }
+
+  /* ============ Page Header ============ */
+  .page-header {
+    @apply mb-6;
+  }
+  .page-title {
+    @apply text-vsph-navy text-2xl font-bold tracking-tight;
+  }
+  .page-subtitle {
+    @apply text-slate-500 text-sm font-medium mt-0.5;
+  }
+  .section-title {
+    @apply text-vsph-navy text-lg font-semibold tracking-tight mb-3;
+  }
+
+  /* ============ KPI Cards ============ */
+  .kpi-card {
+    @apply bg-surface rounded-xl border border-vsph-light-blue/40 p-5 shadow-sm;
+  }
+  .kpi-card-icon {
+    @apply w-11 h-11 rounded-lg flex items-center justify-center shrink-0;
+  }
+
+  /* ============ Status Indicators ============ */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+  .status-dot-active { @apply bg-emerald-500; }
+  .status-dot-inactive { @apply bg-rose-500; }
+
+  /* ============ Animations ============ */
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ---- Custom scrollbar ---- */
 ::-webkit-scrollbar {
-    width: 6px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-    @apply bg-transparent;
+  @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded-full;
+  @apply bg-slate-300 rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400;
+  @apply bg-slate-400;
 }
 
 /* ---- Selection ---- */
 ::selection {
-    @apply bg-vsph-core-blue text-white;
+  @apply bg-vsph-core-blue text-white;
 }
 
 /* ---- Focus ring for accessibility ---- */
 *:focus-visible {
-    outline: 2px solid #0069C8;
-    outline-offset: 2px;
+  outline: 2px solid #0069C8;
+  outline-offset: 2px;
 }

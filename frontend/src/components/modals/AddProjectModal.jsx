@@ -192,7 +192,7 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, projectToEdit }) => {
                     name="project_name"
                     value={formData.project_name}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
+                    className="w-full px-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue text-sm"
                     placeholder="e.g. Q3 Launch"
                   />
                 </div>
@@ -205,10 +205,10 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, projectToEdit }) => {
                     name="project_location"
                     value={formData.project_location}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all text-sm ${
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all text-sm ${
                       fieldErrors.project_location
                         ? "border-red-500 focus:ring-red-500/20"
-                        : "border-slate-300 focus:ring-blue-500/20"
+                        : "border-border focus:ring-vsph-core-blue focus:border-vsph-core-blue"
                     }`}
                     placeholder="e.g. New York, NY"
                   />
@@ -225,7 +225,7 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, projectToEdit }) => {
                     name="project_date"
                     value={formData.project_date}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
+                    className="w-full px-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue text-sm"
                   />
                 </div>
                 <div>

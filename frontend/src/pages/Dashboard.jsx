@@ -28,12 +28,32 @@ const getRoleLabel = (role) => {
     .join(" ");
 };
 
+const KPICard = ({ icon: Icon, label, value, sub, tone }) => {
+  return (
+    <div className={`kpi-card ${tone} ${'hover:shadow-md transition-shadow duration-200'}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col">
+          <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider mb-1">
+            {label}
+          </p>
+          <p className="text-2xl font-bold text-sidebar leading-none mb-1">{value}</p>
+          <p className="text-[10px] text-secondary">{sub}</p>
+        </div>
+        <div className={`kpi-card-icon ${tone.replace('bg-', 'bg-').replace('/10', '/10')}`}>
+          <Icon size={20} className="text-white" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const [metrics, setMetrics] = useState({
     callsToday: 0,
     oppsWonThisMonth: 0,
   });
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const raw = localStorage.getItem("vsph_user_id");
@@ -46,7 +66,10 @@ const Dashboard = () => {
         .then((res) => {
           if (res.success) setMetrics(res.data);
         })
-        .catch((err) => console.error("Error fetching dashboard metrics:", err));
+        .catch((err) => console.error("Error fetching dashboard metrics:", err))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
   }, []);
 
@@ -56,20 +79,50 @@ const Dashboard = () => {
 
   const RoleIcon = getRoleIcon(user && user.role);
 
+  const kpis = [
+    {
+      icon: Phone,
+      label: "Calls today",
+      value: metrics.callsToday,
+      sub: "Logged calls",
+      tone: "bg-vsph-core-blue/10 text-vsph-core-blue border-vsph-core-blue/20",
+    },
+    {
+      icon: Briefcase,
+      label: "Won this month",
+      value: metrics.oppsWonThisMonth,
+      sub: "Closed won",
+      tone: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    },
+    {
+      icon: Users,
+      label: "Active accounts",
+      value: "0",
+      sub: "Total clients",
+      tone: "bg-vsph-light-blue/20 text-vsph-core-blue border-vsph-light-blue/20",
+    },
+    {
+      icon: TrendingUp,
+      label: "Pipeline value",
+      value: "$0",
+      sub: "Open opportunities",
+      tone: "bg-vsph-grey text-vsph-navy border-border",
+    },
+  ];
+
   return (
-    <div className="animate-slide-up flex flex-col min-h-full bg-white">
-      <div className="flex items-center gap-2 px-8 py-6 bg-white border-b border-slate-200 shrink-0">
-        <div className="w-8 h-8 bg-vsph-navy rounded-lg flex items-center justify-center">
+    <div className="flex flex-col min-h-full bg-page-bg animate-fade-in">
+      {/* Page Header */}
+      <div className="flex items-center gap-2 px-8 py-6 surface border-b border-border shrink-0">
+        <div className="w-8 h-8 bg-sidebar rounded-lg flex items-center justify-center">
           <span className="text-white text-xl font-bold">V</span>
         </div>
-        <span className="text-vsph-navy font-bold text-xl tracking-tight">VSPH</span>
+        <span className="text-sidebar font-bold text-xl tracking-tight">VSPH</span>
       </div>
 
-      <div className="page-header px-8 py-6">
+      <div className="page-header px-8 py-6 surface">
         <div className="flex flex-col gap-1">
-          <h1 className="page-title">
-            {getRoleLabel(user && user.role)} dashboard
-          </h1>
+          <h1 className="page-title">{getRoleLabel(user && user.role)} dashboard</h1>
           <p className="page-subtitle">
             {formattedDate} &bull; {user && user.name || "Loading..."} &bull;{" "}
             {user && user.role ? user.role.replace(/_/g, " ") : "Loading..."}
@@ -81,69 +134,31 @@ const Dashboard = () => {
               <RoleIcon size={28} className="fill-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-vsph-core-blue uppercase tracking-wider">
+              <span className="text-[10px] font-semibold text-vsph-core-blue uppercase tracking-wider">
                 {getRoleLabel(user && user.role)}
               </span>
-              <span className="text-4xl font-bold text-vsph-navy leading-none">{metrics.callsToday}</span>
-              <span className="text-xs text-slate-500 mt-0.5">calls today</span>
+              <span className="text-3xl font-bold text-sidebar leading-none">{metrics.callsToday}</span>
+              <span className="text-xs text-secondary mt-0.5">calls today</span>
             </div>
           </div>
           <Button variant="ghost" size="sm" asChild>
-            <a href="#" className="flex items-center gap-2 text-vsph-core-blue hover:text-vsph-navy">
+            <a href="#" className="flex items-center gap-2 text-vsph-core-blue hover:text-sidebar">
               <ExternalLink size={14} /> Full report
             </a>
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-8 pb-8">
-        <MetricCard
-          icon={Phone}
-          label="Calls today"
-          value={metrics.callsToday}
-          sub="Logged calls"
-          color="bg-vsph-core-blue text-white"
-        />
-        <MetricCard
-          icon={Briefcase}
-          label="Won this month"
-          value={metrics.oppsWonThisMonth}
-          sub="Closed won"
-          color="bg-vsph-navy text-white"
-        />
-        <MetricCard
-          icon={Users}
-          label="Active accounts"
-          value="0"
-          sub="Total clients"
-          color="bg-vsph-light-blue/20 text-vsph-core-blue"
-        />
-        <MetricCard
-          icon={TrendingUp}
-          label="Pipeline value"
-          value="$0"
-          sub="Open opportunities"
-          color="bg-vsph-grey text-vsph-navy"
-        />
-      </div>
-    </div>
-  );
-};
-
-const MetricCard = ({ icon: Icon, label, value, sub, color }) => {
-  return (
-    <div className={`card p-6 ${color}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            {label}
-          </p>
-          <p className="text-3xl font-bold text-vsph-navy leading-none mb-1">{value}</p>
-          <p className="text-xs text-slate-400">{sub}</p>
-        </div>
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/20 backdrop-blur-sm">
-          <Icon size={20} className="text-white" />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-8 pb-8">
+        {loading ? (
+          <div className="col-span-full flex items-center justify-center py-24 text-secondary">
+            <Loader2 size={26} className="animate-spin text-vsph-core-blue mr-3" /> Loading dashboard...
+          </div>
+        ) : (
+          kpis.map((kpi) => (
+            <KPICard key={kpi.label} {...kpi} />
+          ))
+        )}
       </div>
     </div>
   );

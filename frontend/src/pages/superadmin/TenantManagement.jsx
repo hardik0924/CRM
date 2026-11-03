@@ -106,23 +106,23 @@ const TenantManagement = () => {
     return t.tenant_name?.toLowerCase().includes(q) || t.tenant_code?.toLowerCase().includes(q)
   })
 
-  const input = 'w-full px-3.5 py-2.5 border border-[#b9c5d6] rounded-lg bg-[#f8fafc] text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue focus-visible:border-vsph-core-blue'
-  const label = 'block text-[13px] font-bold text-[#253F60] mb-2'
+  const input = 'w-full px-3.5 py-2.5 border border-border rounded-lg bg-surface text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue focus-visible:border-vsph-core-blue'
+  const label = 'block text-[13px] font-semibold text-sidebar mb-1.5'
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in bg-page-bg min-h-screen">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
         <div>
-          <p className="text-[11px] font-bold tracking-[0.14em] text-slate-400">PLATFORM / ORGANIZATIONS</p>
-          <h1 className="text-vsph-navy text-3xl font-semibold tracking-tight mt-1">Organizations</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-[11px] font-bold tracking-[0.14em] text-secondary">PLATFORM / ORGANIZATIONS</p>
+          <h1 className="text-sidebar text-3xl font-semibold tracking-tight mt-1">Organizations</h1>
+          <p className="text-secondary text-sm mt-1">
             Every client workspace on the CRM. Add their people from the Employees page.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Link
             to="/superadmin/users?new=1"
-            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors shadow-sm shadow-vsph-core-blue/20"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-vsph-navy transition-colors shadow-sm"
           >
             <UserPlus size={18} /> Create employee
           </Link>
@@ -130,7 +130,7 @@ const TenantManagement = () => {
             href={import.meta.env.VITE_CENTRAL_PLATFORM_URL || 'https://apps.vsph.in'}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-vsph-navy text-vsph-navy text-sm font-semibold hover:bg-vsph-navy hover:text-white transition-colors"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-sidebar text-sidebar text-sm font-semibold hover:bg-sidebar hover:text-white transition-colors"
           >
             <ExternalLink size={16} /> apps.vsph.in
           </a>
@@ -138,14 +138,14 @@ const TenantManagement = () => {
       </div>
 
       {/* Centralized onboarding notice */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 rounded-2xl bg-gradient-to-br from-[#F7FBFF] to-[#EAF4FD] border border-[#CFE1F1] p-6 mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 rounded-xl bg-vsph-core-blue/5 border border-vsph-core-blue/20 p-6 mb-6">
         <div className="max-w-2xl">
           <p className="text-[11px] font-bold tracking-[0.14em] text-vsph-core-blue">CENTRALIZED ONBOARDING</p>
-          <h2 className="text-vsph-navy text-xl font-semibold tracking-tight mt-2">New clients start at apps.vsph.in</h2>
-          <p className="text-slate-500 text-sm mt-1 leading-relaxed">
+          <h2 className="text-sidebar text-xl font-semibold tracking-tight mt-2">New clients start at apps.vsph.in</h2>
+          <p className="text-secondary text-sm mt-1 leading-relaxed">
             Create the organization, assign CRM and send the first administrator invitation from the central
             platform. CRM receives the organization automatically and stays the source of truth for CRM data.
-            Use <span className="font-semibold text-vsph-navy">Internal support</span> only to repair or maintain
+            Use <span className="font-semibold text-sidebar">Internal support</span> only to repair or maintain
             an existing setup.
           </p>
         </div>
@@ -154,13 +154,13 @@ const TenantManagement = () => {
             href={import.meta.env.VITE_CENTRAL_PLATFORM_URL || 'https://apps.vsph.in'}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-vsph-navy transition-colors"
           >
             Open central platform <ArrowRight size={16} />
           </a>
           <button
             onClick={openCreate}
-            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-slate-300 bg-white text-vsph-navy text-sm font-semibold hover:border-vsph-navy transition-colors"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-border bg-surface text-sidebar text-sm font-semibold hover:border-sidebar transition-colors"
             title="Internal support only"
           >
             <Plus size={16} /> Internal support
@@ -168,11 +168,11 @@ const TenantManagement = () => {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-slate-100">
+      <div className="card border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-border">
           <div>
-            <h2 className="text-vsph-navy text-lg font-semibold">All organizations</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Identity and CRM entitlement come from the central platform.</p>
+            <h2 className="text-sidebar text-lg font-semibold">All organizations</h2>
+            <p className="text-xs text-secondary mt-0.5">Identity and CRM entitlement come from the central platform.</p>
           </div>
           <div className="relative w-full sm:w-72">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -180,36 +180,36 @@ const TenantManagement = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name or code"
-              className="w-full h-10 pl-9 pr-3 rounded-lg border border-slate-200 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue"
+              className="w-full h-10 pl-9 pr-3 rounded-lg border border-border text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue"
             />
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-sm">
+          <table className="table-modern min-w-[820px]">
             <thead>
-              <tr className="bg-[#f8fafc] text-[#475569] text-xs">
-                <th className="px-5 py-3 font-semibold">Organization</th>
-                <th className="px-5 py-3 font-semibold">Plan</th>
-                <th className="px-5 py-3 font-semibold">Status</th>
-                <th className="px-5 py-3 font-semibold">CRM access</th>
-                <th className="px-5 py-3 font-semibold">Employees</th>
-                <th className="px-5 py-3 font-semibold">Accounts</th>
-                <th className="px-5 py-3 font-semibold">Created</th>
-                <th className="px-5 py-3 font-semibold text-right">Actions</th>
+              <tr>
+                <th>Organization</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>CRM access</th>
+                <th>Employees</th>
+                <th>Accounts</th>
+                <th>Created</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="py-14 text-center text-slate-500">
+                  <td colSpan="8" className="py-14 text-center text-secondary">
                     <Loader2 size={24} className="animate-spin text-vsph-core-blue mx-auto mb-2" />
                     Loading organizations...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-14 text-center text-slate-500">
+                  <td colSpan="8" className="py-14 text-center text-secondary">
                     {tenants.length === 0
                       ? 'No organizations yet. New commercial clients are onboarded at apps.vsph.in.'
                       : 'No organizations match your search.'}
@@ -217,73 +217,68 @@ const TenantManagement = () => {
                 </tr>
               ) : (
                 filtered.map((t) => (
-                  <tr key={t.tenant_id} className="hover:bg-[#F7FBFF] transition-colors">
-                    <td className="px-5 py-4">
+                  <tr key={t.tenant_id} className="hover:bg-vsph-light-blue/20 transition-colors">
+                    <td className="border-b border-border px-6 py-4">
                       <div className="flex items-center gap-3">
                         <span className="w-9 h-9 rounded-lg bg-vsph-light-blue/20 text-vsph-core-blue grid place-items-center shrink-0">
                           <Building2 size={18} />
                         </span>
                         <div className="min-w-0">
-                          <span className="block font-semibold text-vsph-navy truncate">{t.tenant_name}</span>
+                          <span className="block font-semibold text-sidebar truncate">{t.tenant_name}</span>
                           <span className="block text-xs text-slate-500 font-mono">{t.tenant_code}</span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="border-b border-border px-6 py-4">
                       <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-medium bg-vsph-light-blue/20 text-vsph-core-blue">
                         {t.tenant_plan}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="border-b border-border px-6 py-4">
                       <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
                         t.tenant_status === 'ACTIVE'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-rose-50 text-rose-700'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-rose-50 text-rose-700 border-rose-100'
                       }`}>
                         {t.tenant_status}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
-                      {(() => {
-                        const entitlement = t.tenant_entitlements?.[0]
-                        const status = entitlement?.entitlement_status
-                        const crew = {
-                          ACTIVE: 'bg-emerald-50 text-emerald-700',
-                          SUSPENDED: 'bg-amber-50 text-amber-700',
-                          EXPIRED: 'bg-rose-50 text-rose-700',
-                          REVOKED: 'bg-rose-50 text-rose-700',
-                          PENDING: 'bg-slate-100 text-slate-600',
-                        }
-                        return (
-                          <div className="space-y-1">
-                            <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${crew[status] || 'bg-rose-50 text-rose-700'}`}>
-                              {status || 'UNKNOWN'}
-                            </span>
-                            <span className="block text-[10px] text-slate-400">
-                              {t.external_organization_id ? `Synced ${t.tenant_sync_status || ''}`.trim() : 'Not linked to platform'}
-                            </span>
-                          </div>
-                        )
-                      })()}
+                    <td className="border-b border-border px-6 py-4">
+                      <div className="space-y-1">
+                        <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
+                          t.tenant_entitlements?.[0]?.entitlement_status === 'ACTIVE'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                            : t.tenant_entitlements?.[0]?.entitlement_status === 'SUSPENDED'
+                              ? 'bg-amber-50 text-amber-700 border-amber-100'
+                              : t.tenant_entitlements?.[0]?.entitlement_status === 'EXPIRED' || t.tenant_entitlements?.[0]?.entitlement_status === 'REVOKED'
+                                ? 'bg-rose-50 text-rose-700 border-rose-100'
+                                : 'bg-slate-50 text-slate-600 border-slate-100'
+                        }`}>
+                          {t.tenant_entitlements?.[0]?.entitlement_status || 'UNKNOWN'}
+                        </span>
+                        <span className="block text-[10px] text-secondary">
+                          {t.external_organization_id ? `Synced ${t.tenant_sync_status || ''}`.trim() : 'Not linked to platform'}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-5 py-4 text-slate-600">{t._count?.tenant_users ?? 0}</td>
-                    <td className="px-5 py-4 text-slate-600">{t._count?.tenant_accounts ?? 0}</td>
-                    <td className="px-5 py-4 text-slate-500 text-xs">
+                    <td className="border-b border-border px-6 py-4 text-slate-600">{t._count?.tenant_users ?? 0}</td>
+                    <td className="border-b border-border px-6 py-4 text-slate-600">{t._count?.tenant_accounts ?? 0}</td>
+                    <td className="border-b border-border px-6 py-4 text-slate-500 text-xs">
                       {t.tenant_created_at ? new Date(t.tenant_created_at).toLocaleDateString() : '—'}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="border-b border-border px-6 py-4">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link
                           to={`/superadmin/tenants/${t.tenant_id}/users`}
-                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-vsph-navy hover:border-vsph-core-blue hover:text-vsph-core-blue transition-colors"
+                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-xs font-semibold text-sidebar hover:border-vsph-core-blue hover:text-vsph-core-blue transition-colors"
                           title="Manage employees"
                         >
                           <Users size={15} /> Employees
                         </Link>
-                        <button onClick={() => openEdit(t)} className="p-2 rounded-lg text-slate-500 hover:text-vsph-core-blue hover:bg-vsph-light-blue/20" title="Edit organization">
+                        <button onClick={() => openEdit(t)} className="p-2 rounded-md text-slate-500 hover:text-vsph-core-blue hover:bg-vsph-light-blue/20 transition-colors" title="Edit organization">
                           <Edit3 size={16} />
                         </button>
-                        <button onClick={() => deleteTenant(t)} className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50" title="Delete organization">
+                        <button onClick={() => deleteTenant(t)} className="p-2 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Delete organization">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -298,18 +293,18 @@ const TenantManagement = () => {
 
       {/* Create / edit modal */}
       {formOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-vsph-navy/50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-sidebar/60 backdrop-blur-sm p-4">
+          <div className="bg-surface rounded-xl border border-border w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <div>
-                <h2 className="text-vsph-navy text-lg font-semibold">{editing ? 'Edit organization' : 'Internal support: new organization'}</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h2 className="text-sidebar text-lg font-semibold">{editing ? 'Edit organization' : 'Internal support: new organization'}</h2>
+                <p className="text-xs text-secondary mt-0.5">
                   {editing
                     ? 'Update the organization. CRM access is controlled by platform entitlement.'
                     : 'Commercial onboarding belongs at apps.vsph.in. Use this only for support or repair.'}
                 </p>
               </div>
-              <button onClick={closeForm} className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-vsph-navy" aria-label="Close">
+              <button onClick={closeForm} className="p-2 rounded-md border border-border text-slate-400 hover:text-sidebar hover:bg-vsph-light-blue/20 transition-colors" aria-label="Close">
                 <X size={18} />
               </button>
             </div>
@@ -326,7 +321,7 @@ const TenantManagement = () => {
                 <input id="tenant_code" required value={formData.tenant_code}
                   onChange={(e) => setFormData({ ...formData, tenant_code: e.target.value.toUpperCase() })}
                   className={`${input} font-mono`} placeholder="e.g. ACME001" />
-                <p className="text-xs text-slate-500 mt-1.5">A short unique code used to identify this organization.</p>
+                <p className="text-xs text-secondary mt-1.5">A short unique code used to identify this organization.</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -349,10 +344,10 @@ const TenantManagement = () => {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button type="button" onClick={closeForm} className="h-11 px-5 rounded-lg border border-vsph-navy text-vsph-navy text-sm font-semibold hover:bg-vsph-navy hover:text-white transition-colors">
+                <button type="button" onClick={closeForm} className="h-11 px-5 rounded-lg border border-border text-sidebar text-sm font-semibold hover:bg-sidebar hover:text-white transition-colors">
                   Cancel
                 </button>
-                <button type="submit" disabled={saving} className="h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] inline-flex items-center gap-2 disabled:opacity-60">
+                <button type="submit" disabled={saving} className="h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-vsph-navy inline-flex items-center gap-2 disabled:opacity-60">
                   {saving ? <Loader2 size={16} className="animate-spin" /> : editing ? <Save size={16} /> : <Plus size={16} />}
                   {editing ? 'Save changes' : 'Create organization'}
                 </button>

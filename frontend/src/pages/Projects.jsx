@@ -104,11 +104,11 @@ const Projects = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-vsph-grey animate-fade-in relative overflow-hidden">
-      <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-200 shrink-0 z-10">
+    <div className="flex flex-col h-full bg-page-bg animate-fade-in relative overflow-hidden">
+      <div className="flex items-center justify-between px-8 py-6 surface border-b border-border shrink-0 z-10">
         <div className="flex flex-col gap-1">
-          <h1 className="text-vsph-navy text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-slate-500 text-sm font-medium mt-0.5">
+          <h1 className="text-sidebar text-2xl font-bold tracking-tight">Projects</h1>
+          <p className="text-secondary text-sm font-medium mt-0.5">
             Manage your delivery projects and initiatives
           </p>
         </div>
@@ -123,7 +123,7 @@ const Projects = () => {
               { label: "Date", value: (row) => row.project_date && new Date(row.project_date).toLocaleDateString() },
               { label: "Status", value: (row) => row.project_is_active },
             ])}
-            className="gap-2 font-medium text-slate-600 border border-slate-200"
+            className="gap-2 font-medium text-secondary border border-border"
           >
             <Download size={16} className="text-slate-500" /> Export
           </Button>
@@ -138,7 +138,7 @@ const Projects = () => {
         </div>
       </div>
 
-      <div className="px-8 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
+      <div className="px-8 py-4 border-b border-border surface flex items-center justify-between shrink-0">
         <div className="relative w-80">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
             <Search size={18} className="text-slate-400" />
@@ -146,7 +146,7 @@ const Projects = () => {
           <input
             type="text"
             placeholder="Search projects&hellip;"
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue"
+            className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -157,7 +157,7 @@ const Projects = () => {
               variant="ghost"
               size="sm"
               onClick={handleBulkDelete}
-              className="gap-2 font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50"
+              className="gap-2 font-semibold text-danger border border-rose-100 hover:bg-rose-50"
             >
               <Trash2 size={16} /> Delete selected ({selectedRows.length})
             </Button>
@@ -166,110 +166,112 @@ const Projects = () => {
       </div>
 
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
-        <div className="card flex-1 flex flex-col overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm">
+        <div className="card flex-1 flex flex-col overflow-hidden">
           <div className="overflow-auto flex-1">
-            <table className="w-full text-left text-sm border-collapse" style={{ tableLayout: "fixed" }}>
-              <thead className="sticky top-0 z-10 bg-vsph-grey shadow-[0_1px_0_rgba(0,0,0,0.05)]">
-                <tr>
-                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-10 min-w-[44px] max-w-[44px] text-center z-10">
-                    <input
-                      type="checkbox"
-                      className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
-                      checked={selectAll}
-                      onChange={toggleSelectAll}
-                    />
-                  </th>
-                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-80 min-w-[240px]">Project Name</th>
-                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Type</th>
-                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Location</th>
-                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-48 min-w-[144px]">Date</th>
-                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-40 min-w-[128px] text-center">Status</th>
-                  <th className="border-b border-slate-200 px-6 py-3 bg-vsph-grey w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {loading ? (
+            <div className="table-container">
+              <table className="table-modern" style={{ tableLayout: "fixed" }}>
+                <thead className="sticky top-0 z-10">
                   <tr>
-                    <td colSpan="7" className="py-24 text-center text-slate-500">
-                      <div className="flex flex-col items-center justify-center gap-3">
-                        <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
-                        <p className="text-sm font-medium">Loading projects&hellip;</p>
-                      </div>
-                    </td>
+                    <th className="w-10 min-w-[44px] max-w-[44px] text-center z-10">
+                      <input
+                        type="checkbox"
+                        className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
+                        checked={selectAll}
+                        onChange={toggleSelectAll}
+                      />
+                    </th>
+                    <th className="w-80 min-w-[240px]">Project Name</th>
+                    <th className="w-48 min-w-[144px]">Type</th>
+                    <th className="w-48 min-w-[144px]">Location</th>
+                    <th className="w-48 min-w-[144px]">Date</th>
+                    <th className="w-40 min-w-[128px] text-center">Status</th>
+                    <th className="w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
                   </tr>
-                ) : projectsData.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="py-24 text-center text-slate-500 font-medium">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Layers size={48} className="text-slate-200 mx-auto" />
-                        <p>No projects found.</p>
-                        <button
-                          onClick={() => setIsAddModalOpen(true)}
-                          className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
-                        >
-                          Add your first project
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  projectsData.map((proj) => (
-                    <tr
-                      key={proj.project_id}
-                      className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(proj.project_id) ? "bg-vsph-light-blue/30" : ""}`}
-                    >
-                      <td className="border-b border-slate-100 px-6 py-4 text-center">
-                        <input
-                          type="checkbox"
-                          className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
-                          checked={selectedRows.includes(proj.project_id)}
-                          onChange={(e) => { e.stopPropagation(); toggleRow(proj.project_id); }}
-                        />
+                </thead>
+                <tbody className="divide-y divide-border bg-surface">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="7" className="py-24 text-center text-secondary">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
+                          <p className="text-sm font-medium">Loading projects&hellip;</p>
+                        </div>
                       </td>
-                      <td className="border-b border-slate-100 px-6 py-4 font-medium text-vsph-navy truncate">
-                        {proj.project_name || "-"}
-                      </td>
-                      <td className="border-b border-slate-100 px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${proj.project_type === "INBOUND" ? "bg-vsph-light-blue/20 text-vsph-core-blue" : "bg-vsph-grey text-vsph-navy"}`}>
-                          {proj.project_type?.replace(/_/g, " ") || "-"}
-                        </span>
-                      </td>
-                      <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
-                        {proj.project_location || "-"}
-                      </td>
-                      <td className="border-b border-slate-100 px-6 py-4 text-slate-600 truncate">
-                        {proj.project_date ? new Date(proj.project_date).toLocaleDateString() : "-"}
-                      </td>
-                      <td className="border-b border-slate-100 px-6 py-4 text-center">
-                        {statusBadge(proj.project_is_active)}
-                      </td>
-                      <td className={`px-6 py-4 text-center sticky right-0 group-hover:bg-vsph-light-blue/20 shadow-[-1px_0_0_rgba(0,0,0,0.05)] ${selectedRows.includes(proj.project_id) ? "bg-vsph-light-blue/30" : "bg-white"}`}>
-                        <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                    </tr>
+                  ) : projectsData.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="py-24 text-center text-secondary font-medium">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <Layers size={48} className="text-slate-200 mx-auto" />
+                          <p>No projects found.</p>
                           <button
-                            className="p-2 bg-vsph-grey hover:bg-vsph-light-blue/30 rounded text-slate-500 hover:text-vsph-core-blue transition-colors"
-                            title="Edit"
-                            onClick={(e) => { e.stopPropagation(); setProjectToEdit(proj); setIsAddModalOpen(true); }}
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
                           >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            className="p-2 bg-rose-50 hover:bg-rose-100 rounded text-rose-500 hover:text-rose-600 transition-colors"
-                            title="Delete"
-                            onClick={(e) => { e.stopPropagation(); handleDelete(proj); }}
-                          >
-                            <Trash2 size={16} />
+                            Add your first project
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    projectsData.map((proj) => (
+                      <tr
+                        key={proj.project_id}
+                        className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(proj.project_id) ? "bg-vsph-light-blue/30" : ""}`}
+                      >
+                        <td className="border-b border-border px-6 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
+                            checked={selectedRows.includes(proj.project_id)}
+                            onChange={(e) => { e.stopPropagation(); toggleRow(proj.project_id); }}
+                          />
+                        </td>
+                        <td className="border-b border-border px-6 py-4 font-medium text-sidebar truncate">
+                          {proj.project_name || "-"}
+                        </td>
+                        <td className="border-b border-border px-6 py-4">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${proj.project_type === "INBOUND" ? "bg-vsph-light-blue/20 text-vsph-core-blue" : "bg-vsph-grey text-vsph-navy"}`}>
+                            {proj.project_type?.replace(/_/g, " ") || "-"}
+                          </span>
+                        </td>
+                        <td className="border-b border-border px-6 py-4 text-slate-600 truncate">
+                          {proj.project_location || "-"}
+                        </td>
+                        <td className="border-b border-border px-6 py-4 text-slate-600 truncate">
+                          {proj.project_date ? new Date(proj.project_date).toLocaleDateString() : "-"}
+                        </td>
+                        <td className="border-b border-border px-6 py-4 text-center">
+                          {statusBadge(proj.project_is_active)}
+                        </td>
+                        <td className={`px-6 py-4 text-center sticky right-0 group-hover:bg-vsph-light-blue/20 shadow-[-1px_0_0_rgba(0,0,0,0.05)] ${selectedRows.includes(proj.project_id) ? "bg-vsph-light-blue/30" : "bg-surface"}`}>
+                          <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                            <button
+                              className="btn-icon"
+                              title="Edit"
+                              onClick={(e) => { e.stopPropagation(); setProjectToEdit(proj); setIsAddModalOpen(true); }}
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              className="p-2 rounded text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                              title="Delete"
+                              onClick={(e) => { e.stopPropagation(); handleDelete(proj); }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div className="px-8 py-4 border-t border-slate-200 flex items-center justify-between bg-vsph-grey shrink-0">
-            <span className="text-xs text-slate-500 font-medium">
+          <div className="px-8 py-4 border-t border-border surface flex items-center justify-between shrink-0">
+            <span className="text-xs text-secondary font-medium">
               Showing {totalRecords === 0 ? 0 : (currentPage - 1) * limit + 1} to{" "}
               {Math.min(currentPage * limit, totalRecords)} of {totalRecords} records
             </span>

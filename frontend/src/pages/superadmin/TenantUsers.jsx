@@ -60,16 +60,16 @@ const TenantUsers = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 bg-page-bg">
         <Loader2 size={28} className="animate-spin text-vsph-core-blue" />
-        <p className="mt-3 text-sm text-vsph-navy">Loading organization...</p>
+        <p className="mt-3 text-sm text-sidebar">Loading organization...</p>
       </div>
     )
   }
 
   return (
-    <div className="animate-fade-in">
-      <Link to="/superadmin/tenants" className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-vsph-core-blue mb-5">
+    <div className="animate-fade-in bg-page-bg min-h-screen">
+      <Link to="/superadmin/tenants" className="inline-flex items-center gap-2 text-sm font-medium text-secondary hover:text-vsph-core-blue mb-5">
         <ArrowLeft size={16} /> Back to organizations
       </Link>
 
@@ -80,88 +80,88 @@ const TenantUsers = () => {
           </span>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-vsph-navy text-3xl font-semibold tracking-tight">{tenant?.tenant_name || 'Organization'}</h1>
+              <h1 className="text-sidebar text-3xl font-semibold tracking-tight">{tenant?.tenant_name || 'Organization'}</h1>
               <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
-                tenant?.tenant_status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                tenant?.tenant_status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
               }`}>
                 {tenant?.tenant_status || '—'}
               </span>
             </div>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-secondary mt-1">
               <span className="font-mono">{tenant?.tenant_code}</span>
               <span className="mx-2 text-slate-300">•</span>
               {tenant?.tenant_plan} plan
               {tenant?.tenant_entitlements?.[0] && (
-                <span className="ml-2 font-semibold text-vsph-navy">
+                <span className="ml-2 font-semibold text-sidebar">
                   · CRM {tenant.tenant_entitlements[0].entitlement_status}
                 </span>
               )}
             </p>
           </div>
         </div>
-        <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-[#0054A4] transition-colors shrink-0 shadow-sm shadow-vsph-core-blue/20">
+        <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-vsph-core-blue text-white text-sm font-semibold hover:bg-vsph-navy transition-colors shrink-0 shadow-sm shadow-vsph-core-blue/20">
           <UserPlus size={17} /> Create employee
         </button>
       </div>
 
       {tenant?.external_organization_id && (
-        <div className="mb-6 rounded-xl bg-[#F7FBFF] border border-[#CFE1F1] p-4 text-sm text-slate-600">
-          This organization is linked to <span className="font-semibold text-vsph-navy">apps.vsph.in</span>.
+        <div className="mb-6 rounded-xl bg-vsph-core-blue/5 border border-vsph-core-blue/20 p-4 text-sm text-secondary">
+          This organization is linked to <span className="font-semibold text-sidebar">apps.vsph.in</span>.
           Manage its identity, subscription and CRM entitlement there. Employee actions here are internal support only.
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="card border-border p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold tracking-[0.12em] text-slate-400">EMPLOYEES</p>
-              <p className="text-3xl font-semibold text-vsph-navy mt-1">{users.length}</p>
+              <p className="text-[11px] font-bold tracking-[0.12em] text-secondary uppercase">EMPLOYEES</p>
+              <p className="text-3xl font-semibold text-sidebar mt-1">{users.length}</p>
             </div>
             <Users size={22} className="text-vsph-core-blue" />
           </div>
         </div>
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="card border-border p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold tracking-[0.12em] text-slate-400">ACTIVE</p>
-              <p className="text-3xl font-semibold text-vsph-navy mt-1">{users.filter((u) => u.user_status).length}</p>
+              <p className="text-[11px] font-bold tracking-[0.12em] text-secondary uppercase">ACTIVE</p>
+              <p className="text-3xl font-semibold text-sidebar mt-1">{users.filter((u) => u.user_status).length}</p>
             </div>
             <ShieldCheck size={22} className="text-emerald-500" />
           </div>
         </div>
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="card border-border p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold tracking-[0.12em] text-slate-400">CRM ACCOUNTS</p>
-              <p className="text-3xl font-semibold text-vsph-navy mt-1">{tenant?._count?.tenant_accounts ?? 0}</p>
+              <p className="text-[11px] font-bold tracking-[0.12em] text-secondary uppercase">CRM ACCOUNTS</p>
+              <p className="text-3xl font-semibold text-sidebar mt-1">{tenant?._count?.tenant_accounts ?? 0}</p>
             </div>
-            <LayoutGrid size={22} className="text-vsph-navy" />
+            <LayoutGrid size={22} className="text-sidebar" />
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-        <div className="p-5 border-b border-slate-100">
-          <h2 className="text-vsph-navy text-lg font-semibold">Employees</h2>
-          <p className="text-sm text-slate-500 mt-0.5">People at this organization who can sign in to the CRM.</p>
+      <div className="card border-border">
+        <div className="p-5 border-b border-border">
+          <h2 className="text-sidebar text-lg font-semibold">Employees</h2>
+          <p className="text-sm text-secondary mt-0.5">People at this organization who can sign in to the CRM.</p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="table-modern min-w-[720px]">
             <thead>
-              <tr className="bg-[#f8fafc] text-[#475569] text-xs">
-                <th className="px-5 py-3 font-semibold">Name</th>
-                <th className="px-5 py-3 font-semibold">Email</th>
-                <th className="px-5 py-3 font-semibold">Role</th>
-                <th className="px-5 py-3 font-semibold">Department</th>
-                <th className="px-5 py-3 font-semibold">Status</th>
-                <th className="px-5 py-3 font-semibold text-right">Actions</th>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-14 text-center text-slate-500">
+                  <td colSpan="6" className="py-14 text-center text-secondary">
                     <div className="flex flex-col items-center gap-3">
                       <Mail size={24} className="text-slate-300" />
                       <p>No employees yet. Create the first person who will sign in to this organization's CRM.</p>
@@ -173,10 +173,10 @@ const TenantUsers = () => {
                 </tr>
               ) : (
                 users.map((u) => (
-                  <tr key={u.user_id} className="hover:bg-[#F7FBFF] transition-colors">
-                    <td className="px-5 py-4 font-semibold text-vsph-navy">{u.user_name}</td>
-                    <td className="px-5 py-4 text-slate-600">{u.user_email}</td>
-                    <td className="px-5 py-4">
+                  <tr key={u.user_id} className="hover:bg-vsph-light-blue/20 transition-colors">
+                    <td className="border-b border-border px-5 py-4 font-semibold text-sidebar">{u.user_name}</td>
+                    <td className="border-b border-border px-5 py-4 text-slate-600">{u.user_email}</td>
+                    <td className="border-b border-border px-5 py-4">
                       <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-medium bg-vsph-light-blue/20 text-vsph-core-blue">
                         {u.user_role?.replace(/_/g, ' ')}
                       </span>
@@ -186,20 +186,20 @@ const TenantUsers = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-slate-600">{u.user_department?.replace(/_/g, ' ')}</td>
-                    <td className="px-5 py-4">
+                    <td className="border-b border-border px-5 py-4 text-slate-600">{u.user_department?.replace(/_/g, ' ')}</td>
+                    <td className="border-b border-border px-5 py-4">
                       <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
-                        u.user_status ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                        u.user_status ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
                       }`}>
                         {u.user_status ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="border-b border-border px-5 py-4">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button onClick={() => openEdit(u)} className="p-2 rounded-lg text-slate-500 hover:text-vsph-core-blue hover:bg-vsph-light-blue/20" title="Edit employee">
+                        <button onClick={() => openEdit(u)} className="p-2 rounded-md text-slate-500 hover:text-vsph-core-blue hover:bg-vsph-light-blue/20 transition-colors" title="Edit employee">
                           <Edit3 size={16} />
                         </button>
-                        <button onClick={() => deleteUser(u)} className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50" title="Delete employee">
+                        <button onClick={() => deleteUser(u)} className="p-2 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Delete employee">
                           <Trash2 size={16} />
                         </button>
                       </div>

@@ -84,7 +84,7 @@ const DashboardV2 = () => {
           value: metrics.accounts,
           hint: "Active records",
           icon: Briefcase,
-          tone: "bg-vsph-navy/10 text-vsph-navy border-vsph-navy/20",
+          tone: "bg-sidebar/10 text-sidebar border-sidebar/20",
         },
         metrics.contacts !== null && {
           key: "contacts",
@@ -117,24 +117,24 @@ const DashboardV2 = () => {
   const hasRecent = (metrics?.recentOpportunities?.length || 0) + (metrics?.recentTasks?.length || 0) > 0;
 
   const quickActions = [
-    { label: "New Contact", path: "/v2/contacts", icon: Users, module: "CONTACTS", color: "bg-vsph-core-blue/10 text-vsph-core-blue" },
-    { label: "New Account", path: "/v2/accounts", icon: Briefcase, module: "ACCOUNTS", color: "bg-vsph-navy/10 text-vsph-navy" },
-    { label: "New Opportunity", path: "/v2/opportunities", icon: TrendingUp, module: "OPPORTUNITIES", color: "bg-amber-50 text-amber-600" },
-    { label: "New Task", path: "/v2/tasks", icon: ListChecks, module: "TASKS", color: "bg-rose-50 text-rose-600" },
-    { label: "New Campaign", path: "/v2/campaigns", icon: Megaphone, module: "CAMPAIGNS", color: "bg-vsph-light-blue/20 text-vsph-core-blue" },
-    { label: "New Project", path: "/v2/projects", icon: Layers, module: "PROJECTS", color: "bg-vsph-grey text-vsph-navy" },
+    { label: "New Contact", path: "/v2/contacts", icon: Users, module: "CONTACTS", color: "bg-vsph-core-blue/10 text-vsph-core-blue border-vsph-core-blue/20" },
+    { label: "New Account", path: "/v2/accounts", icon: Briefcase, module: "ACCOUNTS", color: "bg-sidebar/10 text-sidebar border-sidebar/20" },
+    { label: "New Opportunity", path: "/v2/opportunities", icon: TrendingUp, module: "OPPORTUNITIES", color: "bg-amber-50 text-amber-600 border-amber-100" },
+    { label: "New Task", path: "/v2/tasks", icon: ListChecks, module: "TASKS", color: "bg-rose-50 text-rose-600 border-rose-100" },
+    { label: "New Campaign", path: "/v2/campaigns", icon: Megaphone, module: "CAMPAIGNS", color: "bg-vsph-light-blue/20 text-vsph-core-blue border-vsph-light-blue/20" },
+    { label: "New Project", path: "/v2/projects", icon: Layers, module: "PROJECTS", color: "bg-vsph-grey text-vsph-navy border-border" },
   ];
 
   return (
-    <div className="min-h-full bg-vsph-grey p-4 sm:p-6 lg:p-8 font-sans">
+    <div className="min-h-full bg-page-bg p-4 sm:p-6 lg:p-8 font-sans">
       <div className="max-w-[1400px] mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold text-vsph-core-blue uppercase tracking-wider">{today}</p>
-            <h1 className="text-2xl sm:text-3xl font-bold text-vsph-navy tracking-tight mt-1">
+            <p className="text-[10px] font-semibold text-vsph-core-blue uppercase tracking-wider">{today}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-sidebar tracking-tight mt-1">
               Welcome back, {userName}
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-secondary text-sm mt-1">
               Signed in as {userRole}. Here is your workspace at a glance.
             </p>
           </div>
@@ -153,21 +153,23 @@ const DashboardV2 = () => {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-slate-500">
+          <div className="flex items-center justify-center py-24 text-secondary">
             <Loader2 size={26} className="animate-spin text-vsph-core-blue mr-3" /> Loading dashboard...
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {cards.map((card) => (
-                <div key={card.key} className="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4 hover:shadow-md transition-shadow">
-                  <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${card.tone}`}>
-                    <card.icon size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{card.label}</p>
-                    <p className="text-3xl font-bold text-vsph-navy leading-tight mt-1">{card.value}</p>
-                    <p className="text-xs text-slate-400 mt-1">{card.hint}</p>
+                <div key={card.key} className={`kpi-card ${card.tone} hover:shadow-md transition-shadow duration-200`}>
+                  <div className="flex items-start gap-4">
+                    <div className={`kpi-card-icon ${card.tone.replace('/10', '/10').replace('bg-', 'bg-')}`}>
+                      <card.icon size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider">{card.label}</p>
+                      <p className="text-2xl font-bold text-sidebar leading-none mt-0.5">{card.value}</p>
+                      <p className="text-[10px] text-secondary mt-1">{card.hint}</p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -175,27 +177,27 @@ const DashboardV2 = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Pipeline */}
-              <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 p-5">
+              <div className="lg:col-span-4 card border-border p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-vsph-navy">Pipeline</h2>
-                  <span className="text-xs text-slate-500">{totalPipeline} opportunities</span>
+                  <h2 className="font-bold text-sidebar">Pipeline</h2>
+                  <span className="text-[10px] text-secondary">{totalPipeline} opportunities</span>
                 </div>
 
                 {!metrics.pipeline ? (
-                  <p className="text-sm text-slate-500">You do not have access to opportunities.</p>
+                  <p className="text-sm text-secondary">You do not have access to opportunities.</p>
                 ) : metrics.pipeline.length === 0 ? (
-                  <p className="text-sm text-slate-500">No opportunities yet.</p>
+                  <p className="text-sm text-secondary">No opportunities yet.</p>
                 ) : (
                   <div className="space-y-4">
                     {metrics.pipeline.map((row) => {
                       const percent = totalPipeline ? Math.round((row.count / totalPipeline) * 100) : 0;
                       return (
                         <div key={row.stage}>
-                          <div className="flex justify-between text-xs mb-1.5">
+                          <div className="flex justify-between text-[10px] mb-1.5">
                             <span className="font-medium text-slate-600">{label(row.stage)}</span>
                             <span className="text-slate-500">{row.count}</span>
                           </div>
-                          <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                          <div className="h-1.5 rounded-full bg-vsph-grey overflow-hidden">
                             <div
                               className={`h-full rounded-full ${STAGE_COLORS[row.stage] || "bg-slate-400"}`}
                               style={{ width: `${Math.max(percent, row.count ? 4 : 0)}%` }}
@@ -209,14 +211,14 @@ const DashboardV2 = () => {
               </div>
 
               {/* Quick actions */}
-              <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 p-5">
-                <h2 className="font-bold text-vsph-navy mb-4">Quick actions</h2>
+              <div className="lg:col-span-4 card border-border p-5">
+                <h2 className="font-bold text-sidebar mb-4">Quick actions</h2>
                 <div className="grid grid-cols-2 gap-3">
                   {quickActions.filter((a) => hasModule(a.module)).map((action) => (
                     <Link
                       key={action.label}
                       to={action.path}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border border-slate-200 text-sm text-vsph-navy font-medium hover:bg-vsph-grey hover:text-vsph-core-blue transition-colors ${action.color}`}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border text-sm text-sidebar font-medium hover:bg-vsph-grey hover:text-vsph-core-blue transition-colors ${action.color}`}
                     >
                       <action.icon size={16} />
                       {action.label}
@@ -226,44 +228,44 @@ const DashboardV2 = () => {
               </div>
 
               {/* Recent activity */}
-              <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 p-5">
+              <div className="lg:col-span-4 card border-border p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-vsph-navy">Recent activity</h2>
+                  <h2 className="font-bold text-sidebar">Recent activity</h2>
                   {metrics.recentOpportunities && (
-                    <Link to="/v2/opportunities" className="text-xs font-semibold text-vsph-core-blue hover:underline inline-flex items-center gap-1">
+                    <Link to="/v2/opportunities" className="text-[10px] font-semibold text-vsph-core-blue hover:underline inline-flex items-center gap-1">
                       View all <ArrowRight size={13} />
                     </Link>
                   )}
                 </div>
 
                 {!hasRecent ? (
-                  <p className="text-sm text-slate-500">No activity to show yet.</p>
+                  <p className="text-sm text-secondary">No activity to show yet.</p>
                 ) : (
                   <div className="space-y-4">
                     {metrics.recentOpportunities?.map((opp) => (
-                      <div key={opp.opportunity_id} className="flex items-center justify-between gap-3 border-b border-slate-100 last:border-0 pb-3 last:pb-0">
+                      <div key={opp.opportunity_id} className="flex items-center justify-between gap-3 border-b border-border last:border-0 pb-3 last:pb-0">
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-vsph-navy truncate">{opp.opportunity_name}</p>
-                          <p className="text-xs text-slate-500 truncate">
+                          <p className="text-sm font-semibold text-sidebar truncate">{opp.opportunity_name}</p>
+                          <p className="text-[10px] text-secondary truncate">
                             {opp.opportunity_account?.account_name || "No account"} · {opp.opportunity_owner?.user_name || "Unassigned"}
                           </p>
                         </div>
-                        <span className="text-[11px] font-semibold px-2 py-1 rounded bg-vsph-grey text-vsph-navy shrink-0">
+                        <span className="text-[10px] font-semibold px-2 py-1 rounded bg-vsph-grey text-vsph-navy shrink-0">
                           {label(opp.opportunity_stage)}
                         </span>
                       </div>
                     ))}
 
                     {metrics.recentTasks?.map((task) => (
-                      <div key={task.task_id} className="flex items-center justify-between gap-3 border-b border-slate-100 last:border-0 pb-3 last:pb-0">
+                      <div key={task.task_id} className="flex items-center justify-between gap-3 border-b border-border last:border-0 pb-3 last:pb-0">
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-vsph-navy truncate">{task.task_subject || "Untitled task"}</p>
-                          <p className="text-xs text-slate-500 truncate">
+                          <p className="text-sm font-semibold text-sidebar truncate">{task.task_subject || "Untitled task"}</p>
+                          <p className="text-[10px] text-secondary truncate">
                             {task.user?.user_name || "Unassigned"}
                             {task.task_due_date ? ` · due ${new Date(task.task_due_date).toLocaleDateString()}` : ""}
                           </p>
                         </div>
-                        <span className={`text-[11px] font-semibold px-2 py-1 rounded shrink-0 ${PRIORITY_COLORS[task.task_priority] || "bg-vsph-grey text-slate-600"}`}>
+                        <span className={`text-[10px] font-semibold px-2 py-1 rounded shrink-0 ${PRIORITY_COLORS[task.task_priority] || "bg-vsph-grey text-slate-600"}`}>
                           {label(task.task_priority)}
                         </span>
                       </div>
