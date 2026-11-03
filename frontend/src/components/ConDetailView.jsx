@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../utils/api";
 import {
   MoreHorizontal,
@@ -12,16 +13,26 @@ import {
   Clock,
   ChevronDown,
   User,
+  ExternalLink,
 } from "lucide-react";
 import Button from "./ui/Button";
+import AddContactModal from "./modals/AddContactModal";
+import AddCampaignModal from "./modals/AddCampaignModal";
 
 const ConDetailView = ({ isOpen, onClose, contactId }) => {
+  const navigate = useNavigate();
   const [contactData, setContactData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState("Details");
   const [activeSidebarTab, setActiveSidebarTab] = useState("Call");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentUser, setCurrentUser] = useState(null);
+
+  // Modal states
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const [addCampaignOpen, setAddCampaignOpen] = useState(false);
+  const [editContactOpen, setEditContactOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   // New State for calls
   const [callSubject, setCallSubject] = useState("");
@@ -30,7 +41,7 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
   const [callsList, setCallsList] = useState([]);
   const [taskSubject, setTaskSubject] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
-  const [taskPriority, setTaskPriority] = useState("NORMAL"); // NORMAL, HIGH, LOW
+  const [taskPriority, setTaskPriority] = useState("NORMAL");
   const [taskDueDate, setTaskDueDate] = useState("");
   const [taskDueTimeHH, setTaskDueTimeHH] = useState("12");
   const [taskDueTimeMM, setTaskDueTimeMM] = useState("00");
@@ -176,7 +187,6 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
 
       setTasksList((prev) => [taskToPush, ...prev]);
 
-      // Reset form
       setTaskSubject("");
       setTaskDescription("");
       setTaskPriority("NORMAL");
@@ -188,6 +198,30 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
       console.error("Error saving task:", err);
     } finally {
       setSavingTask(false);
+    }
+  };
+
+  const handleEditContact = () => {
+    setEditContactOpen(true);
+  };
+
+  const handleDeleteContact = () => {
+    if (window.confirm(`Delete contact "${fullName}"?`)) {
+      api.delete(`/api/contacts/${contactId}`).then((res) => {
+        if (res.success) {
+          onClose();
+        }
+      });
+    }
+  };
+
+  const handleAddToCampaign = () => {
+    setAddCampaignOpen(true);
+  };
+
+  const handleViewAccount = () => {
+    if (contactData?.contact_account_fk) {
+      navigate(`/v2/accounts?account_id=${contactData.contact_account_fk}`);
     }
   };
 
@@ -242,7 +276,7 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                 <div>
                   <div className="text-[13px] text-blue-600 mb-1 font-semibold flex items-center gap-2">
                     <span
-                      onClick={onClose}
+                      onClick={() => navigate("/v2/contacts")}
                       className="hover:underline cursor-pointer"
                     >
                       Contacts
@@ -258,7 +292,10 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                     <span className="text-slate-300">•</span>
                     <span>{title}</span>
                     <span className="text-slate-300">•</span>
-                    <span className="text-blue-600 cursor-pointer hover:underline">
+                    <span
+                      className="text-blue-600 cursor-pointer hover:underline"
+                      onClick={handleViewAccount}
+                    >
                       {accountName}
                     </span>
                   </p>
@@ -266,25 +303,44 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
 
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="secondary"
+                    variant="primary"
                     size="sm"
-                    className="gap-2 text-blue-600 font-semibold border-slate-300"
+                    onClick={handleAddToCampaign}
+                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
                   >
                     <UserPlus size={14} strokeWidth={2.5} /> Add to Campaign
                   </Button>
                   <Button
                     variant="primary"
                     size="sm"
-                    className="gap-2 font-semibold bg-blue-600"
+                    onClick={handleEditContact}
+                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
                   >
                     <Edit size={14} strokeWidth={2.5} /> Edit
                   </Button>
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="border-slate-300 px-2"
+                    onClick={() => setMoreMenuOpen(true)}
+                    className="border-slate-300 px-2 relative"
                   >
                     <MoreHorizontal size={14} className="text-slate-600" />
+                    {moreMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
+                        <button
+                          onClick={() => { setMoreMenuOpen(false); handleEditContact(); }}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                        >
+                          Edit Contact
+                        </button>
+                        <button
+                          onClick={() => { setMoreMenuOpen(false); handleDeleteContact(); }}
+                          className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        >
+                          Delete Contact
+                        </button>
+                      </div>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -316,7 +372,10 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                   <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                     Account
                   </span>
-                  <span className="text-sm font-semibold text-blue-600 hover:underline cursor-pointer">
+                  <span
+                    className="text-sm font-semibold text-blue-600 hover:underline cursor-pointer"
+                    onClick={handleViewAccount}
+                  >
                     {accountName}
                   </span>
                 </div>
@@ -374,24 +433,25 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                       left={{
                         label: "First Name",
                         value: contactData.contact_firstname || "—",
-                        isLink: true,
+                        isLink: false,
                       }}
                       right={{
                         label: "Contact Owner",
                         value: owner,
-                        isLink: true,
+                        isLink: false,
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Last Name",
                         value: contactData.contact_lastname || "—",
-                        isLink: true,
+                        isLink: false,
                       }}
                       right={{
                         label: "Campaign",
                         value:
                           contactData.contact_campaign?.campaign_name || "—",
+                        isLink: false,
                       }}
                     />
                     <GridRow
@@ -400,31 +460,41 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                         value: accountName,
                         isLink: true,
                         icon: <Edit size={12} className="ml-1 opacity-50" />,
+                        onClick: handleViewAccount,
                       }}
                       right={{
                         label: "Project Name",
                         value: contactData.contact_project?.project_name || "—",
+                        isLink: false,
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Designation",
                         value: title,
-                        isLink: true,
+                        isLink: false,
                       }}
                       right={{
                         label: "Call Status",
                         value: contactData.contact_call_status || "—",
+                        isLink: false,
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Email ID (Professional)",
                         value: contactData.contact_professional_email || "—",
+                        isLink: !!contactData.contact_professional_email,
+                        onClick: () => {
+                          if (contactData.contact_professional_email) {
+                            window.location.href = `mailto:${contactData.contact_professional_email}`;
+                          }
+                        },
                       }}
                       right={{
                         label: "Partner Name",
                         value: contactData.contact_partner_name || "—",
+                        isLink: false,
                       }}
                     />
                     <GridRow
@@ -435,23 +505,29 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                           contactData.contact_phone ||
                           "—",
                         isLink: true,
+                        onClick: () => {
+                          const phone =
+                            contactData.contact_mobile ||
+                            contactData.contact_phone;
+                          if (phone) window.location.href = `tel:${phone}`;
+                        },
                       }}
                       right={{
                         label: "Email Status",
                         value: contactData.contact_email_status || "Not Found",
-                        isLink: true,
+                        isLink: false,
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Department",
                         value: contactData.contact_department || "—",
-                        isLink: true,
+                        isLink: false,
                       }}
                       right={{
                         label: "Number Status",
                         value: contactData.contact_phone_status || "Generated",
-                        isLink: true,
+                        isLink: false,
                       }}
                     />
                     <GridRow
@@ -461,41 +537,68 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                           ? "View Profile"
                           : "—",
                         isLink: !!contactData.contact_profile_link,
+                        onClick: () => {
+                          if (contactData.contact_profile_link) {
+                            window.open(contactData.contact_profile_link, "_blank");
+                          }
+                        },
                       }}
                       right={{
                         label: "Employee Size",
                         value: contactData.contact_employee_size || "—",
+                        isLink: false,
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Level",
                         value: contactData.contact_level_field || "—",
+                        isLink: false,
                       }}
                       right={{
                         label: "Email ID (Personal)",
                         value: contactData.contact_personal_email || "—",
+                        isLink: !!contactData.contact_personal_email,
+                        onClick: () => {
+                          if (contactData.contact_personal_email) {
+                            window.location.href = `mailto:${contactData.contact_personal_email}`;
+                          }
+                        },
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Alternate No",
                         value: contactData.contact_alternate_number || "—",
+                        isLink: true,
+                        onClick: () => {
+                          if (contactData.contact_alternate_number) {
+                            window.location.href = `tel:${contactData.contact_alternate_number}`;
+                          }
+                        },
                       }}
                       right={{
                         label: "Industry",
                         value:
                           contactData.contact_industry?.industry_name || "—",
+                        isLink: false,
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Segment",
                         value: contactData.contact_segment || "—",
+                        isLink: false,
                       }}
                       right={{
                         label: "Navigator Link",
                         value: contactData.contact_navigator_link || "—",
+                        isLink: !!contactData.contact_navigator_link,
+                        onClick: () => {
+                          if (contactData.contact_navigator_link) {
+                            window.open(contactData.contact_navigator_link, "_blank");
+                          }
+                        },
                       }}
                     />
                   </div>
@@ -512,40 +615,48 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                       left={{
                         label: "Salutation",
                         value: contactData.contact_salutation || "—",
+                        isLink: false,
                       }}
                       right={{
                         label: "TPID",
                         value: contactData.contact_tpid || "—",
+                        isLink: false,
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Middle Name",
                         value: contactData.contact_middlename || "—",
+                        isLink: false,
                       }}
                       right={{
                         label: "Fax Number",
                         value: contactData.contact_fax_number || "—",
+                        isLink: false,
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Suffix",
                         value: contactData.contact_suffix || "—",
+                        isLink: false,
                       }}
                       right={{
                         label: "Landline Number",
                         value: contactData.contact_landline_number || "—",
+                        isLink: false,
                       }}
                     />
                     <GridRow
                       left={{
                         label: "Role",
                         value: contactData.contact_role || "—",
+                        isLink: false,
                       }}
                       right={{
                         label: "Contact Status",
                         value: contactData.contact_status || "—",
+                        isLink: false,
                       }}
                     />
                   </div>
@@ -709,8 +820,7 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                             <textarea
                               value={callDescription}
                               onChange={(e) =>
-                                setCallDescription(e.target.value)
-                              }
+                                setCallDescription(e.target.value)}
                               placeholder="What was discussed..."
                               rows={3}
                               className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 resize-none"
@@ -798,28 +908,28 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                                 Due Time
                               </label>
                               <div className="flex items-center justify-center gap-1 w-full border border-slate-200 rounded px-2 py-2 text-[13px] text-slate-800 focus-within:border-blue-400 bg-white">
-                                <select 
-                                  value={taskDueTimeHH} 
+                                <select
+                                  value={taskDueTimeHH}
                                   onChange={(e) => setTaskDueTimeHH(e.target.value)}
                                   className="appearance-none bg-transparent border-none p-0 shadow-none focus:ring-0 focus:outline-none text-center cursor-pointer outline-none w-7"
                                 >
-                                  {Array.from({length: 12}, (_, i) => i + 1).map(h => {
+                                  {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => {
                                     const val = h < 10 ? `0${h}` : `${h}`;
                                     return <option key={val} value={val}>{val}</option>;
                                   })}
                                 </select>
                                 <span className="text-slate-400 font-bold">:</span>
-                                <select 
-                                  value={taskDueTimeMM} 
+                                <select
+                                  value={taskDueTimeMM}
                                   onChange={(e) => setTaskDueTimeMM(e.target.value)}
                                   className="appearance-none bg-transparent border-none p-0 shadow-none focus:ring-0 focus:outline-none text-center cursor-pointer outline-none w-7"
                                 >
-                                  {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
+                                  {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map((m) => (
                                     <option key={m} value={m}>{m}</option>
                                   ))}
                                 </select>
-                                <select 
-                                  value={taskDueTimeAMPM} 
+                                <select
+                                  value={taskDueTimeAMPM}
                                   onChange={(e) => setTaskDueTimeAMPM(e.target.value)}
                                   className="appearance-none bg-transparent border-none p-0 shadow-none focus:ring-0 focus:outline-none text-center cursor-pointer text-blue-600 font-bold ml-1 outline-none w-8"
                                 >
@@ -837,8 +947,7 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                             <textarea
                               value={taskDescription}
                               onChange={(e) =>
-                                setTaskDescription(e.target.value)
-                              }
+                                setTaskDescription(e.target.value)}
                               placeholder="Any additional details..."
                               rows={3}
                               className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 resize-none"
@@ -862,6 +971,65 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                           >
                             <Save size={14} />{" "}
                             {savingTask ? "Saving..." : "Save Task"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Create Email Form */}
+                    {activeSidebarTab === "Email" && (
+                      <div className="p-4">
+                        <h4 className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4">
+                          <Mail size={14} /> Send an Email
+                        </h4>
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                              To
+                            </label>
+                            <input
+                              type="email"
+                              value={contactData.contact_professional_email || contactData.contact_personal_email || ""}
+                              readOnly
+                              className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 bg-slate-50"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                              Subject
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Email subject"
+                              className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                              Body
+                            </label>
+                            <textarea
+                              placeholder="Type your email..."
+                              rows={4}
+                              className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 resize-none"
+                            />
+                          </div>
+
+                          <Button
+                            variant="primary"
+                            onClick={() => {
+                              if (contactData.contact_professional_email) {
+                                window.location.href = `mailto:${contactData.contact_professional_email}`;
+                              } else if (contactData.contact_personal_email) {
+                                window.location.href = `mailto:${contactData.contact_personal_email}`;
+                              }
+                            }}
+                            className="w-full gap-2 font-bold justify-center bg-blue-600 py-2.5"
+                          >
+                            <Mail size={14} /> Send Email
                           </Button>
                         </div>
                       </div>
@@ -902,11 +1070,6 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                                       : "Just now"}
                                   </span>
                                 </div>
-                                {/* {item.call_description && (
-                                  <div className="mt-2 text-[12px] text-slate-600 bg-slate-50 p-2.5 rounded border border-slate-200">
-                                    {item.call_description}
-                                  </div>
-                                )} */}
                               </div>
                             </>
                           ) : (
@@ -928,37 +1091,18 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                                   </span>
                                   <span >
                                     {item.task_due_date && (
-                                    <span className="flex items-center gap-1">
-                                      <Clock size={12} />{" "}
-                                      {new Date(item.task_due_date).toLocaleString("en-US", {
+                                      <span className="flex items-center gap-1">
+                                        <Clock size={12} />{" "}
+                                        {new Date(item.task_due_date).toLocaleString("en-US", {
                                           day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
                                         })}
-                                    </span>
-                                  )}
-                                    {/* {item.task_created_at
-                                      ? new Date(item.task_created_at).toLocaleString("en-US", {
-                                          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-                                        })
-                                      : "Just now"} */}
+                                      </span>
+                                    )}
                                   </span>
-                                  {/* {item.task_due_date && (
-                                    <span className="flex items-center gap-1 text-red-500 font-bold ml-2">
-                                      <Clock size={12} />{" "}
-                                      Due: {new Date(item.task_due_date).toLocaleString("en-US", {
-                                          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-                                        })}
-                                    </span>
-                                  )} */}
                                 </div>
-                                {/* {item.task_description && (
-                                  <div className="mt-2 text-[12px] text-slate-600 bg-slate-50 p-2.5 rounded border border-slate-200">
-                                    {item.task_description}
-                                  </div>
-                                )} */}
                               </div>
                             </>
                           )}
-
                         </div>
                       ))}
                       {displayedTimeline.length === 0 && (
@@ -994,6 +1138,38 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
           </div>
         )}
       </div>
+
+      {addContactOpen && (
+        <AddContactModal
+          isOpen={addContactOpen}
+          onClose={() => setAddContactOpen(false)}
+          onSuccess={() => setAddContactOpen(false)}
+          contactToEdit={null}
+        />
+      )}
+
+      {addCampaignOpen && (
+        <AddCampaignModal
+          isOpen={addCampaignOpen}
+          onClose={() => setAddCampaignOpen(false)}
+          onSuccess={() => setAddCampaignOpen(false)}
+          campaignToEdit={null}
+        />
+      )}
+
+      {editContactOpen && (
+        <AddContactModal
+          isOpen={editContactOpen}
+          onClose={() => setEditContactOpen(false)}
+          onSuccess={() => {
+            setEditContactOpen(false);
+            api.get(`/api/contacts/${contactId}`).then((res) => {
+              if (res.success) setContactData(res.data);
+            });
+          }}
+          contactToEdit={contactData}
+        />
+      )}
     </div>
   );
 };
@@ -1007,6 +1183,7 @@ const GridRow = ({ left, right }) => (
       </span>
       <span
         className={`text-[13px] font-semibold flex items-center ${left.isLink ? "text-blue-600 hover:underline cursor-pointer" : "text-slate-700"} ${left.value === "—" ? "text-slate-300" : ""}`}
+        onClick={left.onClick}
       >
         {left.value}
         {left.icon && left.icon}
@@ -1018,11 +1195,31 @@ const GridRow = ({ left, right }) => (
       </span>
       <span
         className={`text-[13px] font-semibold flex items-center ${right.isLink ? "text-blue-600 hover:underline cursor-pointer" : "text-slate-700"} ${right.value === "—" ? "text-slate-300" : ""}`}
+        onClick={right.onClick}
       >
         {right.value}
         {right.icon && right.icon}
       </span>
     </div>
+  </div>
+);
+
+const RelatedItem = ({ name }) => (
+  <div className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 cursor-pointer group transition-colors">
+    <div className="flex items-center gap-3">
+      <div className="w-6 h-6 rounded bg-blue-50 flex items-center justify-center text-blue-600">
+        <Users size={12} />
+      </div>
+      <span className="text-[13px] text-blue-600 font-semibold group-hover:underline">{name}</span>
+    </div>
+    <span className="text-slate-400">›</span>
+  </div>
+);
+
+const RecentItem = ({ type, name }) => (
+  <div className="flex items-center gap-2 cursor-pointer group">
+    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{type}</span>
+    <span className="text-[13px] text-blue-600 group-hover:underline font-semibold">{name}</span>
   </div>
 );
 
