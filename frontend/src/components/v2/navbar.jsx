@@ -71,7 +71,7 @@ const Navbar = ({ onToggleSidebar }) => {
     <header className="h-[64px] flex items-center justify-between gap-4 px-4 sm:px-6 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
       <button
         onClick={onToggleSidebar}
-        className="p-2 rounded-md text-slate-600 hover:text-vsph-core-blue hover:bg-vsph-grey transition-colors md:hidden"
+        className="p-2 rounded-md text-slate-600 hover:text-vsph-core-blue hover:bg-vsph-grey transition-colors"
         aria-label="Toggle navigation menu"
       >
         <Menu size={24} />

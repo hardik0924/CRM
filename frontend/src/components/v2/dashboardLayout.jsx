@@ -9,7 +9,11 @@ const DashboardV2Layout = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-vsph-grey font-sans">
       {/* Left Sidebar */}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onToggle={() => setSidebarOpen(true)}
+      />
 
       {/* Mobile backdrop */}
       {sidebarOpen && (
