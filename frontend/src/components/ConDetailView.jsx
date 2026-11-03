@@ -18,6 +18,7 @@ import {
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
 import AddCampaignModal from "./modals/AddCampaignModal";
+import { canDoAction, hasModule } from "../utils/modules";
 
 const ConDetailView = ({ isOpen, onClose, contactId }) => {
   const navigate = useNavigate();
@@ -50,9 +51,10 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
   const [tasksList, setTasksList] = useState([]);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
+    const userId = localStorage.getItem("vsph_user_id");
+    const userName = localStorage.getItem("vsph_user_name");
+    if (userId) {
+      setCurrentUser({ user_id: userId, id: userId, name: userName, user_name: userName });
     }
   }, []);
 
@@ -770,7 +772,15 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                           { id: "Call", label: "Call", icon: Phone },
                           { id: "Task", label: "Task", icon: CheckCircle },
                           { id: "Email", label: "Email", icon: Mail },
-                        ].map((tab) => (
+                        ]
+                          .filter((tab) =>
+                            tab.id === "Call"
+                              ? canDoAction("CONTACTS", "CREATE")
+                              : tab.id === "Task"
+                                ? hasModule("TASKS") && canDoAction("TASKS", "CREATE")
+                                : true
+                          )
+                          .map((tab) => (
                           <button
                             key={tab.id}
                             onClick={() => setActiveSidebarTab(tab.id)}

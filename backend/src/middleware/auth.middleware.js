@@ -1,6 +1,11 @@
 import { prisma } from "../lib/prisma.js";
 import { checkCrmAccess } from "../services/entitlement.service.js";
-import { canAccessModule, parseModuleAccess } from "../lib/modules.js";
+import {
+  canAccessModule,
+  canDoAction,
+  parseModuleGrants,
+} from "../lib/modules.js";
+import { getOrgRole } from "../lib/roles.js";
 
 export const authMiddleware = async (req, res, next) => {
   const userId = req.headers["x-user-id"];
@@ -17,7 +22,7 @@ export const authMiddleware = async (req, res, next) => {
     include: { tenant: true },
   });
 
-  if (!user || !user.user_status) {
+  if (!user || !user.user_status || user.user_deleted_at) {
     return res.status(401).json({
       success: false,
       message: "Invalid or inactive user session.",
@@ -37,6 +42,8 @@ export const authMiddleware = async (req, res, next) => {
     });
   }
 
+  const grants = parseModuleGrants(user.user_module_access);
+
   req.user = {
     id: user.user_id,
     email: user.user_email,
@@ -47,7 +54,9 @@ export const authMiddleware = async (req, res, next) => {
     tenantName: user.tenant?.tenant_name || null,
     tenantCode: user.tenant?.tenant_code || null,
     isTenantOwner: Boolean(user.user_is_tenant_owner),
-    modules: parseModuleAccess(user.user_module_access),
+    orgRole: getOrgRole(user),
+    modules: grants.modules,
+    moduleActions: grants.permissions,
   };
 
   next();
@@ -59,6 +68,17 @@ export const requireModule = (code) => (req, res, next) => {
       success: false,
       code: "MODULE_ACCESS_DENIED",
       message: "Your organization administrator has not granted you access to this module.",
+    });
+  }
+  next();
+};
+
+export const requirePermission = (code, action) => (req, res, next) => {
+  if (!canDoAction(req.user, code, action)) {
+    return res.status(403).json({
+      success: false,
+      code: "ACTION_ACCESS_DENIED",
+      message: `You do not have ${String(action).toLowerCase()} access to this module.`,
     });
   }
   next();

@@ -6,13 +6,19 @@ import {
   updateCall,
   deleteCall,
 } from "../controllers/call.controller.js";
+import { requirePermission } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
+// Calls are part of the contact workspace, so they follow CONTACTS permissions.
+const view = requirePermission("CONTACTS", "VIEW");
+const create = requirePermission("CONTACTS", "CREATE");
+const edit = requirePermission("CONTACTS", "EDIT");
+const remove = requirePermission("CONTACTS", "DELETE");
 
-router.post("/", createCall);
-router.get("/", getCalls);
-router.get("/:id", getCallById);
-router.put("/:id", updateCall);
-router.delete("/:id", deleteCall);
+router.post("/", create, createCall);
+router.get("/", view, getCalls);
+router.get("/:id", view, getCallById);
+router.put("/:id", edit, updateCall);
+router.delete("/:id", remove, deleteCall);
 
 export default router;

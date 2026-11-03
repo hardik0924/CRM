@@ -3,16 +3,22 @@ import { Loader2 } from 'lucide-react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import ModulePicker from '../ModulePicker'
-import { CRM_MODULES } from '../../utils/modules'
+import { CRM_MODULES, MODULE_ACTIONS } from '../../utils/modules'
 import { api } from '../../utils/api'
 import toast from 'react-hot-toast'
 
-const ALL_MODULES = CRM_MODULES.map((m) => m.code)
+const ALL_ACTIONS = MODULE_ACTIONS.map((action) => action.code)
+const ALL_GRANTS = Object.fromEntries(CRM_MODULES.map((m) => [m.code, [...ALL_ACTIONS]]))
 
 const EmployeeAccessModal = ({ isOpen, onClose, employee, onSaved }) => {
-  const [selected, setSelected] = useState(() =>
-    employee?.modules === null ? ALL_MODULES : employee?.modules || []
-  )
+  const [grants, setGrants] = useState(() => {
+    if (employee?.modules === null) return ALL_GRANTS
+    const next = {}
+    for (const code of employee?.modules || []) {
+      next[code] = employee?.moduleActions?.[code] || [...ALL_ACTIONS]
+    }
+    return next
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -22,7 +28,10 @@ const EmployeeAccessModal = ({ isOpen, onClose, employee, onSaved }) => {
     setError('')
     setSaving(true)
     try {
-      const res = await api.patch(`/api/organization/employees/${employee.user_id}`, { modules: selected })
+      const res = await api.patch(`/api/organization/employees/${employee.user_id}`, {
+        modules: Object.keys(grants),
+        permissions: grants,
+      })
       if (!res.success) throw new Error(res.message || 'Could not update access')
       toast.success('Module access updated')
       onSaved?.()
@@ -39,7 +48,7 @@ const EmployeeAccessModal = ({ isOpen, onClose, employee, onSaved }) => {
       isOpen={isOpen}
       onClose={onClose}
       title={`Module access · ${employee.user_name}`}
-      widthClass="w-full max-w-lg"
+      widthClass="w-full max-w-xl"
       footer={
         <>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
@@ -52,14 +61,14 @@ const EmployeeAccessModal = ({ isOpen, onClose, employee, onSaved }) => {
     >
       <div className="p-6 space-y-4">
         <p className="text-sm text-slate-600">
-          Choose which CRM modules this employee can open. The dashboard is always available.
+          Choose the modules and the actions this employee can use. The dashboard is always available.
         </p>
         {error && (
           <div className="p-3 rounded-lg bg-rose-50 border border-rose-100 text-sm text-rose-700">{error}</div>
         )}
-        <ModulePicker value={selected} onChange={setSelected} />
+        <ModulePicker value={grants} onChange={setGrants} />
         <p className="text-xs text-slate-500">
-          Access is enforced on the server, not just hidden in the navigation.
+          Access is enforced on the server, not just hidden in the navigation. Employees need View and Edit on Tasks to update their own progress.
         </p>
       </div>
     </Modal>

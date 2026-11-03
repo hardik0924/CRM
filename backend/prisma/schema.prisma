@@ -26,6 +26,7 @@ model tenant {
   tenant_opportunities opportunity[]                  @relation("tenant_opportunities")
   tenant_projects      project[]                      @relation("tenant_projects")
   tenant_tasks         task[]                         @relation("tenant_tasks")
+  tenant_task_updates  task_update[]                  @relation("tenant_task_updates")
   tenant_calls         call[]                         @relation("tenant_calls")
   tenant_campaigns     campaign[]                     @relation("tenant_campaigns")
   tenant_industries    industry[]                     @relation("tenant_industries")
@@ -63,6 +64,8 @@ model user {
   user_campaigns      campaign[]    @relation("campaign_user")
   user_calls          call[]        @relation("call_user")
   user_tasks          task[]        @relation("task_user")
+  tasks_assigned      task[]        @relation("task_assigned_by")
+  task_updates        task_update[] @relation("task_update_user")
   opportunities       opportunity[]
 
   @@index([user_status])
@@ -337,6 +340,9 @@ model task {
   task_user_fk String?
   user         user?   @relation("task_user", fields: [task_user_fk], references: [user_id])
 
+  task_assigned_by_fk String?
+  task_assigned_by    user?   @relation("task_assigned_by", fields: [task_assigned_by_fk], references: [user_id])
+
   task_call_fk String?
   call         call?   @relation("call_task", fields: [task_call_fk], references: [call_id])
 
@@ -346,16 +352,50 @@ model task {
   task_subject     String?
   task_description String?
   task_priority    priority? @default(NORMAL)
-  task_due_date    DateTime? @default(now())
+  task_status      task_status @default(TODO)
+  task_progress    Int         @default(0)
+  task_due_date    DateTime?   @default(now())
+  task_start_date  DateTime?
+  task_completed_at DateTime?
 
   task_created_at DateTime  @default(now())
   task_updated_at DateTime  @updatedAt
   task_deleted_at DateTime?
 
+  task_updates task_update[]
+
   @@index([task_user_fk])
   @@index([task_contact_fk])
+  @@index([task_status])
+  @@index([task_user_fk, task_status])
   @@index([tenant_fk])
   @@map("tasks")
+}
+
+model task_update {
+  task_update_id String @id @default(uuid())
+
+  tenant_fk String
+  tenant    tenant @relation("tenant_task_updates", fields: [tenant_fk], references: [tenant_id])
+
+  task_fk String
+  task    task   @relation(fields: [task_fk], references: [task_id], onDelete: Cascade)
+
+  user_fk String?
+  user    user?   @relation("task_update_user", fields: [user_fk], references: [user_id])
+
+  previous_status   task_status?
+  new_status        task_status?
+  previous_progress Int?
+  new_progress      Int?
+  note              String?      @db.Text
+
+  created_at DateTime @default(now())
+
+  @@index([task_fk, created_at])
+  @@index([tenant_fk])
+  @@index([user_fk])
+  @@map("task_updates")
 }
 
 model campaign {
@@ -614,4 +654,11 @@ enum priority {
   NORMAL
   HIGH
   LOW
+}
+
+enum task_status {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
 }

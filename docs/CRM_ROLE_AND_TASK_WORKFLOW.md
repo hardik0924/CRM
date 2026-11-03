@@ -1,0 +1,269 @@
+# CRM Roles, Employee Management and Task Workflow
+
+This document records the implementation that is currently in the repository and
+the incremental changes made for the three organizational roles and the employee
+task/progress workflow. It is a working record, not a proposal.
+
+## 1. Architecture found during the audit
+
+| Area | Current implementation |
+| --- | --- |
+| Frontend | React 19 + Vite, React Router (`frontend/src/App.jsx`), Tailwind v4 tokens in `frontend/src/index.css` |
+| Backend | Node + Express 5 (`backend/src/app.js`), controllers + routes, no service layer for CRM CRUD |
+| ORM / DB | Prisma 7 with MariaDB adapter, MySQL database `crm` |
+| Auth | `POST /api/auth/login` (email + password) returns a user object; every protected request sends `X-User-Id`; `authMiddleware` reloads the user from the database on every call |
+| Tenant isolation | `tenant_fk` on every CRM table + `getTenantFilter(req)`; browser supplied tenant ids are ignored for client users |
+| Platform admin | `user_role = SUPER_ADMIN`, no tenant, `/superadmin` portal, `/api/tenants` (`superadminOnly`) |
+| Client roles | `user_role = ADMIN` for organization admin; `USER`/`SALES`/`DATA`/`PRODUCTION`/`SPONSORSHIP`/`OPERATION` for employees; `user_is_tenant_owner` marks the client organization owner |
+| Module access | `user.user_module_access` CSV of module codes; `requireModule()` on routes; `ModuleGuard`/`hasModule()` in the UI |
+| Entitlement | `organization_app_entitlement` per tenant, fail-closed in `authMiddleware` and login |
+| Invitations | `invitation` table with hashed single-use tokens (`invitation.service.js`), used by the client Team page |
+| Tasks | `task` table with subject, description, priority, due date, assignee, optional contact/call links; no status, progress or history |
+| Tests | `node --test` in `backend/tests` (pure logic + one DB test gated by `RUN_DB_TESTS=1`) |
+| Build | `npx vite build` in `frontend` |
+
+Important separation that is preserved:
+
+* **VSPH platform SUPER_ADMIN** (`role = SUPER_ADMIN`, no tenant) provisions and
+  supports clients through `/superadmin` and `/api/tenants`.
+* **CRM Organization Super Admin** is the existing `user_is_tenant_owner` user of
+  a tenant. It never becomes a platform role and never gains cross-tenant access.
+
+## 2. Role mapping (no enum migration)
+
+The existing `Role` enum is reused. No role value is rewritten, so existing
+accounts keep their role and password.
+
+| Product role | Stored representation | Notes |
+| --- | --- | --- |
+| Organization Super Admin | `user_is_tenant_owner = true` (role stays `ADMIN`) | Existing owner account, seeded by provisioning |
+| Organization Admin | `user_role = ADMIN`, `user_is_tenant_owner = false` | Existing admin accounts |
+| Employee | any other client role (`USER`, `SALES`, `DATA`, ...) | Existing employees |
+| Platform Super Admin | `user_role = SUPER_ADMIN` | Unchanged, separate security boundary |
+
+`getOrgRole()` (`backend/src/lib/roles.js`) is the single source of truth used by
+middleware, controllers and tests.
+
+## 3. Login and routing
+
+* One shared CRM login: `/v2/login` renders the existing login form directly.
+  The old `/v2/login/client`, `/v2/login/admin` and `/v2/login/employee` URLs
+  redirect to it, so bookmarks keep working but there is only one form and one
+  URL for the three organizational roles.
+* `/v2/login/superadmin` remains for the platform administrator (different
+  security boundary) and `/` redirects to the shared CRM login.
+* The backend decides the role: the login response contains `role`,
+  `isTenantOwner`, `orgRole`, `modules` and `moduleActions`, all loaded from the
+  database. A role sent by the browser is never read.
+* Redirect: platform `SUPER_ADMIN` -> `/superadmin`; all organization roles ->
+  `/v2/dashboard`. Employees see a personal work dashboard, admins/owners see
+  the organization dashboard. No redirect loops.
+* Inactive users are rejected by login and by `authMiddleware`; users without a
+  tenant are rejected for CRM access.
+
+## 4. Module permissions
+
+`user_module_access` is reused and extended in a backward-compatible way:
+
+```
+null                                  -> every module, every action (owner / legacy)
+""                                    -> dashboard only
+"CONTACTS,TASKS"                      -> legacy grant: both modules, all actions
+"CONTACTS:VIEW,CREATE,EDIT|TASKS:VIEW" -> explicit per-action grants
+```
+
+Supported actions: `VIEW`, `CREATE`, `EDIT`, `DELETE`. CSV export is a read of
+already loaded rows, so it requires `VIEW`.
+
+* `parseModuleGrants()`, `canAccessModule()` and `canDoAction()` live in
+  `backend/src/lib/modules.js`; the same list is mirrored in
+  `frontend/src/utils/modules.js`.
+* The organization owner, organization admins and the platform superadmin always
+  have full access. Employees are restricted by the stored grants.
+* Routes enforce actions with `requirePermission(module, action)` in addition to
+  the existing `requireModule(module)`; the UI only mirrors that decision.
+* Search results are filtered per module, so a page/route gate is not the only
+  enforcement.
+
+## 5. Employee management rules
+
+Implemented in `organization.controller.js` and `tenantAdmin.middleware.js`:
+
+* Organization Super Admin can invite/deactivate Admins and Employees, change
+  roles and module grants.
+* Organization Admin can invite/deactivate Employees and manage employee module
+  grants. Admin cannot create or promote an `ADMIN`/`SUPER_ADMIN`, cannot edit
+  another admin, and cannot touch the owner account.
+* The owner account cannot be deactivated or demoted; nobody can deactivate or
+  change their own role.
+* Roles accepted from clients are limited to `CLIENT_ROLES`; `SUPER_ADMIN` is
+  never a valid client role.
+* Invitations stay single-use, hashed, time limited, delivered by the existing
+  service. Passwords are never set by an admin for an invitee.
+
+## 6. Tasks and progress
+
+Additive schema changes (migration `20261103030000_task_workflow`):
+
+* `task.task_assigned_by_fk` (nullable, FK to `users`) — who assigned the work.
+* `task.task_status` enum `TODO | IN_PROGRESS | BLOCKED | COMPLETED`, default `TODO`.
+* `task.task_progress` int, default `0`, validated 0-100 on the backend.
+* `task.task_start_date`, `task.task_completed_at`.
+* New `task_update` table: task, tenant, user, previous/new status, previous/new
+  progress, note, timestamp. Appended, never overwritten.
+
+Authorization:
+
+* Employees create personal tasks; the assignee is forced to themselves.
+* Admins assign tasks to Employees only; the owner assigns to Admins and Employees;
+  the platform superadmin may target any user of a supplied tenant.
+* Employees only see tasks assigned to them (`GET /api/tasks` is filtered in SQL).
+* Employees may change status, progress and a work note on their own task only.
+  Changing assignee/priority/due date/subject through the API is rejected.
+* Admins/owners keep the existing full task editing, scoped to their tenant.
+* Progress 100 does not auto-complete a task; status is explicit.
+* Task detail returns the update history; dashboards include recent updates.
+
+Status transitions (employees): `TODO -> IN_PROGRESS | BLOCKED | COMPLETED`,
+`IN_PROGRESS -> TODO | BLOCKED | COMPLETED`, `BLOCKED -> TODO | IN_PROGRESS`,
+`COMPLETED -> IN_PROGRESS`. Reaching 100% is not required for `COMPLETED`.
+
+## 7. Dashboards
+
+`GET /api/dashboard/metrics` gains a `work` block, tenant-scoped and gated by the
+TASKS module:
+
+* Employee: own counts by status, overdue, upcoming, average progress, recent
+  updates.
+* Admin / owner: organization counts by status, overdue, per-assignee task
+  counts and average progress, recent updates.
+* Platform superadmin: the same aggregate across tenants (existing behavior).
+
+The existing CRM KPI cards, pipeline and recent activity stay unchanged.
+
+## 8. Migration and rollback
+
+Migration: additive only, no drops, no data rewrite.
+
+```sql
+ALTER TABLE tasks
+  ADD COLUMN task_assigned_by_fk VARCHAR(191) NULL,
+  ADD COLUMN task_status ENUM('TODO','IN_PROGRESS','BLOCKED','COMPLETED') NOT NULL DEFAULT 'TODO',
+  ADD COLUMN task_progress INT NOT NULL DEFAULT 0,
+  ADD COLUMN task_start_date DATETIME(3) NULL,
+  ADD COLUMN task_completed_at DATETIME(3) NULL;
+
+CREATE INDEX tasks_task_status_idx ON tasks(task_status);
+CREATE INDEX tasks_task_user_fk_task_status_idx ON tasks(task_user_fk, task_status);
+-- plus the task_updates table (see migration.sql)
+```
+
+`prisma migrate deploy` cannot be used on this database because the schema was
+never baselined (`P3005`). Apply the migration with:
+
+```powershell
+cd backend
+npx prisma db execute --file prisma/migrations/20261103030000_task_workflow/migration.sql
+npx prisma generate
+```
+
+Rollback considerations: drop `task_update` first, then the added columns; the
+existing task rows and all other tables are untouched. The rollback SQL is stored
+in `prisma/migrations/20261103030000_task_workflow/rollback.sql`.
+
+## 9. Verification performed
+
+### Commands (actually run)
+
+| Command | Result |
+| --- | --- |
+| `cd backend ; npm test` | 21 tests, 20 pass, 1 skipped (DB test), 0 fail |
+| `$env:RUN_DB_TESTS='1'; npm test` | 21 tests, 21 pass, 0 skipped, 0 fail |
+| `cd frontend ; npx vite build` | built successfully; only the pre-existing >500 kB chunk warning |
+| `npx prisma db execute --file .../migration.sql` | "Script executed successfully." |
+| `information_schema` column check | all new `tasks` columns and the `task_updates` table exist with the expected types |
+
+The new `backend/tests/roles-tasks.test.js` covers role mapping, module grant
+parsing/serialisation, action enforcement, progress validation, status
+transitions, assignment rules and the employee field guard.
+
+### API scenarios (live server, real MySQL data)
+
+All 29 checks were executed against `http://localhost:5000`; 28 passed on the
+first run. The one reported failure was a typo in the test email, not an
+application failure; re-running that check with the correct email returned
+`401 Account is deactivated` and `401` for the protected request.
+
+| Scenario | Observed result |
+| --- | --- |
+| Owner login (`abc@vsph.in`) | 200, `orgRole=ORG_SUPER_ADMIN`, owner=true |
+| Employee login (`abcsales@vsph.in`) | 200, `orgRole=EMPLOYEE`, modules `CONTACTS,TASKS` |
+| Platform login (`superadmin@crm.com`) | 200, `orgRole=PLATFORM_SUPERADMIN`, no tenant |
+| Employee `GET /api/users` | only the employee's own record |
+| Employee `GET /api/tasks` | only tasks assigned to that employee |
+| Employee updates own status/progress/note | 200, row updated |
+| `GET /api/tasks/:id` after update | history row with previous/new status and progress |
+| Employee changes priority / assignee | 403 |
+| Employee creates a task for someone else | 403 |
+| Employee reads or updates another user's task | 403 |
+| Employee calls organization endpoints | 403 |
+| Employee granted `TASKS:VIEW` only | list 200, edit 403 `ACTION_ACCESS_DENIED` |
+| Owner assigns to an admin | 201 |
+| Admin assigns to an employee | 201 |
+| Admin assigns to owner/admin, creates an admin, edits the owner | 403 |
+| Cross-tenant task read by employee | 404 |
+| Cross-tenant task absent from employee list | confirmed |
+| Inactive user session / login | 401 / 401 |
+| Employee dashboard | `scope=PERSONAL`, total equals own DB task count |
+| Owner dashboard | `scope=ORGANIZATION`, per-person progress present |
+| Module endpoints for owner | all 6 modules 200 |
+| Module endpoints for employee | Contacts/Tasks 200; Accounts/Opportunities/Projects/Campaigns 403 |
+| Search as employee | 200, returns only granted modules |
+| Employee sends `?user_id=<owner>` to dashboard | ignored, personal scope returned |
+
+### Browser checks (Vite dev server on 5174, since 5173 was occupied)
+
+* `/v2/login` renders one shared form for organization users; old `/v2/login/client`
+  and `/v2/login/employee` redirect to it.
+* Employee login lands on `/v2/dashboard`, sidebar shows only Dashboard, Contacts
+  and Tasks, role label "Employee", "My work" summary and no opportunity data.
+* Owner login lands on `/v2/dashboard`, sees all modules plus Team, role label
+  "Organization Super Admin", and the "Organization work overview" with per-person
+  progress.
+* `/v2/team` renders work-progress tiles/table and the employee role controls.
+* Employee task detail: work-update form saves 40% / In progress / note; the
+  Activity tab shows `Todo → In progress`, `0% → 40%` and the note.
+* The employee detail view and task list no longer expose full Edit/Delete.
+
+A defect found during browser verification was fixed: the employee dashboard's
+"Recent activity" list was returning other users' tasks. `recentTasks` is now
+scoped to the signed-in employee in `dashboard.controller.js`.
+
+### Files changed
+
+Backend:
+`prisma/schema.prisma`, `prisma/migrations/20261103030000_task_workflow/*`,
+`src/lib/roles.js` (new), `src/lib/tasks.js` (new), `src/lib/modules.js`,
+`src/middleware/auth.middleware.js`, `src/middleware/tenantAdmin.middleware.js`,
+`src/controllers/auth.controller.js`, `task.controller.js`,
+`organization.controller.js`, `user.controller.js`, `dashboard.controller.js`,
+`search.controller.js`, and the route files for accounts, contacts,
+opportunities, projects, campaigns, calls and tasks,
+`tests/roles-tasks.test.js` (new).
+
+Frontend:
+`src/App.jsx`, `src/utils/modules.js`, `src/components/OrgGuard.jsx` (new),
+`v2/login/loginForm.jsx`, `v2/sidebar.jsx`, `v2/dashboard.jsx`,
+`ModulePicker.jsx`, `TaskDetailView.jsx`, `modals/AddTaskModal.jsx`,
+`modals/EmployeeAccessModal.jsx`, `modals/InviteEmployeeModal.jsx`,
+`pages/Tasks.jsx`, `pages/Team.jsx`, `ConDetailView.jsx`.
+
+### Remaining issues / manual steps
+
+* `prisma migrate deploy` is still blocked by `P3005` until the database is
+  baselined; apply future migrations with `prisma db execute` (documented above).
+* The employee task form allows any status in the dropdown; an invalid transition
+  is rejected by the backend with a 400 and the message is shown in the form.
+* Production deployment must run the migration and `prisma generate` before
+  restarting the API; no production configuration was touched here.
+

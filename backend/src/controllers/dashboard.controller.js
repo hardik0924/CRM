@@ -1,6 +1,11 @@
 import { prisma } from "../lib/prisma.js";
 import { getTenantFilter } from "../middleware/auth.middleware.js";
 import { canAccessModule } from "../lib/modules.js";
+import { getOrgRole, isEmployee } from "../lib/roles.js";
+import { TASK_STATUSES } from "../lib/tasks.js";
+
+const countByStatus = () =>
+  Object.fromEntries(TASK_STATUSES.map((status) => [status, 0]));
 
 /**
  * Dashboard summary. Every number is tenant-filtered; module counts are omitted
@@ -71,7 +76,7 @@ export const getDashboardMetrics = async (req, res) => {
         : null,
       can.tasks
         ? prisma.task.count({
-            where: { task_user_fk: userId, task_deleted_at: null, ...tenant },
+            where: { task_user_fk: userId, task_status: { not: "COMPLETED" }, task_deleted_at: null, ...tenant },
           })
         : null,
       can.opportunities
@@ -94,13 +99,105 @@ export const getDashboardMetrics = async (req, res) => {
         : null,
       can.tasks
         ? prisma.task.findMany({
-            where: { task_deleted_at: null, ...tenant },
+            where: {
+              task_deleted_at: null,
+              ...tenant,
+              // Employees only ever see their own work, including the sidebar list.
+              ...(isEmployee(req.user) ? { task_user_fk: req.user.id } : {}),
+            },
             orderBy: { task_due_date: "asc" },
             take: 5,
             include: { user: { select: { user_name: true } } },
           })
         : null,
     ]);
+
+    let work = null;
+    if (can.tasks) {
+      const orgRole = getOrgRole(req.user);
+      const employeeScope = orgRole === "EMPLOYEE" ? { task_user_fk: req.user.id } : {};
+      const workWhere = { task_deleted_at: null, ...tenant, ...employeeScope };
+
+      const [workTasks, recentUpdates] = await Promise.all([
+        prisma.task.findMany({
+          where: workWhere,
+          select: {
+            task_status: true,
+            task_progress: true,
+            task_due_date: true,
+            task_user_fk: true,
+            user: { select: { user_name: true } },
+          },
+        }),
+        prisma.task_update.findMany({
+          where: {
+            ...tenant,
+            ...(orgRole === "EMPLOYEE" ? { user_fk: req.user.id } : {}),
+          },
+          orderBy: { created_at: "desc" },
+          take: 10,
+          include: {
+            user: { select: { user_id: true, user_name: true } },
+            task: { select: { task_id: true, task_subject: true, task_status: true } },
+          },
+        }),
+      ]);
+
+      const byStatus = countByStatus();
+      const byUserMap = new Map();
+      const weekAhead = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      let overdue = 0;
+      let upcoming = 0;
+      let progressSum = 0;
+
+      for (const task of workTasks) {
+        byStatus[task.task_status] = (byStatus[task.task_status] || 0) + 1;
+        progressSum += task.task_progress || 0;
+
+        if (task.task_status !== "COMPLETED" && task.task_due_date) {
+          const due = new Date(task.task_due_date);
+          if (due < today) overdue += 1;
+          else if (due <= weekAhead) upcoming += 1;
+        }
+
+        const key = task.task_user_fk || "unassigned";
+        const entry = byUserMap.get(key) || {
+          user_id: task.task_user_fk,
+          user_name: task.user?.user_name || "Unassigned",
+          total: 0,
+          completed: 0,
+          overdue: 0,
+          progressSum: 0,
+        };
+        entry.total += 1;
+        entry.progressSum += task.task_progress || 0;
+        if (task.task_status === "COMPLETED") entry.completed += 1;
+        if (task.task_status !== "COMPLETED" && task.task_due_date && new Date(task.task_due_date) < today) {
+          entry.overdue += 1;
+        }
+        byUserMap.set(key, entry);
+      }
+
+      work = {
+        scope: orgRole === "EMPLOYEE" ? "PERSONAL" : "ORGANIZATION",
+        total: workTasks.length,
+        byStatus,
+        overdue,
+        upcoming,
+        averageProgress: workTasks.length ? Math.round(progressSum / workTasks.length) : 0,
+        byUser: [...byUserMap.values()]
+          .map((entry) => ({
+            user_id: entry.user_id,
+            user_name: entry.user_name,
+            total: entry.total,
+            completed: entry.completed,
+            overdue: entry.overdue,
+            averageProgress: entry.total ? Math.round(entry.progressSum / entry.total) : 0,
+          }))
+          .sort((a, b) => b.total - a.total),
+        recentUpdates,
+      };
+    }
 
     res.status(200).json({
       success: true,
@@ -119,6 +216,7 @@ export const getDashboardMetrics = async (req, res) => {
           : null,
         recentOpportunities,
         recentTasks,
+        work,
       },
     });
   } catch (error) {

@@ -1,9 +1,13 @@
 import { prisma } from "../lib/prisma.js";
 import { getTenantFilter } from "../middleware/auth.middleware.js";
+import { getOrgRole } from "../lib/roles.js";
 
 export const getUsers = async (req, res) => {
   try {
     const isSuperadmin = req.user.role === "SUPER_ADMIN";
+    const orgRole = getOrgRole(req.user);
+    const canListOrganization = isSuperadmin || orgRole === "ORG_ADMIN" || orgRole === "ORG_SUPER_ADMIN";
+
     const users = await prisma.user.findMany({
       select: {
         user_id: true,
@@ -16,8 +20,10 @@ export const getUsers = async (req, res) => {
         tenant: { select: { tenant_name: true, tenant_code: true } },
       },
       where: {
-        ...(isSuperadmin ? {} : { user_status: true }),
+        ...(isSuperadmin ? {} : { user_status: true, user_deleted_at: null }),
         ...getTenantFilter(req),
+        // Employees never receive the organization's user directory.
+        ...(canListOrganization ? {} : { user_id: req.user.id }),
       },
       orderBy: { user_created_at: "desc" },
     });

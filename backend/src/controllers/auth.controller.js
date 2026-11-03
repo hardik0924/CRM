@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 import { checkCrmAccess } from "../services/entitlement.service.js";
-import { parseModuleAccess } from "../lib/modules.js";
+import { parseModuleGrants } from "../lib/modules.js";
+import { getOrgRole } from "../lib/roles.js";
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
@@ -17,7 +18,7 @@ export const login = async (req, res) => {
     include: { tenant: true },
   });
 
-  if (!user) {
+  if (!user || user.user_deleted_at) {
     return res.status(404).json({
       success: false,
       message: "User not found",
@@ -67,6 +68,8 @@ export const login = async (req, res) => {
     });
   }
 
+  const grants = parseModuleGrants(user.user_module_access);
+
   return res.status(200).json({
     success: true,
     message: "Login successful",
@@ -75,12 +78,14 @@ export const login = async (req, res) => {
       name: user.user_name,
       email: user.user_email,
       role: user.user_role,
+      orgRole: getOrgRole(user),
       department: user.user_department,
       isTenantOwner: Boolean(user.user_is_tenant_owner),
       tenantId: user.tenant_fk || null,
       tenantName: user.tenant?.tenant_name || null,
       tenantCode: user.tenant?.tenant_code || null,
-      modules: parseModuleAccess(user.user_module_access),
+      modules: grants.modules,
+      moduleActions: grants.permissions,
     },
   });
 };

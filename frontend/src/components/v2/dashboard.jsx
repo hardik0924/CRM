@@ -34,6 +34,16 @@ const PRIORITY_COLORS = {
 const label = (value) =>
   (value || "-").replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
+const STATUS_COLORS = {
+  TODO: "bg-slate-100 text-slate-600 border-slate-200",
+  IN_PROGRESS: "bg-blue-50 text-blue-700 border-blue-100",
+  BLOCKED: "bg-amber-50 text-amber-700 border-amber-100",
+  COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-100",
+};
+
+const statusLabel = (status) =>
+  (status || "TODO").replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+
 const DashboardV2 = () => {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -174,6 +184,91 @@ const DashboardV2 = () => {
                 </div>
               ))}
             </div>
+
+            {metrics.work && (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <h2 className="text-lg font-bold text-sidebar">
+                      {metrics.work.scope === "PERSONAL" ? "My work" : "Organization work overview"}
+                    </h2>
+                    <p className="text-xs text-secondary">
+                      {metrics.work.total} task{metrics.work.total === 1 ? "" : "s"} · average progress {metrics.work.averageProgress}%
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {Object.entries(metrics.work.byStatus).map(([status, count]) => (
+                      <span key={status} className={`text-[10px] font-semibold px-2 py-1 rounded border ${STATUS_COLORS[status] || STATUS_COLORS.TODO}`}>
+                        {statusLabel(status)} {count}
+                      </span>
+                    ))}
+                    {metrics.work.overdue > 0 && (
+                      <span className="text-[10px] font-semibold px-2 py-1 rounded border bg-rose-50 text-rose-700 border-rose-100">
+                        Overdue {metrics.work.overdue}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {metrics.work.scope !== "PERSONAL" && (
+                    <div className="card border-border p-5">
+                      <h3 className="font-bold text-sidebar mb-4">Progress by person</h3>
+                      {metrics.work.byUser.length === 0 ? (
+                        <p className="text-sm text-secondary">No assigned work yet.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {metrics.work.byUser.map((row) => (
+                            <Link
+                              key={row.user_id || "unassigned"}
+                              to={row.user_id ? `/v2/tasks?assigned_to=${row.user_id}` : "/v2/tasks"}
+                              className="block rounded-lg border border-border px-3 py-2.5 hover:border-vsph-core-blue transition-colors"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm font-semibold text-sidebar truncate">{row.user_name}</span>
+                                <span className="text-[11px] text-secondary shrink-0">
+                                  {row.completed}/{row.total} done{row.overdue ? ` · ${row.overdue} overdue` : ""}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <div className="h-1.5 flex-1 rounded-full bg-slate-200 overflow-hidden">
+                                  <div className="h-full rounded-full bg-vsph-core-blue" style={{ width: `${row.averageProgress}%` }} />
+                                </div>
+                                <span className="text-[10px] font-semibold text-slate-600">{row.averageProgress}%</span>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="card border-border p-5">
+                    <h3 className="font-bold text-sidebar mb-4">Recent work updates</h3>
+                    {metrics.work.recentUpdates.length === 0 ? (
+                      <p className="text-sm text-secondary">No work updates yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {metrics.work.recentUpdates.map((update) => (
+                          <div key={update.task_update_id} className="border-b border-border last:border-0 pb-3 last:pb-0">
+                            <p className="text-sm font-semibold text-sidebar truncate">
+                              {update.task?.task_subject || "Task"}
+                            </p>
+                            <p className="text-[11px] text-secondary">
+                              {update.user?.user_name || "Unknown"} · {statusLabel(update.new_status)}
+                              {update.previous_progress !== update.new_progress
+                                ? ` · ${update.previous_progress ?? 0}% → ${update.new_progress ?? 0}%`
+                                : ""}
+                            </p>
+                            {update.note && <p className="text-xs text-slate-700 mt-1 line-clamp-2">{update.note}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Pipeline */}

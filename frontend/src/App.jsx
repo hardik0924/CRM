@@ -9,11 +9,9 @@ import Campaigns from './pages/Campaigns'
 import Tasks from './pages/Tasks'
 import Team from './pages/Team'
 import AcceptInvite from './pages/AcceptInvite'
-import Login from './components/login'
 
 // V2 Imports
 import LoginV2Layout from './components/v2/login/loginLayout'
-import LoginV2 from './components/v2/login/login'
 import LoginV2Form from './components/v2/login/loginForm'
 import DashboardV2Layout from './components/v2/dashboardLayout'
 import DashboardV2 from './components/v2/dashboard'
@@ -25,21 +23,25 @@ import TenantManagement from './pages/superadmin/TenantManagement'
 import TenantUsers from './pages/superadmin/TenantUsers'
 import UsersManagement from './pages/superadmin/UsersManagement'
 import ModuleGuard from './components/ModuleGuard'
+import OrgGuard from './components/OrgGuard'
 
 
 const App = () => {
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
+      {/* One shared CRM login for every organizational role. */}
+      <Route path="/" element={<Navigate to="/v2/login" replace />} />
       <Route path="/accept-invite" element={<AcceptInvite />} />
 
-      {/* V2 Login Routes */}
+      {/* Shared CRM login */}
       <Route path="/v2/login" element={<LoginV2Layout />}>
-        <Route index element={<LoginV2 />} />
+        <Route index element={<LoginV2Form />} />
+        {/* Platform administrator - a separate security boundary. */}
         <Route path="superadmin" element={<LoginV2Form role="superadmin" title="Superadmin login" subtitle="Create and manage client accounts" />} />
-        <Route path="client" element={<LoginV2Form role="client" title="CRM login" subtitle="Client administrators and employees sign in here" />} />
-        <Route path="admin" element={<LoginV2Form role="admin" title="Administrator login" subtitle="Access the CRM as an administrator" />} />
-        <Route path="employee" element={<LoginV2Form role="employee" title="Employee login" subtitle="Access your CRM workspace and tasks" />} />
+        {/* Old links keep working but resolve to the same shared form. */}
+        <Route path="client" element={<Navigate to="/v2/login" replace />} />
+        <Route path="admin" element={<Navigate to="/v2/login" replace />} />
+        <Route path="employee" element={<Navigate to="/v2/login" replace />} />
       </Route>
 
       {/* Superadmin Portal */}
@@ -59,7 +61,7 @@ const App = () => {
         <Route path="/v2/projects" element={<ModuleGuard code="PROJECTS"><Projects /></ModuleGuard>} />
         <Route path="/v2/campaigns" element={<ModuleGuard code="CAMPAIGNS"><Campaigns /></ModuleGuard>} />
         <Route path="/v2/tasks" element={<ModuleGuard code="TASKS"><Tasks /></ModuleGuard>} />
-        <Route path="/v2/team" element={<Team />} />
+        <Route path="/v2/team" element={<OrgGuard><Team /></OrgGuard>} />
       </Route>
 
       {/* Legacy Dashboard Routes */}
@@ -74,7 +76,7 @@ const App = () => {
       </Route>
 
       {/* Redirect fallback for unknown routes */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/v2/login" replace />} />
     </Routes>
   )
 }

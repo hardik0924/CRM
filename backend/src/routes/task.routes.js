@@ -6,13 +6,19 @@ import {
   updateTask,
   deleteTask,
 } from "../controllers/task.controller.js";
+import { requirePermission } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
+const view = requirePermission("TASKS", "VIEW");
+const create = requirePermission("TASKS", "CREATE");
+const edit = requirePermission("TASKS", "EDIT");
+const remove = requirePermission("TASKS", "DELETE");
 
-router.post("/", createTask);
-router.get("/", getTasks);
-router.get("/:id", getTaskById);
-router.put("/:id", updateTask);
-router.delete("/:id", deleteTask);
+router.post("/", create, createTask);
+router.get("/", view, getTasks);
+router.get("/:id", view, getTaskById);
+router.put("/:id", edit, updateTask);
+router.patch("/:id", edit, updateTask);
+router.delete("/:id", remove, deleteTask);
 
 export default router;

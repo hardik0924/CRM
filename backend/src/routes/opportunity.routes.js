@@ -6,13 +6,18 @@ import {
   deleteOpportunity,
   getOpportunityById,
 } from "../controllers/opportunity.controller.js";
+import { requirePermission } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
+const view = requirePermission("OPPORTUNITIES", "VIEW");
+const create = requirePermission("OPPORTUNITIES", "CREATE");
+const edit = requirePermission("OPPORTUNITIES", "EDIT");
+const remove = requirePermission("OPPORTUNITIES", "DELETE");
 
-router.get("/", getOpportunities);
-router.post("/", createOpportunity);
-router.get("/:id", getOpportunityById);
-router.put("/:id", updateOpportunity);
-router.delete("/:id", deleteOpportunity);
+router.get("/", view, getOpportunities);
+router.post("/", create, createOpportunity);
+router.get("/:id", view, getOpportunityById);
+router.put("/:id", edit, updateOpportunity);
+router.delete("/:id", remove, deleteOpportunity);
 
 export default router;

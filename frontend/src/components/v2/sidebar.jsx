@@ -12,7 +12,7 @@ import {
   UserCog,
   ChevronRight,
 } from 'lucide-react';
-import { hasModule } from '../../utils/modules';
+import { hasModule, canDoAction, canManageOrganization, orgRoleLabel } from '../../utils/modules';
 
 const NAV_ITEMS = [
   { name: 'Dashboard', path: '/v2/dashboard', icon: Home },
@@ -26,17 +26,15 @@ const NAV_ITEMS = [
 
 const Sidebar = ({ open = false, onClose, onToggle }) => {
   const location = useLocation();
-  const canManage =
-    localStorage.getItem('vsph_user_role') === 'ADMIN' ||
-    localStorage.getItem('vsph_user_owner') === 'true';
+  const canManage = canManageOrganization();
 
   const navItems = [
-    ...NAV_ITEMS.filter((item) => !item.module || hasModule(item.module)),
+    ...NAV_ITEMS.filter((item) => !item.module || (hasModule(item.module) && canDoAction(item.module, 'VIEW'))),
     ...(canManage ? [{ name: 'Team', path: '/v2/team', icon: UserCog }] : []),
   ];
 
   const userName = localStorage.getItem('vsph_user_name') || 'CRM user';
-  const userRole = (localStorage.getItem('vsph_user_role') || 'USER').replace(/_/g, ' ');
+  const userRole = orgRoleLabel();
 
   // On desktop when collapsed, only show icons (no text).
   const isCollapsed = !open && typeof window !== 'undefined' && window.innerWidth >= 768;

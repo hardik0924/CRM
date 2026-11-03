@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Loader2, User } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
-import SearchableSelect from "../ui/SearchableSelect";
 import { api } from "../../utils/api";
+import { canManageOrganization, currentOrgRole } from "../../utils/modules";
 import toast from "react-hot-toast";
+
+const STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "COMPLETED"];
 
 const AddTaskModal = ({ isOpen, onClose, onSuccess, taskToEdit }) => {
   const [loading, setLoading] = useState(false);
@@ -13,11 +15,16 @@ const AddTaskModal = ({ isOpen, onClose, onSuccess, taskToEdit }) => {
   const [ownerId, setOwnerId] = useState("");
   const [users, setUsers] = useState([]);
 
+  const isEmployee = currentOrgRole() === "EMPLOYEE";
+  const canAssignOthers = canManageOrganization();
+
   const defaultFormData = {
     task_subject: "",
     task_description: "",
     task_priority: "NORMAL",
     task_due_date: "",
+    task_status: "TODO",
+    task_progress: 0,
   };
 
   const [formData, setFormData] = useState(defaultFormData);
@@ -29,6 +36,8 @@ const AddTaskModal = ({ isOpen, onClose, onSuccess, taskToEdit }) => {
         task_subject: taskToEdit.task_subject || "",
         task_description: taskToEdit.task_description || "",
         task_priority: taskToEdit.task_priority || "NORMAL",
+        task_status: taskToEdit.task_status || "TODO",
+        task_progress: taskToEdit.task_progress || 0,
         task_due_date: taskToEdit.task_due_date
           ? new Date(taskToEdit.task_due_date).toISOString().split("T")[0]
           : "",
@@ -40,14 +49,21 @@ const AddTaskModal = ({ isOpen, onClose, onSuccess, taskToEdit }) => {
       setOwnerId("");
       setOwnerName("");
     }
-  }, [taskToEdit]);
+  }, [taskToEdit, isOpen]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await api.get("/api/users?limit=100");
         if (res.success) {
-          setUsers(res.data);
+          // Admins can only assign work to employees; the owner may also
+          // assign to other admins.
+          const assignable = res.data.filter((user) => {
+            if (user.user_role === "SUPER_ADMIN" || user.user_is_tenant_owner) return false;
+            if (user.user_role === "ADMIN") return currentOrgRole() === "ORG_SUPER_ADMIN";
+            return true;
+          });
+          setUsers(assignable);
         }
       } catch (err) {
         console.error("Failed to fetch users:", err);
@@ -68,7 +84,7 @@ const AddTaskModal = ({ isOpen, onClose, onSuccess, taskToEdit }) => {
     setError("");
 
     try {
-      if (!formData.task_subject) {
+      if (!formData.task_subject.trim()) {
         toast.error("Task subject is required.");
         setLoading(false);
         return;
@@ -76,15 +92,13 @@ const AddTaskModal = ({ isOpen, onClose, onSuccess, taskToEdit }) => {
 
       const payload = {
         ...formData,
-        task_user_fk: ownerId,
+        task_progress: Number(formData.task_progress) || 0,
+        task_user_fk: ownerId || undefined,
       };
 
       let response;
       if (taskToEdit) {
-        response = await api.put(
-          `/api/tasks/${taskToEdit.task_id}`,
-          payload,
-        );
+        response = await api.put(`/api/tasks/${taskToEdit.task_id}`, payload);
       } else {
         response = await api.post("/api/tasks", payload);
       }
@@ -210,31 +224,76 @@ const AddTaskModal = ({ isOpen, onClose, onSuccess, taskToEdit }) => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Assigned to
-                </label>
-                <select
-                  value={ownerId}
-                  onChange={(e) => {
-                    const user = users.find((u) => u.user_id === e.target.value);
-                    if (user) {
-                      setOwnerId(user.user_id);
-                      setOwnerName(user.user_name);
-                    }
-                  }}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue"
-                >
-                  {!users.find((u) => u.user_id === ownerId) && (
-                    <option value={ownerId}>{ownerName || "Select user"}</option>
-                  )}
-                  {users.map((u) => (
-                    <option key={u.user_id} value={u.user_id}>
-                      {u.user_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {!isEmployee && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Status
+                    </label>
+                    <select
+                      name="task_status"
+                      value={formData.task_status}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue"
+                    >
+                      {STATUSES.map((status) => (
+                        <option key={status} value={status}>
+                          {status.replace(/_/g, " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Progress %
+                    </label>
+                    <input
+                      type="number"
+                      name="task_progress"
+                      min="0"
+                      max="100"
+                      value={formData.task_progress}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canAssignOthers ? (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Assigned to
+                  </label>
+                  <select
+                    value={ownerId}
+                    onChange={(e) => {
+                      const user = users.find((u) => u.user_id === e.target.value);
+                      if (user) {
+                        setOwnerId(user.user_id);
+                        setOwnerName(user.user_name);
+                      }
+                    }}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vsph-core-blue"
+                  >
+                    <option value="">Assign to me</option>
+                    {users.map((u) => (
+                      <option key={u.user_id} value={u.user_id}>
+                        {u.user_name} {u.user_role === "ADMIN" ? "(Admin)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {currentOrgRole() === "ORG_SUPER_ADMIN"
+                      ? "You can assign tasks to admins and employees of your organization."
+                      : "Admins can assign tasks to employees."}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  This task will be assigned to you as a personal task. You can update its progress from the task page.
+                </p>
+              )}
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { getTenantFilter } from "../middleware/auth.middleware.js";
-import { canAccessModule } from "../lib/modules.js";
+import { canDoAction } from "../lib/modules.js";
 
 export const globalSearch = async (req, res) => {
   try {
@@ -19,7 +19,7 @@ export const globalSearch = async (req, res) => {
     const promises = [];
 
     // Accounts
-    if ((filterType === "all" || filterType === "accounts") && canAccessModule(req.user, "ACCOUNTS")) {
+    if ((filterType === "all" || filterType === "accounts") && canDoAction(req.user, "ACCOUNTS", "VIEW")) {
       promises.push(
         prisma.account.findMany({
           where: { account_name: { contains: searchStr }, ...getTenantFilter(req) },
@@ -35,7 +35,7 @@ export const globalSearch = async (req, res) => {
     }
 
     // Contacts
-    if ((filterType === "all" || filterType === "contacts") && canAccessModule(req.user, "CONTACTS")) {
+    if ((filterType === "all" || filterType === "contacts") && canDoAction(req.user, "CONTACTS", "VIEW")) {
       promises.push(
         prisma.contact.findMany({
           where: {
@@ -66,7 +66,7 @@ export const globalSearch = async (req, res) => {
     }
 
     // Opportunities
-    if ((filterType === "all" || filterType === "opportunities") && canAccessModule(req.user, "OPPORTUNITIES")) {
+    if ((filterType === "all" || filterType === "opportunities") && canDoAction(req.user, "OPPORTUNITIES", "VIEW")) {
       promises.push(
         prisma.opportunity.findMany({
           where: { opportunity_name: { contains: searchStr }, ...getTenantFilter(req) },
@@ -82,7 +82,7 @@ export const globalSearch = async (req, res) => {
     }
 
     // Projects
-    if ((filterType === "all" || filterType === "projects") && canAccessModule(req.user, "PROJECTS")) {
+    if ((filterType === "all" || filterType === "projects") && canDoAction(req.user, "PROJECTS", "VIEW")) {
       promises.push(
         prisma.project.findMany({
           where: { project_name: { contains: searchStr }, ...getTenantFilter(req) },

@@ -1,23 +1,27 @@
 import { useEffect, useState } from 'react'
 import {
-  Ban, Check, CheckCircle2, Copy, Loader2, Mail, RefreshCw, ShieldCheck, UserPlus, Users,
+  Ban, Check, CheckCircle2, Copy, Loader2, Mail, RefreshCw, ShieldCheck, UserPlus, Users, BarChart3,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
 import InviteEmployeeModal from '../components/modals/InviteEmployeeModal'
 import EmployeeAccessModal from '../components/modals/EmployeeAccessModal'
-import { moduleLabel } from '../utils/modules'
+import { moduleLabel, currentOrgRole, orgRoleLabel } from '../utils/modules'
 import { api } from '../utils/api'
 import toast from 'react-hot-toast'
 
-const ROLES = ['USER', 'ADMIN', 'SALES', 'DATA', 'PRODUCTION', 'SPONSORSHIP', 'OPERATION']
+const EMPLOYEE_ROLES = ['USER', 'SALES', 'DATA', 'PRODUCTION', 'SPONSORSHIP', 'OPERATION']
+const OWNER_ROLES = ['ADMIN', ...EMPLOYEE_ROLES]
+const roleLabel = (employee) =>
+  employee.user_is_tenant_owner ? 'Organization Super Admin' : employee.user_role === 'ADMIN' ? 'Organization Admin' : 'Employee'
 
 const Team = () => {
   const currentUserId = localStorage.getItem('vsph_user_id')
-  const role = localStorage.getItem('vsph_user_role')
-  const isOwner = localStorage.getItem('vsph_user_owner') === 'true'
-  const canManage = role === 'ADMIN' || isOwner
+  const isOwner = currentOrgRole() === 'ORG_SUPER_ADMIN'
+  const canManage = ['ORG_ADMIN', 'ORG_SUPER_ADMIN'].includes(currentOrgRole())
+  const ROLES = isOwner ? OWNER_ROLES : EMPLOYEE_ROLES
 
   const [employees, setEmployees] = useState([])
+  const [work, setWork] = useState(null)
   const [loading, setLoading] = useState(canManage)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [accessFor, setAccessFor] = useState(null)
@@ -26,9 +30,13 @@ const Team = () => {
 
   const fetchEmployees = async () => {
     try {
-      const res = await api.get('/api/organization/employees')
+      const [res, metrics] = await Promise.all([
+        api.get('/api/organization/employees'),
+        api.get('/api/dashboard/metrics').catch(() => null),
+      ])
       if (res.success) setEmployees(res.data)
       else toast.error(res.message || 'Could not load employees')
+      if (metrics?.success) setWork(metrics.data?.work || null)
     } catch (err) {
       console.error('Error fetching employees:', err)
       toast.error('Could not load employees')
@@ -36,6 +44,7 @@ const Team = () => {
       setLoading(false)
     }
   }
+
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -125,6 +134,64 @@ const Team = () => {
           </div>
         )}
 
+        {work && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
+            {[
+              { label: 'Total tasks', value: work.total },
+              { label: 'To do', value: work.byStatus?.TODO || 0 },
+              { label: 'In progress', value: work.byStatus?.IN_PROGRESS || 0 },
+              { label: 'Blocked', value: work.byStatus?.BLOCKED || 0 },
+              { label: 'Overdue', value: work.overdue },
+              { label: 'Avg progress', value: `${work.averageProgress}%` },
+            ].map((tile) => (
+              <div key={tile.label} className="card border-border p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-secondary">{tile.label}</p>
+                <p className="text-xl font-bold text-sidebar mt-1">{tile.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {work?.byUser?.length > 0 && (
+          <div className="card border-border mb-5">
+            <div className="flex items-center gap-2 p-5 border-b border-border">
+              <BarChart3 size={18} className="text-vsph-core-blue" />
+              <h2 className="text-sidebar text-lg font-semibold">Work progress</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead>
+                  <tr className="bg-surface text-[#475569] text-xs">
+                    <th className="px-5 py-3 font-semibold">Person</th>
+                    <th className="px-5 py-3 font-semibold">Tasks</th>
+                    <th className="px-5 py-3 font-semibold">Completed</th>
+                    <th className="px-5 py-3 font-semibold">Overdue</th>
+                    <th className="px-5 py-3 font-semibold">Average progress</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {work.byUser.map((row) => (
+                    <tr key={row.user_id || 'unassigned'} className="hover:bg-vsph-light-blue/20">
+                      <td className="px-5 py-3 font-semibold text-sidebar">{row.user_name}</td>
+                      <td className="px-5 py-3 text-slate-600">{row.total}</td>
+                      <td className="px-5 py-3 text-slate-600">{row.completed}</td>
+                      <td className="px-5 py-3 text-slate-600">{row.overdue}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-28 rounded-full bg-slate-200 overflow-hidden">
+                            <div className="h-full rounded-full bg-vsph-core-blue" style={{ width: `${row.averageProgress}%` }} />
+                          </div>
+                          <span className="text-xs font-semibold text-slate-600">{row.averageProgress}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         <div className="card border-border">
           <div className="flex items-center justify-between p-5 border-b border-border">
             <div className="flex items-center gap-2">
@@ -188,8 +255,8 @@ const Team = () => {
                           </div>
                         </td>
                         <td className="px-5 py-4">
-                          {employee.user_is_tenant_owner || isSelf ? (
-                            <span className="text-xs font-medium text-sidebar">{employee.user_role?.replace(/_/g, ' ')}</span>
+                          {employee.user_is_tenant_owner || isSelf || (employee.user_role === 'ADMIN' && !isOwner) ? (
+                            <span className="text-xs font-medium text-sidebar">{roleLabel(employee)}</span>
                           ) : (
                             <select
                               value={employee.user_role}
@@ -197,7 +264,7 @@ const Team = () => {
                               onChange={(e) => updateEmployee(employee, { user_role: e.target.value })}
                               className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue"
                             >
-                              {ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
+                              {ROLES.map((r) => <option key={r} value={r}>{r === 'ADMIN' ? 'Organization Admin' : 'Employee'}</option>)}
                             </select>
                           )}
                         </td>
@@ -244,7 +311,7 @@ const Team = () => {
                                 <RefreshCw size={14} className={busy ? 'animate-spin' : ''} /> Resend
                               </button>
                             )}
-                            {!employee.user_is_tenant_owner && !isSelf && (
+                            {!employee.user_is_tenant_owner && !isSelf && !(employee.user_role === 'ADMIN' && !isOwner) && (
                               <button
                                 onClick={() => updateEmployee(employee, { user_status: !employee.user_status })}
                                 disabled={busy}

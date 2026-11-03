@@ -3,18 +3,21 @@ import { Check, Copy, Loader2 } from 'lucide-react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import ModulePicker from '../ModulePicker'
-import { CRM_MODULES } from '../../utils/modules'
+import { CRM_MODULES, MODULE_ACTIONS, currentOrgRole } from '../../utils/modules'
 import { api } from '../../utils/api'
 
-const ROLES = ['USER', 'ADMIN', 'SALES', 'DATA', 'PRODUCTION', 'SPONSORSHIP', 'OPERATION']
+const EMPLOYEE_ROLES = ['USER', 'SALES', 'DATA', 'PRODUCTION', 'SPONSORSHIP', 'OPERATION']
+const OWNER_ROLES = ['ADMIN', ...EMPLOYEE_ROLES]
 const DEPARTMENTS = ['SALES', 'MARKETING', 'FINANCE', 'IT', 'HUMAN_RESOURCES']
-const ALL_MODULES = CRM_MODULES.map((m) => m.code)
+const ALL_ACTIONS = MODULE_ACTIONS.map((a) => a.code)
+const ALL_GRANTS = Object.fromEntries(CRM_MODULES.map((m) => [m.code, [...ALL_ACTIONS]]))
 
 const empty = { name: '', email: '', role: 'USER', department: 'SALES' }
 
 const InviteEmployeeModal = ({ isOpen = true, onClose, onSaved }) => {
+  const roles = currentOrgRole() === 'ORG_SUPER_ADMIN' ? OWNER_ROLES : EMPLOYEE_ROLES
   const [form, setForm] = useState(empty)
-  const [modules, setModules] = useState(ALL_MODULES)
+  const [grants, setGrants] = useState(ALL_GRANTS)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [devLink, setDevLink] = useState('')
@@ -27,7 +30,11 @@ const InviteEmployeeModal = ({ isOpen = true, onClose, onSaved }) => {
     setError('')
     setSaving(true)
     try {
-      const res = await api.post('/api/organization/employees/invite', { ...form, modules })
+      const res = await api.post('/api/organization/employees/invite', {
+        ...form,
+        modules: Object.keys(grants),
+        permissions: grants,
+      })
       if (!res.success) throw new Error(res.message || 'Could not create the invitation.')
       if (res.data?.devInvitationUrl) {
         setDevLink(res.data.devInvitationUrl)
@@ -105,7 +112,7 @@ const InviteEmployeeModal = ({ isOpen = true, onClose, onSaved }) => {
             <div>
               <label className={label} htmlFor="role">CRM role</label>
               <select id="role" name="role" value={form.role} onChange={change} className={input}>
-                {ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
+                {roles.map((r) => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
               </select>
             </div>
             <div>
@@ -118,7 +125,7 @@ const InviteEmployeeModal = ({ isOpen = true, onClose, onSaved }) => {
 
           <div>
             <p className={label}>Module access</p>
-            <ModulePicker value={modules} onChange={setModules} />
+            <ModulePicker value={grants} onChange={setGrants} />
             <p className="text-xs text-slate-500 mt-2">Dashboard is always available. You can change this later.</p>
           </div>
 

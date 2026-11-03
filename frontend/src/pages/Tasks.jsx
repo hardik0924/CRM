@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Download, Plus, Search, Edit2, Loader2, Trash2, ListChecks,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
+import { canDoAction, currentOrgRole } from "../utils/modules";
 import AddTaskModal from "../components/modals/AddTaskModal";
 import TaskDetailView from "../components/TaskDetailView";
 import toast from "react-hot-toast";
@@ -15,10 +17,27 @@ const PRIORITY_COLORS = {
   LOW: "bg-emerald-50 text-emerald-700 border-emerald-100",
 };
 
+const STATUS_COLORS = {
+  TODO: "bg-slate-100 text-slate-600 border-slate-200",
+  IN_PROGRESS: "bg-blue-50 text-blue-700 border-blue-100",
+  BLOCKED: "bg-amber-50 text-amber-700 border-amber-100",
+  COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-100",
+};
+
+const statusLabel = (status) =>
+  (status || "TODO").replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+
 const label = (value) =>
   (value || "-").replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
 const Tasks = () => {
+  const [searchParams] = useSearchParams();
+  const assignedTo = searchParams.get("assigned_to") || "";
+  const canCreate = canDoAction("TASKS", "CREATE");
+  const canEdit = canDoAction("TASKS", "EDIT");
+  const canManageTasks = canEdit && currentOrgRole() !== "EMPLOYEE";
+  const canDelete = canDoAction("TASKS", "DELETE");
+
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectAll, setSelectAll] = useState(false);
@@ -34,14 +53,14 @@ const Tasks = () => {
   useEffect(() => {
     const t = setTimeout(() => fetchTasks(), 300);
     return () => clearTimeout(t);
-  }, [searchTerm, currentPage]);
+  }, [searchTerm, currentPage, assignedTo]);
 
   const fetchTasks = async () => {
     try {
       setLoading(true);
       const query = `?page=${currentPage}&limit=${limit}${
         searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ""
-      }`;
+      }${assignedTo ? `&assigned_to=${encodeURIComponent(assignedTo)}` : ""}`;
       const response = await api.get(`/api/tasks${query}`);
       if (response.success) {
         setTasksData(response.data);
@@ -139,6 +158,8 @@ const Tasks = () => {
             size="sm"
             onClick={() => setIsAddModalOpen(true)}
             className="gap-2 font-semibold"
+            disabled={!canCreate}
+            title={canCreate ? "Create a task" : "You do not have create access"}
           >
             <Plus size={16} /> New task
           </Button>
@@ -187,17 +208,19 @@ const Tasks = () => {
                         onChange={toggleSelectAll}
                       />
                     </th>
-                    <th className="w-80 min-w-[240px]">Subject</th>
-                    <th className="w-40 min-w-[120px]">Priority</th>
-                    <th className="w-48 min-w-[144px]">Due Date</th>
-                    <th className="w-48 min-w-[144px]">Assigned to</th>
+                    <th className="w-80 min-w-[220px]">Subject</th>
+                    <th className="w-36 min-w-[120px]">Status</th>
+                    <th className="w-32 min-w-[100px]">Priority</th>
+                    <th className="w-40 min-w-[140px]">Progress</th>
+                    <th className="w-40 min-w-[130px]">Due Date</th>
+                    <th className="w-44 min-w-[140px]">Assigned to</th>
                     <th className="w-24 min-w-[96px] text-center sticky right-0 shadow-[-1px_0_0_rgba(0,0,0,0.05)] z-10">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border bg-surface">
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="py-24 text-center text-secondary">
+                      <td colSpan="8" className="py-24 text-center text-secondary">
                         <div className="flex flex-col items-center justify-center gap-3">
                           <Loader2 className="animate-spin text-vsph-core-blue" size={28} />
                           <p className="text-sm font-medium">Loading tasks&hellip;</p>
@@ -206,7 +229,7 @@ const Tasks = () => {
                     </tr>
                   ) : tasksData.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="py-24 text-center text-secondary font-medium">
+                      <td colSpan="8" className="py-24 text-center text-secondary font-medium">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <ListChecks size={48} className="text-slate-200 mx-auto" />
                           <p>No tasks found.</p>
@@ -239,6 +262,11 @@ const Tasks = () => {
                           {task.task_subject || "-"}
                         </td>
                         <td className="border-b border-border px-6 py-4">
+                          <span className={`px-2 py-1 rounded text-xs font-medium border ${STATUS_COLORS[task.task_status] || STATUS_COLORS.TODO}`}>
+                            {statusLabel(task.task_status)}
+                          </span>
+                        </td>
+                        <td className="border-b border-border px-6 py-4">
                           {task.task_priority ? (
                             <span className={`px-2 py-1 rounded text-xs font-medium ${PRIORITY_COLORS[task.task_priority] || "bg-vsph-grey text-slate-600"}`}>
                               {task.task_priority?.replace(/_/g, " ") || "-"}
@@ -246,6 +274,14 @@ const Tasks = () => {
                           ) : (
                             "-"
                           )}
+                        </td>
+                        <td className="border-b border-border px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-20 rounded-full bg-slate-200 overflow-hidden">
+                              <div className="h-full rounded-full bg-vsph-core-blue" style={{ width: `${task.task_progress || 0}%` }} />
+                            </div>
+                            <span className="text-xs font-semibold text-slate-600">{task.task_progress || 0}%</span>
+                          </div>
                         </td>
                         <td className="border-b border-border px-6 py-4 text-slate-600 truncate">
                           {task.task_due_date ? new Date(task.task_due_date).toLocaleDateString() : "-"}
@@ -255,20 +291,24 @@ const Tasks = () => {
                         </td>
                         <td className={`px-6 py-4 text-center sticky right-0 group-hover:bg-vsph-light-blue/20 shadow-[-1px_0_0_rgba(0,0,0,0.05)] ${selectedRows.includes(task.task_id) ? "bg-vsph-light-blue/30" : "bg-surface"}`}>
                           <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                            <button
-                              className="btn-icon"
-                              title="Edit"
-                              onClick={(e) => { e.stopPropagation(); setTaskToEdit(task); setIsAddModalOpen(true); }}
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              className="p-2 rounded text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
-                              title="Delete"
-                              onClick={(e) => { e.stopPropagation(); handleDelete(task); }}
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            {canManageTasks && (
+                              <button
+                                className="btn-icon"
+                                title="Edit"
+                                onClick={(e) => { e.stopPropagation(); setTaskToEdit(task); setIsAddModalOpen(true); }}
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                className="p-2 rounded text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                                title="Delete"
+                                onClick={(e) => { e.stopPropagation(); handleDelete(task); }}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -317,6 +357,8 @@ const Tasks = () => {
           isOpen={!!viewTaskId}
           onClose={() => setViewTaskId(null)}
           taskId={viewTaskId}
+          onChanged={fetchTasks}
+          onDeleted={fetchTasks}
         />
       )}
     </div>

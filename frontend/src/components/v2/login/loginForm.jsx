@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { api } from "../../../utils/api"
-import Button from "../../ui/Button"
 
-const LoginForm = ({ role, title, subtitle }) => {
+const LoginForm = ({ title = "CRM login", subtitle = "Organization admins and employees sign in here" }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -28,10 +27,12 @@ const LoginForm = ({ role, title, subtitle }) => {
                 localStorage.setItem("vsph_user_name", user.name);
                 localStorage.setItem("vsph_user_email", user.email);
                 localStorage.setItem("vsph_user_owner", user.isTenantOwner ? "true" : "false");
+                localStorage.setItem("vsph_org_role", user.orgRole || "");
                 localStorage.setItem("vsph_tenant_id", user.tenantId || "");
                 localStorage.setItem("vsph_tenant_name", user.tenantName || "");
                 localStorage.setItem("vsph_tenant_code", user.tenantCode || "");
                 localStorage.setItem("vsph_user_modules", JSON.stringify(user.modules ?? null));
+                localStorage.setItem("vsph_user_actions", JSON.stringify(user.moduleActions ?? null));
 
                 if (user.role === "SUPER_ADMIN") {
                     navigate("/superadmin");
@@ -51,14 +52,6 @@ const LoginForm = ({ role, title, subtitle }) => {
     return (
         <div className="w-full md:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-24 py-12">
                 <div className="max-w-md w-full mx-auto">
-                    {/* Back button */}
-                    <div className="mb-8 animate-fade-in">
-                        <Link to="/v2/login" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-vsph-core-blue transition-colors font-medium">
-                            <ArrowLeft size={16} />
-                            Back to role selection
-                        </Link>
-                    </div>
-
                     {/* VSPh Brand */}
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-6 h-6 bg-vsph-navy rounded-md flex items-center justify-center">
@@ -101,10 +94,7 @@ const LoginForm = ({ role, title, subtitle }) => {
                         </div>
 
                         <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                                <label className="block text-sm font-medium text-slate-700" htmlFor="password">Password</label>
-                                <a href="#" className="text-sm font-medium text-vsph-core-blue hover:text-vsph-navy hover:underline transition-colors">Forgot password?</a>
-                            </div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="password">Password</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                     <Lock size={18} />
@@ -122,6 +112,7 @@ const LoginForm = ({ role, title, subtitle }) => {
                                     type="button" 
                                     className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
                                     onClick={() => setShowPassword(!showPassword)}
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -136,6 +127,10 @@ const LoginForm = ({ role, title, subtitle }) => {
                             {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Sign in'}
                         </button>
                     </form>
+
+                    <p className="mt-6 text-xs text-slate-500 text-center">
+                        Your role and module access are determined by your organization administrator.
+                    </p>
                 </div>
         </div>
     )
