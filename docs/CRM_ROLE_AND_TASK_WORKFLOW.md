@@ -361,10 +361,25 @@ the live `crm` database were not modified.
    instead of a dead "Mailing Box" placeholder.
 5. **Employee task status choices follow the workflow**, so the UI no longer
    offers moves the backend rejects. Admins still see every status.
+6. **Activity tabs show real data.** Account, opportunity, project and campaign
+   detail views replace the "content will go here" placeholder with a feed of
+   calls and tasks logged against the record's linked contacts
+   (`GET /api/activity?entity=…&id=…`). The endpoint runs behind the same auth
+   middleware, checks module access, and filters by tenant, so an entity in
+   another tenant returns 404 and a module the user lacks returns 403. Chatter
+   stays a placeholder.
 
 Verification in the sandbox: `npm test` 23 tests (22 pass, 1 skipped, 0 fail),
 `vite build` passes, and browser checks covered each item above with temporary
 records that were removed afterwards.
+
+Activity tab checks: the account `xyz` feed listed a real task and call (subject,
+status, contact, user, timestamp); project and campaign feeds showed the same
+items while a contact was temporarily linked and went back to the empty state
+after the link was reverted; an opportunity with no logged calls or tasks showed
+"No activity yet". API checks returned 200 for a valid record, 200 with `[]` for
+no activity, 404 for another tenant's account and for a soft-deleted project,
+403 for a module the signed-in user lacks, and 400 for an unknown entity.
 
 Deliberately not changed:
 
