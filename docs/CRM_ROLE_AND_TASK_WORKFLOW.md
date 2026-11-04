@@ -368,6 +368,10 @@ the live `crm` database were not modified.
    middleware, checks module access, and filters by tenant, so an entity in
    another tenant returns 404 and a module the user lacks returns 403. Chatter
    stays a placeholder.
+7. **The account Opportunities tab lists the account's opportunities.** The
+   label was hardcoded to `Opportunities (0)` and the pane had no content, even
+   when the opportunity was saved with that account. `GET /api/accounts/:id` now
+   returns them and the tab shows name, stage and close date.
 
 Verification in the sandbox: `npm test` 23 tests (22 pass, 1 skipped, 0 fail),
 `vite build` passes, and browser checks covered each item above with temporary
