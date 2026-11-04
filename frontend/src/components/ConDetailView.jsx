@@ -278,9 +278,9 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
         ) : contactData ? (
           <div className="w-full mx-auto flex flex-col h-full min-h-0">
             {/* Top Section */}
-            <div className="bg-white shadow-sm border-b border-slate-200 shrink-0">
-              {/* DIV 1: Breadcrumb & Actions */}
-              <div className="flex justify-between items-start px-6 pt-4 mb-2">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 pb-0">
+              {/* Breadcrumb & Actions */}
+              <div className="flex justify-between items-start mb-4">
                 <div>
                   <Breadcrumbs
                     items={[
@@ -288,20 +288,11 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                       { label: fullName || "Contact", current: true },
                     ]}
                   />
-                  <h1 className="text-2xl font-bold text-slate-800 tracking-tight leading-none mb-1.5">
+                  <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3 tracking-tight">
                     {fullName}
                   </h1>
-                  <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
-                    <span>{contactData.contact_code || "UNKNOWN"}</span>
-                    <span className="text-slate-300">•</span>
-                    <span>{title}</span>
-                    <span className="text-slate-300">•</span>
-                    <span
-                      className="text-blue-600 cursor-pointer hover:underline"
-                      onClick={handleViewAccount}
-                    >
-                      {accountName}
-                    </span>
+                  <p className="text-[11px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">
+                    {contactData.contact_code || "UNKNOWN"}
                   </p>
                 </div>
 
@@ -359,55 +350,37 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                 </div>
               </div>
 
-              {/* DIV 2: Highlights */}
-              <div className="flex border-t border-slate-100 mt-4 px-6 py-3">
-                <div className="flex-1 border-r border-slate-100 px-4 first:pl-0 last:border-r-0">
-                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Mobile
+              {/* Highlights Panel */}
+              <div className="flex flex-wrap gap-12 pt-4 pb-4 border-t border-slate-100">
+                <div className="flex flex-col min-w-[120px]">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mobile</span>
+                  <span className="text-sm font-semibold text-blue-600 flex items-center gap-1.5">
+                    <Phone size={14} /> {mobile}
                   </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-blue-600 flex items-center gap-1.5">
-                      <Phone size={14} /> {mobile}
-                    </span>
-                    <button className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
-                      <Phone size={10} /> Log Call
-                    </button>
-                  </div>
+                  <button className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 mt-2">
+                    <Phone size={10} /> Log Call
+                  </button>
                 </div>
-                <div className="flex-1 border-r border-slate-100 px-4 last:border-r-0">
-                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Email
-                  </span>
-                  <span className="text-sm font-semibold text-slate-400">
-                    {email !== "-" ? email : "—"}
-                  </span>
+                <div className="flex flex-col min-w-[120px]">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email</span>
+                  <span className="text-[13px] text-slate-800 font-semibold">{email !== "-" ? email : "—"}</span>
                 </div>
-                <div className="flex-1 border-r border-slate-100 px-4 last:border-r-0">
-                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Account
-                  </span>
+                <div className="flex flex-col min-w-[120px]">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Account</span>
                   <span
-                    className="text-sm font-semibold text-blue-600 hover:underline cursor-pointer"
+                    className="text-[13px] text-blue-600 hover:underline cursor-pointer"
                     onClick={handleViewAccount}
                   >
                     {accountName}
                   </span>
                 </div>
-                <div className="flex-1 border-r border-slate-100 px-4 last:border-r-0">
-                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Call Status
-                  </span>
-                  <span className="text-sm font-semibold text-slate-400">
-                    {contactData.contact_call_status || "—"}
-                  </span>
+                <div className="flex flex-col min-w-[120px]">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Call Status</span>
+                  <span className="text-[13px] text-slate-800 font-semibold">{contactData.contact_call_status || "—"}</span>
                 </div>
-                <div className="flex-1 px-4 last:border-r-0">
-                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Owner
-                  </span>
-                  <span className="text-sm font-semibold text-slate-800">
-                    {owner}
-                  </span>
+                <div className="flex flex-col min-w-[120px]">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Owner</span>
+                  <span className="text-[13px] text-slate-800 font-semibold">{owner}</span>
                 </div>
               </div>
 
