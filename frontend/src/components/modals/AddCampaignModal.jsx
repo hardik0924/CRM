@@ -29,8 +29,8 @@ const AddCampaignModal = ({ isOpen, onClose, onSuccess, campaignToEdit }) => {
       setOwnerName(campaignToEdit.user?.user_name || "Unknown");
     } else {
       setFormData(defaultFormData);
-      setOwnerId("");
-      setOwnerName("");
+      setOwnerId(localStorage.getItem("vsph_user_id") || "");
+      setOwnerName(localStorage.getItem("vsph_user_name") || "");
     }
   }, [campaignToEdit]);
 
