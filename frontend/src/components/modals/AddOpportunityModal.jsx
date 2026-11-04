@@ -11,6 +11,7 @@ const AddOpportunityModal = ({
   onClose,
   onSuccess,
   opportunityToEdit,
+  defaultAccountId,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -153,7 +154,7 @@ const AddOpportunityModal = ({
         opportunity_close_date: "",
         opportunity_stage: "",
         opportunity_type: "",
-        opportunity_account_fk: "",
+        opportunity_account_fk: defaultAccountId || "",
         opportunity_contact_fk: "",
         opportunity_project_id: "",
         opportunity_campaign_id: "",
@@ -179,7 +180,7 @@ const AddOpportunityModal = ({
         }
       }
     }
-  }, [opportunityToEdit, isOpen]);
+  }, [opportunityToEdit, isOpen, defaultAccountId]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

@@ -7,7 +7,13 @@ import { api } from "../../utils/api";
 import { INDUSTRIES } from "../../data/industries";
 import toast from "react-hot-toast";
 
-const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
+const AddContactModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  contactToEdit,
+  defaultAccountId,
+}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [ownerName, setOwnerName] = useState("");
@@ -112,9 +118,12 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
         shipping_country: shipping.shipping_country || "",
       });
     } else {
-      setFormData(defaultFormData);
+      setFormData({
+        ...defaultFormData,
+        contact_account_fk: defaultAccountId || "",
+      });
     }
-  }, [contactToEdit]);
+  }, [contactToEdit, defaultAccountId]);
 
   useEffect(() => {
     const fetchAccounts = async () => {
