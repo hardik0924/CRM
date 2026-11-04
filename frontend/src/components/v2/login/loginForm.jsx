@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, ArrowRight } from 'lucide-react'
 import { api } from "../../../utils/api"
 
-const LoginForm = ({ title = "CRM login", subtitle = "Organization admins and employees sign in here" }) => {
+const LoginForm = ({ title = "Welcome back", subtitle = "Sign in to your VSPH CRM workspace" }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -50,88 +50,94 @@ const LoginForm = ({ title = "CRM login", subtitle = "Organization admins and em
     }
 
     return (
-        <div className="w-full md:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-24 py-12">
-                <div className="max-w-md w-full mx-auto">
-                    {/* VSPh Brand */}
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="w-6 h-6 bg-vsph-navy rounded-md flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">V</span>
-                        </div>
-                        <span className="text-vsph-navy font-bold text-sm tracking-tight">VSPH</span>
-                    </div>
-
-                    {/* Header */}
-                    <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
-                        <h1 className="text-vsph-navy text-2xl font-bold tracking-tight">{title}</h1>
-                        <p className="text-slate-500 mt-2">{subtitle}</p>
-                    </div>
-
-                    {/* Error Message */}
-                    {error && (
-                        <div className="mb-6 p-3 bg-rose-50 text-rose-700 text-sm rounded-md border border-rose-100">
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Form */}
-                    <form onSubmit={handleLogin} className="space-y-5 animate-slide-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="email">Email address</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                    <Mail size={18} />
-                                </div>
-                                <input 
-                                    id="email" 
-                                    type="email" 
-                                    placeholder="Enter your email" 
-                                    className="!pl-10 block w-full px-4 py-2.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue transition-all"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="password">Password</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                    <Lock size={18} />
-                                </div>
-                                <input 
-                                    id="password" 
-                                    type={showPassword ? "text" : "password"} 
-                                    placeholder="••••••••" 
-                                    className="!pl-10 !pr-10 block w-full px-4 py-2.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue transition-all"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                    required
-                                />
-                                <button 
-                                    type="button" 
-                                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <button 
-                            type="submit" 
-                            disabled={isLoading}
-                            className="btn-primary w-full flex items-center justify-center gap-2 mt-2 py-3 rounded-lg font-semibold disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Sign in'}
-                        </button>
-                    </form>
-
-                    <p className="mt-6 text-xs text-slate-500 text-center">
-                        Your role and module access are determined by your organization administrator.
-                    </p>
+        <div className="flex w-full flex-col justify-center bg-white px-6 py-10 sm:px-12 md:w-1/2 lg:px-16">
+            <div className="mx-auto w-full max-w-[420px]">
+                {/* Brand (mobile only, the left panel is hidden) */}
+                <div className="mb-8 flex items-center md:hidden">
+                    <img src="/vsph-logo-dark.png" alt="VSPH" className="h-10 w-auto object-contain" />
                 </div>
+
+                {/* Header */}
+                <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.05s', animationFillMode: 'both' }}>
+                    <h1 className="text-[28px] font-semibold tracking-tight text-vsph-navy">{title}</h1>
+                    <p className="mt-2 text-sm text-slate-500">{subtitle}</p>
+                </div>
+
+                {/* Error */}
+                {error && (
+                    <div role="alert" className="mb-6 flex items-start gap-2.5 rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                {/* Form */}
+                <form onSubmit={handleLogin} className="space-y-5 animate-slide-up" style={{ animationDelay: '0.12s', animationFillMode: 'both' }}>
+                    <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="email">Email address</label>
+                        <div className="relative">
+                            <Mail size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                id="email"
+                                type="email"
+                                autoComplete="email"
+                                placeholder="you@company.com"
+                                className="!h-12 !rounded-xl !border-slate-200 !pl-11 !text-[15px] shadow-sm transition-all focus:!border-vsph-core-blue focus:!ring-4 focus:!ring-vsph-core-blue/10"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="password">Password</label>
+                        <div className="relative">
+                            <Lock size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                autoComplete="current-password"
+                                placeholder="Enter your password"
+                                className="!h-12 !rounded-xl !border-slate-200 !pl-11 !pr-12 !text-[15px] shadow-sm transition-all focus:!border-vsph-core-blue focus:!ring-4 focus:!ring-vsph-core-blue/10"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                required
+                            />
+                            <button
+                                type="button"
+                                className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                                onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="group mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-vsph-navy to-vsph-core-blue text-sm font-semibold text-white shadow-lg shadow-vsph-core-blue/20 transition-all hover:shadow-xl hover:shadow-vsph-core-blue/25 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin" />
+                                Signing in…
+                            </>
+                        ) : (
+                            <>
+                                Sign in
+                                <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" />
+                            </>
+                        )}
+                    </button>
+                </form>
+
+                <p className="mt-8 text-center text-xs leading-relaxed text-slate-400">
+                    Your role and module access are managed by your organization administrator.
+                </p>
+            </div>
         </div>
     )
 }
