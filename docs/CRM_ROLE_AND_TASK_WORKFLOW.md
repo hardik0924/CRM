@@ -339,3 +339,44 @@ Verified against the dev database and API on port 5000, then in the browser:
 No schema change was needed for this fix. Existing accounts that stored no
 industry keep `NULL` until the account is edited and saved again.
 
+### Follow-up fixes (branch `fix/industry-tenant-ui`, not merged)
+
+These were built and tested in a separate git worktree with its own database
+copy (`crm_fix`), API on 5001 and Vite on 5175. The live app (`5000`/`5174`) and
+the live `crm` database were not modified.
+
+1. **Industries are unique per tenant, not globally.** Migration
+   `20261104090000_industry_per_tenant` drops the global key and adds
+   `(tenant_fk, industry_name)`. Account and contact saves create or reuse the
+   industry inside the signed-in tenant only. Apply with `prisma db execute`
+   while `migrate deploy` is blocked by `P3005`; `rollback.sql` restores the
+   global key and only works while no two tenants share a name.
+2. **New campaigns default their owner to the signed-in user.** The owner
+   dropdown was always populated, but nothing was preselected, so campaigns
+   could be saved without an owner.
+3. **The account drawer pre-fills the account** in "New Contact" and
+   "New Opportunity" (the prop was passed but ignored).
+4. **Contact detail shows the real designation** (`contact_designation`, not
+   `contact_title`) and displays the stored billing and shipping addresses
+   instead of a dead "Mailing Box" placeholder.
+5. **Employee task status choices follow the workflow**, so the UI no longer
+   offers moves the backend rejects. Admins still see every status.
+
+Verification in the sandbox: `npm test` 23 tests (22 pass, 1 skipped, 0 fail),
+`vite build` passes, and browser checks covered each item above with temporary
+records that were removed afterwards.
+
+Deliberately not changed:
+
+* Accounts with no industry cannot be backfilled automatically: the old code
+  never stored the chosen free-text name, so there is nothing to read. The four
+  remaining rows in the dev copy are test records (`Test Account`, `TestCo`,
+  `xyz`, `pqr`) and need a manual edit.
+* A billing-to-account location backfill would touch only two of those test
+  rows, so the display fallback stays and no data write is planned.
+* Detail drawers already close before an edit and refetch on reopen; the older
+  "stale until reopened" note no longer reproduces.
+
+Before merging: take a database backup, apply the migration, run
+`prisma generate`, restart the API, then merge the branch and push.
+
