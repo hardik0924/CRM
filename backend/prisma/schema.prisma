@@ -125,7 +125,7 @@ model account {
 
 model industry {
   industry_id   String @id @default(uuid())
-  industry_name String @unique
+  industry_name String
 
   tenant_fk String
   tenant    tenant @relation("tenant_industries", fields: [tenant_fk], references: [tenant_id])
@@ -139,6 +139,7 @@ model industry {
   accounts account[]
   contacts contact[]
 
+  @@unique([tenant_fk, industry_name])
   @@index([industry_name])
   @@index([industry_status])
   @@index([industry_deleted_at])

@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { findOrCreateIndustry } from "../lib/industries.js";
 import { account_type } from "@prisma/client";
 import { getTenantFilter } from "../middleware/auth.middleware.js";
 
@@ -225,15 +226,12 @@ export const createAccount = async (req, res) => {
           }
         : undefined;
 
-    let industryId = null;
-    if (account_industry) {
-      const industry = await prisma.industry.upsert({
-        where: { industry_name: account_industry },
-        update: {},
-        create: { industry_name: account_industry, tenant_fk: tenantId },
-      });
-      industryId = industry.industry_id;
-    }
+    const industry = await findOrCreateIndustry(
+      prisma,
+      tenantId,
+      account_industry,
+    );
+    const industryId = industry?.industry_id || null;
 
     // Owner is required by the schema; default to the signed-in user so the
     // "New account" form works when a user forgets to pick one.
@@ -348,22 +346,22 @@ export const updateAccount = async (req, res) => {
     }
 
     if (account_industry) {
-      let industry = await prisma.industry.findUnique({
-        where: { industry_name: account_industry },
-      });
-      if (!industry) {
+      let tenantId = req.user.tenantFk;
+      if (!tenantId) {
         const account = await prisma.account.findFirst({
           where: { account_id: id },
           select: { tenant_fk: true },
         });
-        industry = await prisma.industry.create({
-          data: {
-            industry_name: account_industry,
-            tenant_fk: account?.tenant_fk || req.user.tenantFk,
-          },
-        });
+        tenantId = account?.tenant_fk;
       }
-      dataToUpdate.industry = { connect: { industry_id: industry.industry_id } };
+      const industry = await findOrCreateIndustry(
+        prisma,
+        tenantId,
+        account_industry,
+      );
+      if (industry) {
+        dataToUpdate.industry = { connect: { industry_id: industry.industry_id } };
+      }
     } else if (account_industry === "") {
       dataToUpdate.industry = { disconnect: true };
     }

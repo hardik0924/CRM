@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { getTenantFilter } from "../middleware/auth.middleware.js";
+import { findOrCreateIndustry } from "../lib/industries.js";
 
 export const getContacts = async (req, res) => {
   try {
@@ -151,14 +152,12 @@ export const createContact = async (req, res) => {
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
       )
     ) {
-      const industry = await prisma.industry.findUnique({
-        where: { industry_name: contact_industry_fk },
-      });
-      if (industry) {
-        resolvedIndustryId = industry.industry_id;
-      } else {
-        resolvedIndustryId = null;
-      }
+      const industry = await findOrCreateIndustry(
+        prisma,
+        tenantId,
+        contact_industry_fk,
+      );
+      resolvedIndustryId = industry?.industry_id || null;
     }
 
     let resolvedOwnerId = contact_owner_fk || null;
@@ -349,14 +348,12 @@ export const updateContact = async (req, res) => {
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
       )
     ) {
-      const industry = await prisma.industry.findUnique({
-        where: { industry_name: contact_industry_fk },
-      });
-      if (industry) {
-        resolvedIndustryId = industry.industry_id;
-      } else {
-        resolvedIndustryId = null;
-      }
+      const industry = await findOrCreateIndustry(
+        prisma,
+        req.user.tenantFk || existingContact.tenant_fk,
+        contact_industry_fk,
+      );
+      resolvedIndustryId = industry?.industry_id || null;
     }
 
     let resolvedOwnerId = contact_owner_fk || null;
