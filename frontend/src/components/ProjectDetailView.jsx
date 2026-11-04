@@ -3,6 +3,7 @@ import { api } from "../utils/api";
 import { Layers, Users, Calendar, Edit2, MoreHorizontal } from "lucide-react";
 import Button from "./ui/Button";
 import AddTaskModal from "./modals/AddTaskModal";
+import ActivityFeed from "./ActivityFeed";
 import { canDoAction } from "../utils/modules";
 
 const ProjectDetailView = ({ isOpen, onClose, projectId, onEdit }) => {
@@ -201,9 +202,7 @@ const ProjectDetailView = ({ isOpen, onClose, projectId, onEdit }) => {
                       </div>
                     </div>
                   )}
-                  {activeTab !== "Details" && (
-                    <div className="p-8 text-center text-sm font-semibold text-slate-500">{activeTab} content will go here.</div>
-                  )}
+                  {activeTab === "Activity" && <ActivityFeed entity="project" id={projectId} />}
                 </div>
               </div>
 

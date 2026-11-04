@@ -3,6 +3,7 @@ import { api } from "../utils/api";
 import { TrendingUp, Users, Briefcase, Calendar, Edit2, MoreHorizontal } from "lucide-react";
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
+import ActivityFeed from "./ActivityFeed";
 import { canDoAction } from "../utils/modules";
 
 const STAGE_COLORS = {
@@ -216,9 +217,7 @@ const OppDetailView = ({ isOpen, onClose, opportunityId, onEdit }) => {
                       </div>
                     </div>
                   )}
-                  {activeTab !== "Details" && (
-                    <div className="p-8 text-center text-sm font-semibold text-slate-500">{activeTab} content will go here.</div>
-                  )}
+                  {activeTab === "Activity" && <ActivityFeed entity="opportunity" id={opportunityId} />}
                 </div>
               </div>
 

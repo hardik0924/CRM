@@ -4,6 +4,7 @@ import { Users, Target, MoreHorizontal, Edit2, Menu } from "lucide-react";
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
 import AddOpportunityModal from "./modals/AddOpportunityModal";
+import ActivityFeed from "./ActivityFeed";
 import { canDoAction } from "../utils/modules";
 
 const AccountDetailView = ({ isOpen, onClose, accountId, onEdit }) => {
@@ -240,9 +241,10 @@ const AccountDetailView = ({ isOpen, onClose, accountId, onEdit }) => {
                       )}
                     </div>
                   )}
-                  {activeTab !== "Details" && activeTab !== "Contacts" && (
+                  {activeTab === "Activity" && <ActivityFeed entity="account" id={accountData.account_id} />}
+                  {activeTab === "Chatter" && (
                      <div className="p-8 text-center text-sm font-semibold text-slate-500">
-                        {activeTab} content will go here.
+                        Chatter content will go here.
                      </div>
                   )}
                 </div>

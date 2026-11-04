@@ -3,6 +3,7 @@ import { api } from "../utils/api";
 import { Megaphone, Users, Calendar, Edit2, MoreHorizontal } from "lucide-react";
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
+import ActivityFeed from "./ActivityFeed";
 import { canDoAction } from "../utils/modules";
 
 const CampaignDetailView = ({ isOpen, onClose, campaignId, onEdit }) => {
@@ -191,9 +192,7 @@ const CampaignDetailView = ({ isOpen, onClose, campaignId, onEdit }) => {
                       </div>
                     </div>
                   )}
-                  {activeTab !== "Details" && (
-                    <div className="p-8 text-center text-sm font-semibold text-slate-500">{activeTab} content will go here.</div>
-                  )}
+                  {activeTab === "Activity" && <ActivityFeed entity="campaign" id={campaignId} />}
                 </div>
               </div>
 
