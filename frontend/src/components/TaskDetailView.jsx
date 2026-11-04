@@ -6,7 +6,7 @@ import {
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
 import AddTaskModal from "./modals/AddTaskModal";
-import { canDoAction, canManageOrganization } from "../utils/modules";
+import { canDoAction, canManageOrganization, currentOrgRole } from "../utils/modules";
 import toast from "react-hot-toast";
 
 const PRIORITY_COLORS = {
@@ -23,6 +23,13 @@ const STATUS_COLORS = {
 };
 
 const STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "COMPLETED"];
+// Mirrors backend/src/lib/tasks.js; employees can only make these moves.
+const TRANSITIONS = {
+  TODO: ["IN_PROGRESS", "BLOCKED", "COMPLETED"],
+  IN_PROGRESS: ["TODO", "BLOCKED", "COMPLETED"],
+  BLOCKED: ["TODO", "IN_PROGRESS"],
+  COMPLETED: ["IN_PROGRESS"],
+};
 const statusLabel = (status) =>
   (status || "TODO").replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
@@ -73,6 +80,18 @@ const TaskDetailView = ({ isOpen, onClose, taskId, onChanged, onDeleted }) => {
   }, [isOpen, taskId]);
 
   if (!isOpen) return null;
+
+  // Only show moves the current user can actually make; admins may set any.
+  const isEmployeeUser = currentOrgRole() === "EMPLOYEE";
+  const statusOptions =
+    isEmployeeUser && taskData?.task_status
+      ? [
+          ...new Set([
+            taskData.task_status,
+            ...(TRANSITIONS[taskData.task_status] || []),
+          ]),
+        ]
+      : STATUSES;
 
   const saveProgress = async (e) => {
     e.preventDefault();
@@ -354,7 +373,7 @@ const TaskDetailView = ({ isOpen, onClose, taskId, onChanged, onDeleted }) => {
                           onChange={(e) => setForm({ ...form, task_status: e.target.value })}
                           className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-800 focus:outline-none focus:border-blue-400"
                         >
-                          {STATUSES.map((status) => (
+                          {statusOptions.map((status) => (
                             <option key={status} value={status}>{statusLabel(status)}</option>
                           ))}
                         </select>
