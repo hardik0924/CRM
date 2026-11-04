@@ -60,6 +60,8 @@ export const getAccounts = async (req, res) => {
       data: accounts.map((acc) => ({
         ...acc,
         account_industry: acc.industry?.industry_name || "",
+        account_city: acc.account_city || acc.account_billing_address?.[0]?.billing_city || "",
+        account_country: acc.account_country || acc.account_billing_address?.[0]?.billing_country || "",
       })),
       pagination: {
         totalRecords,
@@ -106,6 +108,8 @@ export const getAccountById = async (req, res) => {
       data: {
         ...account,
         account_industry: account.industry?.industry_name || "",
+        account_city: account.account_city || account.account_billing_address?.[0]?.billing_city || "",
+        account_country: account.account_country || account.account_billing_address?.[0]?.billing_country || "",
       },
     });
   } catch (error) {
@@ -223,12 +227,12 @@ export const createAccount = async (req, res) => {
 
     let industryId = null;
     if (account_industry) {
-      const industry = await prisma.industry.findUnique({
+      const industry = await prisma.industry.upsert({
         where: { industry_name: account_industry },
+        update: {},
+        create: { industry_name: account_industry, tenant_fk: tenantId },
       });
-      if (industry) {
-        industryId = industry.industry_id;
-      }
+      industryId = industry.industry_id;
     }
 
     // Owner is required by the schema; default to the signed-in user so the
@@ -244,8 +248,8 @@ export const createAccount = async (req, res) => {
         account_type: account_type || undefined,
         account_phone,
         account_email,
-        account_city,
-        account_country,
+        account_city: account_city || billing_city || "",
+        account_country: account_country || billing_country || "",
         account_industry_fk: industryId,
         account_description,
         account_account_status,
@@ -322,12 +326,16 @@ export const updateAccount = async (req, res) => {
       dataToUpdate.account_annual_revenue = account_annual_revenue ? parseFloat(account_annual_revenue) : null;
     }
 
-    if (account_city !== undefined) dataToUpdate.account_city = account_city;
+    if (account_city !== undefined || billing_city !== undefined) {
+      dataToUpdate.account_city = account_city || billing_city || "";
+    }
     if (account_website !== undefined) dataToUpdate.account_website = account_website;
     if (account_type !== undefined) dataToUpdate.account_type = account_type || undefined;
     if (account_phone !== undefined) dataToUpdate.account_phone = account_phone;
     if (account_email !== undefined) dataToUpdate.account_email = account_email;
-    if (account_country !== undefined) dataToUpdate.account_country = account_country;
+    if (account_country !== undefined || billing_country !== undefined) {
+      dataToUpdate.account_country = account_country || billing_country || "";
+    }
     if (account_description !== undefined) dataToUpdate.account_description = account_description;
     if (account_account_status !== undefined) dataToUpdate.account_account_status = account_account_status;
 
@@ -340,12 +348,22 @@ export const updateAccount = async (req, res) => {
     }
 
     if (account_industry) {
-      const industry = await prisma.industry.findUnique({
+      let industry = await prisma.industry.findUnique({
         where: { industry_name: account_industry },
       });
-      if (industry) {
-        dataToUpdate.industry = { connect: { industry_id: industry.industry_id } };
+      if (!industry) {
+        const account = await prisma.account.findFirst({
+          where: { account_id: id },
+          select: { tenant_fk: true },
+        });
+        industry = await prisma.industry.create({
+          data: {
+            industry_name: account_industry,
+            tenant_fk: account?.tenant_fk || req.user.tenantFk,
+          },
+        });
       }
+      dataToUpdate.industry = { connect: { industry_id: industry.industry_id } };
     } else if (account_industry === "") {
       dataToUpdate.industry = { disconnect: true };
     }
