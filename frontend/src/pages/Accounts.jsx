@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  Download, Plus, Search, Edit2, Loader2, Trash2, Briefcase,
+  Search, Edit2, Loader2, Trash2, Briefcase, Plus,
 } from "lucide-react";
 import Button from "../components/ui/Button";
+import PageHeader from "../components/ui/PageHeader";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddAccountModal from "../components/modals/AddAccountModal";
@@ -119,68 +120,55 @@ const Accounts = () => {
 
   return (
     <div className="flex flex-col h-full bg-page-bg animate-fade-in relative overflow-hidden">
-      <div className="flex items-center justify-between px-8 py-6 surface border-b border-border shrink-0 z-10">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-sidebar text-2xl font-bold tracking-tight">Accounts</h1>
-          <p className="text-secondary text-sm font-medium mt-0.5">
-            Manage your organization's accounts and clients
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => exportCsv("accounts.csv", accountsData, [
-              { label: "Code", value: (row) => row.account_code },
-              { label: "Name", value: (row) => row.account_name },
-              { label: "Employees", value: (row) => row.account_employees_size },
-              { label: "Industry", value: (row) => row.account_industry || row.industry?.industry_name },
-              { label: "City", value: (row) => row.account_city },
-              { label: "Status", value: (row) => row.account_account_status },
-            ])}
-            className="gap-2 font-medium text-secondary border border-border"
-          >
-            <Download size={16} className="text-slate-500" /> Export
-          </Button>
-          {canCreate && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsAddModalOpen(true)}
-              className="gap-2 font-semibold"
-            >
-              <Plus size={16} /> New account
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="px-8 py-4 border-b border-border surface flex items-center justify-between shrink-0">
-        <div className="relative w-80">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <Search size={18} className="text-slate-400" />
+      <>
+        <PageHeader
+          title="Accounts"
+          description="Manage your organization's accounts and clients"
+          exportData={{
+            filename: "accounts.csv",
+            onExport: () =>
+              exportCsv("accounts.csv", accountsData, [
+                { label: "Code", value: (row) => row.account_code },
+                { label: "Name", value: (row) => row.account_name },
+                { label: "Employees", value: (row) => row.account_employees_size },
+                { label: "Industry", value: (row) => row.account_industry || row.industry?.industry_name },
+                { label: "City", value: (row) => row.account_city },
+                { label: "Status", value: (row) => row.account_account_status },
+              ]),
+          }}
+          primaryAction={{
+            label: "New account",
+            icon: <Plus size={16} />,
+            onClick: () => setIsAddModalOpen(true),
+          }}
+        />
+        <div className="px-8 py-4 border-b border-border surface flex items-center justify-between shrink-0">
+          <div className="relative w-80">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <Search size={18} className="text-slate-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search accounts&hellip;"
+              className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Search accounts&hellip;"
-            className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div className="flex items-center gap-3 text-sm">
+            {canDelete && selectedRows.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBulkDelete}
+                className="gap-2 font-semibold text-danger border border-rose-100 hover:bg-rose-50"
+              >
+                <Trash2 size={16} /> Delete selected ({selectedRows.length})
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          {canDelete && selectedRows.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBulkDelete}
-              className="gap-2 font-semibold text-danger border border-rose-100 hover:bg-rose-50"
-            >
-              <Trash2 size={16} /> Delete selected ({selectedRows.length})
-            </Button>
-          )}
-        </div>
-      </div>
+      </>
 
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
         <div className="card flex-1 flex flex-col overflow-hidden">

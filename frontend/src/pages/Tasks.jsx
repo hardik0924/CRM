@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  Download, Plus, Search, Edit2, Loader2, Trash2, ListChecks,
+  Plus, Search, Edit2, Loader2, Trash2, ListChecks,
 } from "lucide-react";
 import Button from "../components/ui/Button";
+import PageHeader from "../components/ui/PageHeader";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import { canDoAction, currentOrgRole } from "../utils/modules";
@@ -137,40 +138,27 @@ const Tasks = () => {
 
   return (
     <div className="flex flex-col h-full bg-page-bg animate-fade-in relative overflow-hidden">
-      <div className="flex items-center justify-between px-8 py-6 surface border-b border-border shrink-0 z-10">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-sidebar text-2xl font-bold tracking-tight">Tasks</h1>
-          <p className="text-secondary text-sm font-medium mt-0.5">
-            Manage your to-dos and follow-ups
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => exportCsv("tasks.csv", tasksData, [
+      <PageHeader
+        title="Tasks"
+        description="Manage your to-dos and follow-ups"
+        exportData={{
+          filename: "tasks.csv",
+          onExport: () =>
+            exportCsv("tasks.csv", tasksData, [
               { label: "Subject", value: (row) => row.task_subject },
               { label: "Priority", value: (row) => row.task_priority },
               { label: "Due date", value: (row) => row.task_due_date && new Date(row.task_due_date).toLocaleDateString() },
               { label: "Assigned to", value: (row) => row.user?.user_name },
-            ])}
-            className="gap-2 font-medium text-secondary border border-border"
-          >
-            <Download size={16} className="text-slate-500" /> Export
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setIsAddModalOpen(true)}
-            className="gap-2 font-semibold"
-            disabled={!canCreate}
-            title={canCreate ? "Create a task" : "You do not have create access"}
-          >
-            <Plus size={16} /> New task
-          </Button>
-        </div>
-      </div>
-
+            ]),
+        }}
+        primaryAction={{
+          label: "New task",
+          icon: <Plus size={16} />,
+          onClick: () => setIsAddModalOpen(true),
+          disabled: !canCreate,
+          title: canCreate ? "Create a task" : "You do not have create access",
+        }}
+      />
       <div className="px-8 py-4 border-b border-border surface flex items-center justify-between shrink-0">
         <div className="relative w-80">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -197,7 +185,6 @@ const Tasks = () => {
           )}
         </div>
       </div>
-
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
         <div className="card flex-1 flex flex-col overflow-hidden">
           <div className="overflow-auto flex-1">

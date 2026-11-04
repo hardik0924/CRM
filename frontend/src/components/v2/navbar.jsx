@@ -118,7 +118,7 @@ const Navbar = () => {
       <div className="h-[64px] flex items-center gap-2 px-4 sm:px-6">
         <span className="font-bold text-xl text-vsph-navy tracking-tight shrink-0 mr-2">VSPH</span>
 
-        <nav className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto" aria-label="Navigation">
+        <nav className="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto pb-1" aria-label="Navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -126,9 +126,9 @@ const Navbar = () => {
                 key={item.name}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] font-semibold whitespace-nowrap transition-colors ${
+                  `flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] font-semibold whitespace-nowrap transition-all ${
                     isActive
-                      ? 'bg-vsph-core-blue text-white'
+                      ? 'bg-vsph-core-blue text-white shadow-sm shadow-vsph-core-blue/20'
                       : 'text-slate-600 hover:bg-vsph-grey hover:text-vsph-core-blue'
                   }`
                 }
@@ -138,6 +138,8 @@ const Navbar = () => {
               </NavLink>
             );
           })}
+          {/* Ensures the last item is fully reachable when scrolling */}
+          <span className="w-4 shrink-0" />
         </nav>
 
         <div className="relative hidden md:block w-64 shrink-0">

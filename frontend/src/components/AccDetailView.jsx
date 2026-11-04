@@ -5,6 +5,7 @@ import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
 import AddOpportunityModal from "./modals/AddOpportunityModal";
 import ActivityFeed from "./ActivityFeed";
+import Breadcrumbs from "./ui/Breadcrumbs";
 import { canDoAction } from "../utils/modules";
 
 const AccountDetailView = ({ isOpen, onClose, accountId, onEdit }) => {
@@ -55,9 +56,12 @@ const AccountDetailView = ({ isOpen, onClose, accountId, onEdit }) => {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 pb-0">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <div className="text-xs text-blue-600 mb-1 font-semibold tracking-wide">
-                    <span onClick={onClose} className="hover:underline cursor-pointer">Accounts</span> &gt; {accountData.account_name}
-                  </div>
+                  <Breadcrumbs
+                    items={[
+                      { label: "Accounts", path: "/v2/accounts" },
+                      { label: accountData.account_name || "Account", current: true },
+                    ]}
+                  />
                   <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3 tracking-tight">
                     {accountData.account_name}
                   </h1>

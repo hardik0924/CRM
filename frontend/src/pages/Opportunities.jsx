@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  Download, Plus, Search, Filter, Edit2, Loader2, Trash2, TrendingUp,
+  Plus, Search, Filter, Edit2, Loader2, Trash2, TrendingUp,
 } from "lucide-react";
 import Button from "../components/ui/Button";
+import PageHeader from "../components/ui/PageHeader";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddOpportunityModal from "../components/modals/AddOpportunityModal";
@@ -128,41 +129,26 @@ const Opportunities = () => {
 
   return (
     <div className="flex flex-col h-full bg-page-bg animate-fade-in relative overflow-hidden">
-      <div className="flex items-center justify-between px-8 py-6 surface border-b border-border shrink-0 z-10">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-sidebar text-2xl font-bold tracking-tight">Opportunities</h1>
-          <p className="text-secondary text-sm font-medium mt-0.5">
-            Track your sales pipeline and close more deals
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => exportCsv("opportunities.csv", opportunitiesData, [
+      <PageHeader
+        title="Opportunities"
+        description="Track your sales pipeline and close more deals"
+        exportData={{
+          filename: "opportunities.csv",
+          onExport: () =>
+            exportCsv("opportunities.csv", opportunitiesData, [
               { label: "Name", value: (row) => row.opportunity_name },
               { label: "Stage", value: (row) => row.opportunity_stage },
               { label: "Close date", value: (row) => row.opportunity_close_date && new Date(row.opportunity_close_date).toLocaleDateString() },
               { label: "Owner", value: (row) => row.opportunity_owner?.user_name },
               { label: "Account", value: (row) => row.opportunity_account?.account_name },
-            ])}
-            className="gap-2 font-medium text-secondary border border-border"
-          >
-            <Download size={16} className="text-slate-500" /> Export
-          </Button>
-          {canCreate && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsAddModalOpen(true)}
-              className="gap-2 font-semibold"
-            >
-              <Plus size={16} /> New opportunity
-            </Button>
-          )}
-        </div>
-      </div>
-
+            ]),
+        }}
+        primaryAction={{
+          label: "New opportunity",
+          icon: <Plus size={16} />,
+          onClick: () => setIsAddModalOpen(true),
+        }}
+      />
       <div className="px-8 py-4 border-b border-border surface flex items-center justify-between shrink-0">
         <div className="relative w-80">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -206,7 +192,6 @@ const Opportunities = () => {
           </div>
         </div>
       </div>
-
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
         <div className="card flex-1 flex flex-col overflow-hidden">
           <div className="overflow-auto flex-1">
