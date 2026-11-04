@@ -316,3 +316,26 @@ Known gaps observed but not changed (pre-existing or out of scope):
 * Employee personal tasks cannot be deleted by the employee (backend rule);
   the UI now reflects that.
 
+### Account industry and location fix (2026-11-04)
+
+Two display bugs were fixed in `account.controller.js`:
+
+* **Industry** — the form offers a much larger list than the eight seeded
+  industries, so saving an unknown name previously dropped the value. The
+  controller now creates the industry on demand (scoped to the account's tenant)
+  and links it. Known names still reuse the existing row.
+* **Location** — when `account_city`/`account_country` were empty, the list and
+  detail responses now fall back to the billing city/country, so the Location
+  column is not blank for accounts that only have a billing address.
+
+Verified against the dev database and API on port 5000, then in the browser:
+
+| Check | Result |
+| --- | --- |
+| Create/edit an account with an industry outside the seeded list; `GET /api/accounts/:id` returns it | Pass |
+| Account with only billing city/country shows Location in list and detail | Pass |
+| Flipkart (`ACC-000020`) after re-save: `account_industry_fk` set, industry `Telecommunications`, list row shows `Telecommunications` and `pune` | Pass |
+
+No schema change was needed for this fix. Existing accounts that stored no
+industry keep `NULL` until the account is edited and saved again.
+
