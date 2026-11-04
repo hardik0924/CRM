@@ -3,7 +3,7 @@ import { Check, Copy, Loader2 } from 'lucide-react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import ModulePicker from '../ModulePicker'
-import { CRM_MODULES, MODULE_ACTIONS, currentOrgRole } from '../../utils/modules'
+import { CRM_MODULES, MODULE_ACTIONS, currentOrgRole, userRoleLabel } from '../../utils/modules'
 import { api } from '../../utils/api'
 
 const EMPLOYEE_ROLES = ['USER', 'SALES', 'DATA', 'PRODUCTION', 'SPONSORSHIP', 'OPERATION']
@@ -112,7 +112,7 @@ const InviteEmployeeModal = ({ isOpen = true, onClose, onSaved }) => {
             <div>
               <label className={label} htmlFor="role">CRM role</label>
               <select id="role" name="role" value={form.role} onChange={change} className={input}>
-                {roles.map((r) => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
+                {roles.map((r) => <option key={r} value={r}>{userRoleLabel(r)}</option>)}
               </select>
             </div>
             <div>

@@ -76,3 +76,16 @@ export const orgRoleLabel = (role = currentOrgRole()) =>
 
 export const moduleLabel = (code) =>
   CRM_MODULES.find((m) => m.code === code)?.label || code
+
+// Organization roles. EMPLOYEE_ROLES are the six employee subtypes.
+export const userRoleLabel = (role) =>
+  ({
+    ADMIN: 'Organization Admin',
+    USER: 'Employee (General)',
+    SALES: 'Employee (Sales)',
+    DATA: 'Employee (Data)',
+    PRODUCTION: 'Employee (Production)',
+    SPONSORSHIP: 'Employee (Sponsorship)',
+    OPERATION: 'Employee (Operations)',
+  })[role] || role || 'Employee'
+

@@ -5,14 +5,14 @@ import {
 import Button from '../components/ui/Button'
 import InviteEmployeeModal from '../components/modals/InviteEmployeeModal'
 import EmployeeAccessModal from '../components/modals/EmployeeAccessModal'
-import { moduleLabel, currentOrgRole, orgRoleLabel } from '../utils/modules'
+import { moduleLabel, currentOrgRole, orgRoleLabel, userRoleLabel } from '../utils/modules'
 import { api } from '../utils/api'
 import toast from 'react-hot-toast'
 
 const EMPLOYEE_ROLES = ['USER', 'SALES', 'DATA', 'PRODUCTION', 'SPONSORSHIP', 'OPERATION']
 const OWNER_ROLES = ['ADMIN', ...EMPLOYEE_ROLES]
 const roleLabel = (employee) =>
-  employee.user_is_tenant_owner ? 'Organization Super Admin' : employee.user_role === 'ADMIN' ? 'Organization Admin' : 'Employee'
+  employee.user_is_tenant_owner ? 'Organization Super Admin' : userRoleLabel(employee.user_role)
 
 const Team = () => {
   const currentUserId = localStorage.getItem('vsph_user_id')
@@ -264,7 +264,7 @@ const Team = () => {
                               onChange={(e) => updateEmployee(employee, { user_role: e.target.value })}
                               className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-vsph-core-blue focus:border-vsph-core-blue"
                             >
-                              {ROLES.map((r) => <option key={r} value={r}>{r === 'ADMIN' ? 'Organization Admin' : 'Employee'}</option>)}
+                              {ROLES.map((r) => <option key={r} value={r}>{userRoleLabel(r)}</option>)}
                             </select>
                           )}
                         </td>

@@ -1,6 +1,4 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import DashboardLayout from './layouts/DashboardLayout'
-import Dashboard from './pages/Dashboard'
 import Contacts from './pages/Contacts'
 import Accounts from './pages/Accounts'
 import Opportunities from './pages/Opportunities'
@@ -64,16 +62,14 @@ const App = () => {
         <Route path="/v2/team" element={<OrgGuard><Team /></OrgGuard>} />
       </Route>
 
-      {/* Legacy Dashboard Routes */}
-      <Route element={<DashboardLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/contacts" element={<Contacts />} />
-        <Route path="/accounts" element={<Accounts />} />
-        <Route path="/opportunities" element={<Opportunities />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/campaigns" element={<Campaigns />} />
-        <Route path="/tasks" element={<Tasks />} />
-      </Route>
+      {/* Legacy v1 URLs redirect to the v2 app */}
+      <Route path="/dashboard" element={<Navigate to="/v2/dashboard" replace />} />
+      <Route path="/contacts" element={<Navigate to="/v2/contacts" replace />} />
+      <Route path="/accounts" element={<Navigate to="/v2/accounts" replace />} />
+      <Route path="/opportunities" element={<Navigate to="/v2/opportunities" replace />} />
+      <Route path="/projects" element={<Navigate to="/v2/projects" replace />} />
+      <Route path="/campaigns" element={<Navigate to="/v2/campaigns" replace />} />
+      <Route path="/tasks" element={<Navigate to="/v2/tasks" replace />} />
 
       {/* Redirect fallback for unknown routes */}
       <Route path="*" element={<Navigate to="/v2/login" replace />} />

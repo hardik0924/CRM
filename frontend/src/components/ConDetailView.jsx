@@ -416,7 +416,7 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
 
               {/* DIV 3: Navigations */}
               <div className="flex gap-6 px-6 border-t border-slate-100">
-                {["Details", "Opportunities", "Accuracy", "Related"].map(
+                {["Details", "Opportunities"].map(
                   (tab) => (
                     <button
                       key={tab}
@@ -1200,18 +1200,33 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
               </div>
             )}
 
-            {activeMainTab !== "Details" && (
-              <div className="p-12 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-4">
-                  <MoreHorizontal className="text-slate-400" size={24} />
+            {activeMainTab === "Opportunities" && (
+              <div className="p-4 lg:p-6">
+                <div className="bg-white border border-slate-200 shadow-sm">
+                  {contactData.opportunities?.length > 0 ? (
+                    <div className="divide-y divide-slate-200">
+                      {contactData.opportunities.map((opportunity) => (
+                        <div key={opportunity.opportunity_id} className="p-4 flex justify-between items-center">
+                          <div>
+                            <div className="font-semibold text-sm text-blue-600">{opportunity.opportunity_name}</div>
+                            <div className="text-xs text-slate-500 mt-0.5">
+                              {opportunity.opportunity_stage?.replace(/_/g, ' ') || 'No stage'}
+                            </div>
+                          </div>
+                          <div className="text-right text-xs font-medium text-slate-700">
+                            {opportunity.opportunity_close_date
+                              ? new Date(opportunity.opportunity_close_date).toLocaleDateString()
+                              : 'No close date'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-sm font-semibold text-slate-500">
+                      No opportunities linked to this contact.
+                    </div>
+                  )}
                 </div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-1">
-                  No {activeMainTab} yet
-                </h3>
-                <p className="text-xs text-slate-500">
-                  There is no {activeMainTab.toLowerCase()} data for this
-                  contact.
-                </p>
               </div>
             )}
           </div>

@@ -140,6 +140,8 @@ const CampaignDetailView = ({ isOpen, onClose, campaignId, onEdit }) => {
                   <div className="flex border-b border-slate-200 px-4 overflow-x-auto custom-scrollbar">
                     {[
                       { id: "Details", label: "Details" },
+                      { id: "Contacts", label: `Contacts (${campData._count?.contacts || 0})` },
+                      { id: "Opportunities", label: `Opportunities (${campData._count?.opportunities || 0})` },
                       { id: "Activity", label: "Activity" },
                     ].map((tab) => (
                       <button
@@ -190,6 +192,58 @@ const CampaignDetailView = ({ isOpen, onClose, campaignId, onEdit }) => {
                           </div>
                         </div>
                       </div>
+                    </div>
+                  )}
+                  {activeTab === "Contacts" && (
+                    <div className="p-0">
+                      {campData.contacts?.length > 0 ? (
+                        <div className="divide-y divide-slate-200">
+                          {campData.contacts.map((contact) => (
+                            <div key={contact.contact_id} className="p-4 flex justify-between items-center">
+                              <div>
+                                <div className="font-semibold text-sm text-blue-600">
+                                  {contact.contact_firstname} {contact.contact_lastname}
+                                </div>
+                                <div className="text-xs text-slate-500 mt-0.5">{contact.contact_professional_email || 'No email'}</div>
+                              </div>
+                              <div className="text-[10px] text-slate-400 uppercase tracking-wider">
+                                {contact.contact_call_status?.replace(/_/g, ' ') || '—'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-8 text-center text-sm font-semibold text-slate-500">
+                          No contacts linked to this campaign.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {activeTab === "Opportunities" && (
+                    <div className="p-0">
+                      {campData.opportunities?.length > 0 ? (
+                        <div className="divide-y divide-slate-200">
+                          {campData.opportunities.map((opportunity) => (
+                            <div key={opportunity.opportunity_id} className="p-4 flex justify-between items-center">
+                              <div>
+                                <div className="font-semibold text-sm text-blue-600">{opportunity.opportunity_name}</div>
+                                <div className="text-xs text-slate-500 mt-0.5">
+                                  {opportunity.opportunity_stage?.replace(/_/g, ' ') || 'No stage'}
+                                </div>
+                              </div>
+                              <div className="text-right text-xs font-medium text-slate-700">
+                                {opportunity.opportunity_close_date
+                                  ? new Date(opportunity.opportunity_close_date).toLocaleDateString()
+                                  : 'No close date'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-8 text-center text-sm font-semibold text-slate-500">
+                          No opportunities linked to this campaign.
+                        </div>
+                      )}
                     </div>
                   )}
                   {activeTab === "Activity" && <ActivityFeed entity="campaign" id={campaignId} />}

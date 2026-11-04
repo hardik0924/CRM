@@ -148,9 +148,8 @@ const AccountDetailView = ({ isOpen, onClose, accountId, onEdit }) => {
                       { id: 'Details', label: 'Details' },
                       { id: 'Contacts', label: `Contacts (${accountData.account_contacts?.length || 0})` },
                       { id: 'Opportunities', label: `Opportunities (${accountData.opportunities?.length || 0})` },
-                      { id: 'Member Accounts', label: 'Member Accounts (0)' },
+                      { id: 'Member Accounts', label: `Member Accounts (${accountData.account_children?.length || 0})` },
                       { id: 'Activity', label: 'Activity' },
-                      { id: 'Chatter', label: 'Chatter' }
                     ].map((tab) => (
                       <button
                         key={tab.id}
@@ -271,16 +270,27 @@ const AccountDetailView = ({ isOpen, onClose, accountId, onEdit }) => {
                     </div>
                   )}
                   {activeTab === "Member Accounts" && (
-                     <div className="p-8 text-center text-sm font-semibold text-slate-500">
-                        Member Accounts content will go here.
-                     </div>
+                    <div className="p-0">
+                      {accountData.account_children?.length > 0 ? (
+                        <div className="divide-y divide-slate-200">
+                          {accountData.account_children.map(child => (
+                            <div key={child.account_id} className="p-4 hover:bg-slate-50 transition-colors flex justify-between items-center">
+                               <div>
+                                  <div className="font-semibold text-sm text-blue-600">{child.account_name}</div>
+                                  <div className="text-xs text-slate-500 mt-0.5">{child.account_code}</div>
+                               </div>
+                               <div className="text-[10px] text-slate-400 uppercase tracking-wider">{child.account_account_status || 'ACTIVE'}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-8 text-center text-sm font-semibold text-slate-500">
+                           No member accounts linked to this account.
+                        </div>
+                      )}
+                    </div>
                   )}
                   {activeTab === "Activity" && <ActivityFeed entity="account" id={accountData.account_id} />}
-                  {activeTab === "Chatter" && (
-                     <div className="p-8 text-center text-sm font-semibold text-slate-500">
-                        Chatter content will go here.
-                     </div>
-                  )}
                 </div>
               </div>
 

@@ -84,6 +84,26 @@ export const getCampaignById = async (req, res) => {
       where: { campaign_id: id, ...getTenantFilter(req) },
       include: {
         user: { select: { user_name: true } },
+        _count: { select: { contacts: true, opportunities: true } },
+        contacts: {
+          select: {
+            contact_id: true,
+            contact_firstname: true,
+            contact_lastname: true,
+            contact_professional_email: true,
+            contact_call_status: true,
+          },
+          orderBy: { contact_created_at: "desc" },
+        },
+        opportunities: {
+          select: {
+            opportunity_id: true,
+            opportunity_name: true,
+            opportunity_stage: true,
+            opportunity_close_date: true,
+          },
+          orderBy: { opportunity_created_at: "desc" },
+        },
       },
     });
 

@@ -51,6 +51,11 @@ const Tasks = () => {
   const [viewTaskId, setViewTaskId] = useState(null);
 
   useEffect(() => {
+    const taskId = searchParams.get("task_id");
+    if (taskId) setViewTaskId(taskId);
+  }, [searchParams]);
+
+  useEffect(() => {
     const t = setTimeout(() => fetchTasks(), 300);
     return () => clearTimeout(t);
   }, [searchTerm, currentPage, assignedTo]);

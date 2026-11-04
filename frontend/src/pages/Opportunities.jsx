@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Download, Plus, Search, Filter, Edit2, Loader2, Trash2, TrendingUp,
 } from "lucide-react";
@@ -35,9 +36,15 @@ const Opportunities = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [opportunityToEdit, setOpportunityToEdit] = useState(null);
   const [viewOpportunityId, setViewOpportunityId] = useState(null);
+  const [searchParams] = useSearchParams();
   const canCreate = canDoAction("OPPORTUNITIES", "CREATE");
   const canEdit = canDoAction("OPPORTUNITIES", "EDIT");
   const canDelete = canDoAction("OPPORTUNITIES", "DELETE");
+
+  useEffect(() => {
+    const opportunityId = searchParams.get("opportunity_id");
+    if (opportunityId) setViewOpportunityId(opportunityId);
+  }, [searchParams]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchOpportunities(), 300);

@@ -9,7 +9,7 @@ export const getContacts = async (req, res) => {
     const skip = (page - 1) * limit;
     const search = req.query.search || "";
 
-    // Search by name, code, or email. Soft-deleted rows never come back.
+    // Search by name, code, email or linked account name. Soft-deleted rows never come back.
     const where = search
       ? {
           contact_deleted_at: null,
@@ -18,6 +18,7 @@ export const getContacts = async (req, res) => {
             { contact_lastname: { contains: search } },
             { contact_code: { contains: search } },
             { contact_professional_email: { contains: search } },
+            { account: { account_name: { contains: search } } },
           ],
           ...getTenantFilter(req),
         }
@@ -499,6 +500,15 @@ export const getContactById = async (req, res) => {
         contact_campaign: true,
         contact_account_billing_address: true,
         contact_account_shipping_address: true,
+        opportunities: {
+          select: {
+            opportunity_id: true,
+            opportunity_name: true,
+            opportunity_stage: true,
+            opportunity_close_date: true,
+          },
+          orderBy: { opportunity_created_at: "desc" },
+        },
       },
     });
 

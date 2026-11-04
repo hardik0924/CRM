@@ -366,8 +366,8 @@ the live `crm` database were not modified.
    calls and tasks logged against the record's linked contacts
    (`GET /api/activity?entity=…&id=…`). The endpoint runs behind the same auth
    middleware, checks module access, and filters by tenant, so an entity in
-   another tenant returns 404 and a module the user lacks returns 403. Chatter
-   stays a placeholder.
+   another tenant returns 404 and a module the user lacks returns 403. The
+   Chatter tab was later removed in the open-issue batch below.
 7. **The account Opportunities tab lists the account's opportunities.** The
    label was hardcoded to `Opportunities (0)` and the pane had no content, even
    when the opportunity was saved with that account. `GET /api/accounts/:id` now
@@ -395,6 +395,37 @@ Deliberately not changed:
   rows, so the display fallback stays and no data write is planned.
 * Detail drawers already close before an edit and refetch on reopen; the older
   "stale until reopened" note no longer reproduces.
+
+### Open-issue fixes and horizontal navbar
+
+8. **Global search opens the record.** Clicking a search result now navigates to
+   the module with the record id (`?account_id=`, `?contact_id=`,
+   `?opportunity_id=`, `?project_id=`, `?task_id=`), which opens the detail
+   drawer instead of the plain list.
+9. **Team roles are distinct.** The role dropdown and invite form use readable
+   labels (`Employee (Sales)`, `Employee (Data)`, …) instead of six identical
+   "Employee" options. The table shows the same label.
+10. **Contact search matches the account name**, so searching "Flipkart"
+    returns that account's contacts.
+11. **Real detail lists replace placeholders.** Account "Member Accounts" lists
+    `account_children`; contact "Opportunities" lists the linked opportunities;
+    campaign "Contacts" and "Opportunities" tabs list the linked records and
+    counts come from the detail API.
+12. **Placeholder-only tabs removed.** Chatter, contact Accuracy and contact
+    Related had no schema behind them and are gone.
+13. **Legacy v1 URLs redirect to `/v2`** (`/dashboard`, `/contacts`,
+    `/accounts`, `/opportunities`, `/projects`, `/campaigns`, `/tasks`). The old
+    layout is no longer routed.
+14. **Horizontal navbar.** The v2 sidebar is replaced by a top navigation bar
+    with the same module permissions, search and sign out; `sidebar.jsx` is
+    deleted.
+
+Verified in the sandbox: search deep links open the account/opportunity/project/
+task drawers; contact search by account name returns the contact; account member
+list, contact opportunities and campaign contact/opportunity tabs render real
+temporary links that were reverted; employee nav shows only Dashboard, Contacts
+and Tasks; legacy URLs redirect; `vite build` passes and `npm test` runs 23 tests
+(22 pass, 1 skipped).
 
 Before merging: take a database backup, apply the migration, run
 `prisma generate`, restart the API, then merge the branch and push.

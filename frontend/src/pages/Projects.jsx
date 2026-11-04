@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Download, Plus, Search, Edit2, Loader2, Trash2, Layers,
 } from "lucide-react";
@@ -22,9 +23,15 @@ const Projects = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState(null);
   const [viewProjectId, setViewProjectId] = useState(null);
+  const [searchParams] = useSearchParams();
   const canCreate = canDoAction("PROJECTS", "CREATE");
   const canEdit = canDoAction("PROJECTS", "EDIT");
   const canDelete = canDoAction("PROJECTS", "DELETE");
+
+  useEffect(() => {
+    const projectId = searchParams.get("project_id");
+    if (projectId) setViewProjectId(projectId);
+  }, [searchParams]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchProjects(), 300);
