@@ -95,6 +95,16 @@ export const getAccountById = async (req, res) => {
         account_billing_address: true,
         account_shipping_address: true,
         account_contacts: true,
+        opportunities: {
+          where: { opportunity_account_fk: id },
+          select: {
+            opportunity_id: true,
+            opportunity_name: true,
+            opportunity_stage: true,
+            opportunity_close_date: true,
+          },
+          orderBy: { opportunity_created_at: "desc" },
+        },
       },
     });
 

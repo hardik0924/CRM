@@ -147,7 +147,7 @@ const AccountDetailView = ({ isOpen, onClose, accountId, onEdit }) => {
                     {[
                       { id: 'Details', label: 'Details' },
                       { id: 'Contacts', label: `Contacts (${accountData.account_contacts?.length || 0})` },
-                      { id: 'Opportunities', label: 'Opportunities (0)' },
+                      { id: 'Opportunities', label: `Opportunities (${accountData.opportunities?.length || 0})` },
                       { id: 'Member Accounts', label: 'Member Accounts (0)' },
                       { id: 'Activity', label: 'Activity' },
                       { id: 'Chatter', label: 'Chatter' }
@@ -240,6 +240,40 @@ const AccountDetailView = ({ isOpen, onClose, accountId, onEdit }) => {
                         </div>
                       )}
                     </div>
+                  )}
+                  {activeTab === "Opportunities" && (
+                    <div className="p-0">
+                      {accountData.opportunities?.length > 0 ? (
+                        <div className="divide-y divide-slate-200">
+                          {accountData.opportunities.map(opportunity => (
+                            <div key={opportunity.opportunity_id} className="p-4 hover:bg-slate-50 transition-colors flex justify-between items-center">
+                               <div>
+                                  <div className="font-semibold text-sm text-blue-600">
+                                     {opportunity.opportunity_name}
+                                  </div>
+                                  <div className="text-xs text-slate-500 mt-0.5">
+                                     {opportunity.opportunity_stage?.replace(/_/g, ' ') || 'No stage'}
+                                  </div>
+                               </div>
+                               <div className="text-right text-xs font-medium text-slate-700">
+                                  {opportunity.opportunity_close_date
+                                    ? new Date(opportunity.opportunity_close_date).toLocaleDateString()
+                                    : 'No close date'}
+                               </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-8 text-center text-sm font-semibold text-slate-500">
+                           No opportunities associated with this account.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {activeTab === "Member Accounts" && (
+                     <div className="p-8 text-center text-sm font-semibold text-slate-500">
+                        Member Accounts content will go here.
+                     </div>
                   )}
                   {activeTab === "Activity" && <ActivityFeed entity="account" id={accountData.account_id} />}
                   {activeTab === "Chatter" && (
