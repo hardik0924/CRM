@@ -6,6 +6,7 @@ import {
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
 import AddTaskModal from "./modals/AddTaskModal";
+import Breadcrumbs from "./ui/Breadcrumbs";
 import { canDoAction, canManageOrganization, currentOrgRole } from "../utils/modules";
 import toast from "react-hot-toast";
 
@@ -143,9 +144,12 @@ const TaskDetailView = ({ isOpen, onClose, taskId, onChanged, onDeleted }) => {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 pb-0">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <div className="text-xs text-blue-600 mb-1 font-semibold tracking-wide">
-                    <span onClick={onClose} className="hover:underline cursor-pointer">Tasks</span> &gt; {taskData.task_subject}
-                  </div>
+                  <Breadcrumbs
+                    items={[
+                      { label: "Tasks", path: "/v2/tasks" },
+                      { label: taskData.task_subject || "Task", current: true },
+                    ]}
+                  />
                   <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3 tracking-tight">
                     {taskData.task_subject}
                   </h1>

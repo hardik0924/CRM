@@ -18,6 +18,7 @@ import {
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
 import AddCampaignModal from "./modals/AddCampaignModal";
+import Breadcrumbs from "./ui/Breadcrumbs";
 import { canDoAction, hasModule } from "../utils/modules";
 
 const ConDetailView = ({ isOpen, onClose, contactId }) => {
@@ -281,16 +282,12 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
               {/* DIV 1: Breadcrumb & Actions */}
               <div className="flex justify-between items-start px-6 pt-4 mb-2">
                 <div>
-                  <div className="text-[13px] text-blue-600 mb-1 font-semibold flex items-center gap-2">
-                    <span
-                      onClick={() => navigate("/v2/contacts")}
-                      className="hover:underline cursor-pointer"
-                    >
-                      Contacts
-                    </span>
-                    <span className="text-slate-400">&gt;</span>
-                    <span className="text-slate-600">{fullName}</span>
-                  </div>
+                  <Breadcrumbs
+                    items={[
+                      { label: "Contacts", path: "/v2/contacts" },
+                      { label: fullName || "Contact", current: true },
+                    ]}
+                  />
                   <h1 className="text-2xl font-bold text-slate-800 tracking-tight leading-none mb-1.5">
                     {fullName}
                   </h1>

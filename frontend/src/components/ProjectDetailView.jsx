@@ -4,6 +4,7 @@ import { Layers, Users, Calendar, Edit2, MoreHorizontal } from "lucide-react";
 import Button from "./ui/Button";
 import AddTaskModal from "./modals/AddTaskModal";
 import ActivityFeed from "./ActivityFeed";
+import Breadcrumbs from "./ui/Breadcrumbs";
 import { canDoAction } from "../utils/modules";
 
 const ProjectDetailView = ({ isOpen, onClose, projectId, onEdit }) => {
@@ -47,9 +48,12 @@ const ProjectDetailView = ({ isOpen, onClose, projectId, onEdit }) => {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 pb-0">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <div className="text-xs text-blue-600 mb-1 font-semibold tracking-wide">
-                    <span onClick={onClose} className="hover:underline cursor-pointer">Projects</span> &gt; {projData.project_name}
-                  </div>
+                  <Breadcrumbs
+                    items={[
+                      { label: "Projects", path: "/v2/projects" },
+                      { label: projData.project_name || "Project", current: true },
+                    ]}
+                  />
                   <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3 tracking-tight">
                     {projData.project_name}
                   </h1>

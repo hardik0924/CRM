@@ -4,6 +4,7 @@ import {
   Download, Plus, Search, Eye, Edit2, Loader2, Trash2, Users,
 } from "lucide-react";
 import Button from "../components/ui/Button";
+import PageHeader from "../components/ui/PageHeader";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddContactModal from "../components/modals/AddContactModal";
@@ -130,41 +131,27 @@ const Contacts = () => {
   return (
     <div className="flex flex-col h-full bg-page-bg animate-fade-in relative overflow-hidden">
       {/* Page Header */}
-      <div className="flex items-center justify-between px-8 py-6 surface border-b border-border shrink-0 z-10">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-sidebar text-2xl font-bold tracking-tight">Contacts</h1>
-          <p className="text-secondary text-sm font-medium mt-0.5">
-            Manage your organization's contacts and relationships
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => exportCsv("contacts.csv", contactsData, [
+      <PageHeader
+        title="Contacts"
+        description="Manage your organization's contacts and relationships"
+        exportData={{
+          filename: "contacts.csv",
+          onExport: () =>
+            exportCsv("contacts.csv", contactsData, [
               { label: "Code", value: (row) => row.contact_code },
               { label: "First name", value: (row) => row.contact_firstname },
               { label: "Last name", value: (row) => row.contact_lastname },
               { label: "Account", value: (row) => row.account?.account_name },
               { label: "Email", value: (row) => row.contact_professional_email || row.contact_personal_email },
               { label: "Owner", value: (row) => row.contact_owner?.user_name },
-            ])}
-            className="gap-2 font-medium text-secondary border border-border"
-          >
-            <Download size={16} className="text-slate-500" /> Export
-          </Button>
-          {canCreate && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsAddModalOpen(true)}
-              className="gap-2 font-semibold"
-            >
-              <Plus size={16} /> New contact
-            </Button>
-          )}
-        </div>
-      </div>
+            ]),
+        }}
+        primaryAction={{
+          label: "New contact",
+          icon: <Plus size={16} />,
+          onClick: () => setIsAddModalOpen(true),
+        }}
+      />
 
       {/* Search & Actions Bar */}
       <div className="px-8 py-4 border-b border-border surface flex items-center justify-between shrink-0">

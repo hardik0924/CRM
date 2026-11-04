@@ -4,6 +4,7 @@ import { Megaphone, Users, Calendar, Edit2, MoreHorizontal } from "lucide-react"
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
 import ActivityFeed from "./ActivityFeed";
+import Breadcrumbs from "./ui/Breadcrumbs";
 import { canDoAction } from "../utils/modules";
 
 const CampaignDetailView = ({ isOpen, onClose, campaignId, onEdit }) => {
@@ -47,9 +48,12 @@ const CampaignDetailView = ({ isOpen, onClose, campaignId, onEdit }) => {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 pb-0">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <div className="text-xs text-blue-600 mb-1 font-semibold tracking-wide">
-                    <span onClick={onClose} className="hover:underline cursor-pointer">Campaigns</span> &gt; {campData.campaign_name}
-                  </div>
+                  <Breadcrumbs
+                    items={[
+                      { label: "Campaigns", path: "/v2/campaigns" },
+                      { label: campData.campaign_name || "Campaign", current: true },
+                    ]}
+                  />
                   <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3 tracking-tight">
                     {campData.campaign_name}
                   </h1>

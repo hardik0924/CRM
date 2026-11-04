@@ -4,6 +4,7 @@ import { TrendingUp, Users, Briefcase, Calendar, Edit2, MoreHorizontal } from "l
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
 import ActivityFeed from "./ActivityFeed";
+import Breadcrumbs from "./ui/Breadcrumbs";
 import { canDoAction } from "../utils/modules";
 
 const STAGE_COLORS = {
@@ -56,9 +57,12 @@ const OppDetailView = ({ isOpen, onClose, opportunityId, onEdit }) => {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 pb-0">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <div className="text-xs text-blue-600 mb-1 font-semibold tracking-wide">
-                    <span onClick={onClose} className="hover:underline cursor-pointer">Opportunities</span> &gt; {oppData.opportunity_name}
-                  </div>
+                  <Breadcrumbs
+                    items={[
+                      { label: "Opportunities", path: "/v2/opportunities" },
+                      { label: oppData.opportunity_name || "Opportunity", current: true },
+                    ]}
+                  />
                   <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3 tracking-tight">
                     {oppData.opportunity_name}
                   </h1>

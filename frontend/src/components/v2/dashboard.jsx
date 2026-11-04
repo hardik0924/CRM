@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Phone,
   Trophy,
@@ -51,6 +51,7 @@ const DashboardV2 = () => {
 
   const userName = localStorage.getItem("vsph_user_name") || "there";
   const userRole = (localStorage.getItem("vsph_user_role") || "USER").replace(/_/g, " ");
+  const navigate = useNavigate();
 
   useEffect(() => {
     api
@@ -79,6 +80,7 @@ const DashboardV2 = () => {
           hint: "Logged by you",
           icon: Phone,
           tone: "bg-vsph-core-blue/10 text-vsph-core-blue border-vsph-core-blue/20",
+          path: null,
         },
         {
           key: "won",
@@ -87,6 +89,8 @@ const DashboardV2 = () => {
           hint: "Closed won by you",
           icon: Trophy,
           tone: "bg-emerald-50 text-emerald-600 border-emerald-100",
+          path: "/v2/opportunities",
+          module: "OPPORTUNITIES",
         },
         metrics.accounts !== null && {
           key: "accounts",
@@ -95,6 +99,8 @@ const DashboardV2 = () => {
           hint: "Active records",
           icon: Briefcase,
           tone: "bg-sidebar/10 text-sidebar border-sidebar/20",
+          path: "/v2/accounts",
+          module: "ACCOUNTS",
         },
         metrics.contacts !== null && {
           key: "contacts",
@@ -103,6 +109,8 @@ const DashboardV2 = () => {
           hint: "Active records",
           icon: Users,
           tone: "bg-vsph-light-blue/20 text-vsph-core-blue border-vsph-light-blue/20",
+          path: "/v2/contacts",
+          module: "CONTACTS",
         },
         metrics.openOpportunities !== null && {
           key: "open",
@@ -111,6 +119,8 @@ const DashboardV2 = () => {
           hint: "In pipeline",
           icon: TrendingUp,
           tone: "bg-amber-50 text-amber-600 border-amber-100",
+          path: "/v2/opportunities",
+          module: "OPPORTUNITIES",
         },
         metrics.myOpenTasks !== null && {
           key: "tasks",
@@ -119,6 +129,8 @@ const DashboardV2 = () => {
           hint: "Assigned to you",
           icon: ListChecks,
           tone: "bg-rose-50 text-rose-600 border-rose-100",
+          path: "/v2/tasks",
+          module: "TASKS",
         },
       ].filter(Boolean)
     : [];
@@ -169,20 +181,28 @@ const DashboardV2 = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {cards.map((card) => (
-                <div key={card.key} className={`kpi-card ${card.tone} hover:shadow-md transition-shadow duration-200`}>
-                  <div className="flex items-start gap-4">
-                    <div className={`kpi-card-icon ${card.tone.replace('/10', '/10').replace('bg-', 'bg-')}`}>
-                      <card.icon size={20} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider">{card.label}</p>
-                      <p className="text-2xl font-bold text-sidebar leading-none mt-0.5">{card.value}</p>
-                      <p className="text-[10px] text-secondary mt-1">{card.hint}</p>
+              {cards.map((card) => {
+                const canView = !card.module || hasModule(card.module);
+                const clickable = canView && !!card.path;
+                return (
+                  <div
+                    key={card.key}
+                    className={`kpi-card ${card.tone} hover:shadow-md transition-shadow duration-200 ${clickable ? "cursor-pointer" : ""}`}
+                    onClick={clickable ? () => navigate(card.path) : undefined}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`kpi-card-icon ${card.tone.replace('/10', '/10').replace('bg-', 'bg-')}`}>
+                        <card.icon size={20} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider">{card.label}</p>
+                        <p className="text-2xl font-bold text-sidebar leading-none mt-0.5">{card.value}</p>
+                        <p className="text-[10px] text-secondary mt-1">{card.hint}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {metrics.work && (

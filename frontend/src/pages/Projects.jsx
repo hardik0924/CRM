@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  Download, Plus, Search, Edit2, Loader2, Trash2, Layers,
+  Plus, Search, Edit2, Loader2, Trash2, Layers,
 } from "lucide-react";
 import Button from "../components/ui/Button";
+import PageHeader from "../components/ui/PageHeader";
 import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddProjectModal from "../components/modals/AddProjectModal";
@@ -108,6 +109,7 @@ const Projects = () => {
     const variants = {
       ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-100",
       INACTIVE: "bg-rose-50 text-rose-700 border-rose-100",
+      SUSPENDED: "bg-amber-50 text-amber-700 border-amber-100",
     };
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${variants[status] || variants.INACTIVE}`}>
@@ -118,41 +120,26 @@ const Projects = () => {
 
   return (
     <div className="flex flex-col h-full bg-page-bg animate-fade-in relative overflow-hidden">
-      <div className="flex items-center justify-between px-8 py-6 surface border-b border-border shrink-0 z-10">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-sidebar text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-secondary text-sm font-medium mt-0.5">
-            Manage your delivery projects and initiatives
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => exportCsv("projects.csv", projectsData, [
+      <PageHeader
+        title="Projects"
+        description="Manage your delivery projects and initiatives"
+        exportData={{
+          filename: "projects.csv",
+          onExport: () =>
+            exportCsv("projects.csv", projectsData, [
               { label: "Name", value: (row) => row.project_name },
               { label: "Type", value: (row) => row.project_type },
               { label: "Location", value: (row) => row.project_location },
               { label: "Date", value: (row) => row.project_date && new Date(row.project_date).toLocaleDateString() },
               { label: "Status", value: (row) => row.project_is_active },
-            ])}
-            className="gap-2 font-medium text-secondary border border-border"
-          >
-            <Download size={16} className="text-slate-500" /> Export
-          </Button>
-          {canCreate && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsAddModalOpen(true)}
-              className="gap-2 font-semibold"
-            >
-              <Plus size={16} /> New project
-            </Button>
-          )}
-        </div>
-      </div>
-
+            ]),
+        }}
+        primaryAction={{
+          label: "New project",
+          icon: <Plus size={16} />,
+          onClick: () => setIsAddModalOpen(true),
+        }}
+      />
       <div className="px-8 py-4 border-b border-border surface flex items-center justify-between shrink-0">
         <div className="relative w-80">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -179,7 +166,6 @@ const Projects = () => {
           )}
         </div>
       </div>
-
       <div className="flex-1 p-8 overflow-hidden flex flex-col">
         <div className="card flex-1 flex flex-col overflow-hidden">
           <div className="overflow-auto flex-1">
