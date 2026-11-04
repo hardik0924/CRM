@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   Phone, Users, Briefcase, TrendingUp, Filter, Calendar,
   ExternalLink, Activity, User, ShieldCheck, Settings, Database,
-  Factory, Star, ListChecks, Megaphone, IndianRupee, Percent,
+  Factory, Star, ListChecks, Megaphone, IndianRupee, Percent, Loader2,
 } from "lucide-react";
 import { api } from "../utils/api";
 import Button from "../components/ui/Button";
@@ -97,15 +97,15 @@ const Dashboard = () => {
     {
       icon: Users,
       label: "Active accounts",
-      value: "0",
+      value: metrics.accounts ?? 0,
       sub: "Total clients",
       tone: "bg-vsph-light-blue/20 text-vsph-core-blue border-vsph-light-blue/20",
     },
     {
       icon: TrendingUp,
-      label: "Pipeline value",
-      value: "$0",
-      sub: "Open opportunities",
+      label: "Open opportunities",
+      value: metrics.openOpportunities ?? 0,
+      sub: "In pipeline",
       tone: "bg-vsph-grey text-vsph-navy border-border",
     },
   ];
