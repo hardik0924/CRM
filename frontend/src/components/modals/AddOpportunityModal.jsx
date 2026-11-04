@@ -171,15 +171,11 @@ const AddOpportunityModal = ({
       });
 
       if (isOpen) {
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-          try {
-            const user = JSON.parse(userStr);
-            setOwnerName(user.user_name || user.name || "Unknown User");
-            setOwnerId(user.user_id || user.id);
-          } catch (e) {
-            console.error("Failed to parse user", e);
-          }
+        const userId = localStorage.getItem("vsph_user_id");
+        const userName = localStorage.getItem("vsph_user_name");
+        if (userId) {
+          setOwnerName(userName || "Unknown User");
+          setOwnerId(userId);
         }
       }
     }

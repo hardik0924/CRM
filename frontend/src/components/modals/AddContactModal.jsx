@@ -134,20 +134,16 @@ const AddContactModal = ({ isOpen, onClose, onSuccess, contactToEdit }) => {
     };
 
     if (isOpen) {
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr);
-          if (!contactToEdit) {
-            setOwnerName(user.user_name || user.name || "Unknown User");
-            setOwnerId(user.user_id || user.id);
-          } else if (contactToEdit.contact_owner) {
-            setOwnerName(contactToEdit.contact_owner.user_name);
-            setOwnerId(contactToEdit.contact_owner_fk);
-          }
-        } catch (e) {
-          console.error("Failed to parse user", e);
+      if (!contactToEdit) {
+        const userId = localStorage.getItem("vsph_user_id");
+        const userName = localStorage.getItem("vsph_user_name");
+        if (userId) {
+          setOwnerName(userName || "Unknown User");
+          setOwnerId(userId);
         }
+      } else if (contactToEdit.contact_owner) {
+        setOwnerName(contactToEdit.contact_owner.user_name);
+        setOwnerId(contactToEdit.contact_owner_fk);
       }
       fetchAccounts();
     }
