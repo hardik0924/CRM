@@ -119,6 +119,9 @@ Vite prints the URL, normally **http://localhost:5173**. Open it in a browser.
 |---|---|---|---|
 | Superadmin | `superadmin@crm.com` | `0000` | `/superadmin` |
 | Client administrator | `client@vsph.com` | `0000` | `/v2/dashboard` |
+| ABC administrator | `admin.abc@vsph.in` | `Admin1234` | `/v2/dashboard` |
+| ABC owner | `abc@vsph.in` | `0000` | `/v2/dashboard` |
+| ABC employee | `abcsales@vsph.in` | `0000` | `/v2/dashboard` |
 
 New client users and employees sign in on the same page with the email and password set for them. Invitation links use `INVITATION_BASE_URL`, so keep it pointed at the frontend URL you actually run.
 
