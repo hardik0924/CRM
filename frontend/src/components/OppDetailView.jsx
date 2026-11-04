@@ -3,6 +3,7 @@ import { api } from "../utils/api";
 import { TrendingUp, Users, Briefcase, Calendar, Edit2, MoreHorizontal } from "lucide-react";
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
+import { canDoAction } from "../utils/modules";
 
 const STAGE_COLORS = {
   PITCH_DONE: "bg-vsph-core-blue text-white",
@@ -13,7 +14,10 @@ const STAGE_COLORS = {
   UNASSIGNED: "bg-slate-300 text-slate-600",
 };
 
-const OppDetailView = ({ isOpen, onClose, opportunityId }) => {
+const OppDetailView = ({ isOpen, onClose, opportunityId, onEdit }) => {
+  const canCreateContact = canDoAction("CONTACTS", "CREATE");
+  const canEdit = canDoAction("OPPORTUNITIES", "EDIT");
+  const canDelete = canDoAction("OPPORTUNITIES", "DELETE");
   const [oppData, setOppData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("Details");
@@ -62,14 +66,17 @@ const OppDetailView = ({ isOpen, onClose, opportunityId }) => {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => { setAddContactOpen(true); }}
-                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Users size={16} /> New Contact
-                  </Button>
+                  {canCreateContact && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => { setAddContactOpen(true); }}
+                      className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Users size={16} /> New Contact
+                    </Button>
+                  )}
+                  {(canEdit || canDelete) && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -79,29 +86,34 @@ const OppDetailView = ({ isOpen, onClose, opportunityId }) => {
                     <MoreHorizontal size={16} className="text-slate-600" />
                     {moreMenuOpen && (
                       <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
-                        <button
-                          onClick={() => { setMoreMenuOpen(false); }}
-                          className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
-                        >
-                          Edit Opportunity
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (window.confirm(`Delete opportunity "${oppData.opportunity_name}"?`)) {
-                              api.delete(`/api/opportunities/${opportunityId}`).then((res) => {
-                                if (res.success) {
-                                  onClose();
-                                }
-                              });
-                            }
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                        >
-                          Delete Opportunity
-                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => { setMoreMenuOpen(false); onEdit?.(oppData); }}
+                            className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                          >
+                            Edit Opportunity
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Delete opportunity "${oppData.opportunity_name}"?`)) {
+                                api.delete(`/api/opportunities/${opportunityId}`).then((res) => {
+                                  if (res.success) {
+                                    onClose();
+                                  }
+                                });
+                              }
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                          >
+                            Delete Opportunity
+                          </button>
+                        )}
                       </div>
                     )}
                   </Button>
+                  )}
                 </div>
               </div>
 

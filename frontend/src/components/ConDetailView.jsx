@@ -22,6 +22,8 @@ import { canDoAction, hasModule } from "../utils/modules";
 
 const ConDetailView = ({ isOpen, onClose, contactId }) => {
   const navigate = useNavigate();
+  const canEditContact = canDoAction("CONTACTS", "EDIT");
+  const canDeleteContact = canDoAction("CONTACTS", "DELETE");
   const [contactData, setContactData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState("Details");
@@ -304,22 +306,27 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleAddToCampaign}
-                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
-                  >
-                    <UserPlus size={14} strokeWidth={2.5} /> Add to Campaign
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleEditContact}
-                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Edit size={14} strokeWidth={2.5} /> Edit
-                  </Button>
+                  {canEditContact && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleAddToCampaign}
+                      className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                    >
+                      <UserPlus size={14} strokeWidth={2.5} /> Add to Campaign
+                    </Button>
+                  )}
+                  {canEditContact && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleEditContact}
+                      className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Edit size={14} strokeWidth={2.5} /> Edit
+                    </Button>
+                  )}
+                  {(canEditContact || canDeleteContact) && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -329,21 +336,26 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                     <MoreHorizontal size={14} className="text-slate-600" />
                     {moreMenuOpen && (
                       <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
-                        <button
-                          onClick={() => { setMoreMenuOpen(false); handleEditContact(); }}
-                          className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
-                        >
-                          Edit Contact
-                        </button>
-                        <button
-                          onClick={() => { setMoreMenuOpen(false); handleDeleteContact(); }}
-                          className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                        >
-                          Delete Contact
-                        </button>
+                        {canEditContact && (
+                          <button
+                            onClick={() => { setMoreMenuOpen(false); handleEditContact(); }}
+                            className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                          >
+                            Edit Contact
+                          </button>
+                        )}
+                        {canDeleteContact && (
+                          <button
+                            onClick={() => { setMoreMenuOpen(false); handleDeleteContact(); }}
+                            className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                          >
+                            Delete Contact
+                          </button>
+                        )}
                       </div>
                     )}
                   </Button>
+                  )}
                 </div>
               </div>
 

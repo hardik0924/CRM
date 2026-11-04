@@ -4,8 +4,14 @@ import { Users, Target, MoreHorizontal, Edit2, Menu } from "lucide-react";
 import Button from "./ui/Button";
 import AddContactModal from "./modals/AddContactModal";
 import AddOpportunityModal from "./modals/AddOpportunityModal";
+import { canDoAction } from "../utils/modules";
 
-const AccountDetailView = ({ isOpen, onClose, accountId }) => {
+const AccountDetailView = ({ isOpen, onClose, accountId, onEdit }) => {
+  const canCreateContact = canDoAction("CONTACTS", "CREATE");
+  const canCreateOpportunity = canDoAction("OPPORTUNITIES", "CREATE");
+  const canEdit = canDoAction("ACCOUNTS", "EDIT");
+  const canDelete = canDoAction("ACCOUNTS", "DELETE");
+  const showMoreMenu = canEdit || canDelete;
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("Details");
@@ -57,22 +63,27 @@ const AccountDetailView = ({ isOpen, onClose, accountId }) => {
                   <p className="text-[11px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">{accountData.account_code}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => { setAddContactOpen(true); }}
-                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Users size={16} /> New Contact
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => { setAddOpportunityOpen(true); }}
-                    className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Target size={16} /> New Opportunity
-                  </Button>
+                  {canCreateContact && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => { setAddContactOpen(true); }}
+                      className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Users size={16} /> New Contact
+                    </Button>
+                  )}
+                  {canCreateOpportunity && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => { setAddOpportunityOpen(true); }}
+                      className="gap-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Target size={16} /> New Opportunity
+                    </Button>
+                  )}
+                  {showMoreMenu && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -82,29 +93,34 @@ const AccountDetailView = ({ isOpen, onClose, accountId }) => {
                     <MoreHorizontal size={16} className="text-slate-600" />
                     {moreMenuOpen && (
                       <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
-                        <button
-                          onClick={() => { setMoreMenuOpen(false); }}
-                          className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
-                        >
-                          Edit Account
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (window.confirm(`Delete account "${accountData.account_name}"?`)) {
-                              api.delete("/api/accounts", { ids: [accountId] }).then((res) => {
-                                if (res.success) {
-                                  onClose();
-                                }
-                              });
-                            }
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                        >
-                          Delete Account
-                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => { setMoreMenuOpen(false); onEdit?.(accountData); }}
+                            className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                          >
+                            Edit Account
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Delete account "${accountData.account_name}"?`)) {
+                                api.delete("/api/accounts", { ids: [accountId] }).then((res) => {
+                                  if (res.success) {
+                                    onClose();
+                                  }
+                                });
+                              }
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                          >
+                            Delete Account
+                          </button>
+                        )}
                       </div>
                     )}
                   </Button>
+                  )}
                 </div>
               </div>
 

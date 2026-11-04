@@ -7,6 +7,7 @@ import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddCampaignModal from "../components/modals/AddCampaignModal";
 import CampaignDetailView from "../components/CampaignDetailView";
+import { canDoAction } from "../utils/modules";
 import toast from "react-hot-toast";
 
 const label = (value) =>
@@ -24,6 +25,9 @@ const Campaigns = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [campaignToEdit, setCampaignToEdit] = useState(null);
   const [viewCampaignId, setViewCampaignId] = useState(null);
+  const canCreate = canDoAction("CAMPAIGNS", "CREATE");
+  const canEdit = canDoAction("CAMPAIGNS", "EDIT");
+  const canDelete = canDoAction("CAMPAIGNS", "DELETE");
 
   useEffect(() => {
     const t = setTimeout(() => fetchCampaigns(), 300);
@@ -120,14 +124,16 @@ const Campaigns = () => {
           >
             <Download size={16} className="text-slate-500" /> Export
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setIsAddModalOpen(true)}
-            className="gap-2 font-semibold"
-          >
-            <Plus size={16} /> New campaign
-          </Button>
+          {canCreate && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsAddModalOpen(true)}
+              className="gap-2 font-semibold"
+            >
+              <Plus size={16} /> New campaign
+            </Button>
+          )}
         </div>
       </div>
 
@@ -145,7 +151,7 @@ const Campaigns = () => {
           />
         </div>
         <div className="flex items-center gap-3 text-sm">
-          {selectedRows.length > 0 && (
+          {canDelete && selectedRows.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -166,12 +172,14 @@ const Campaigns = () => {
                 <thead className="sticky top-0 z-10">
                   <tr>
                     <th className="w-10 min-w-[44px] max-w-[44px] text-center z-10">
-                      <input
-                        type="checkbox"
-                        className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
-                        checked={selectAll}
-                        onChange={toggleSelectAll}
-                      />
+                      {canDelete && (
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
+                          checked={selectAll}
+                          onChange={toggleSelectAll}
+                        />
+                      )}
                     </th>
                     <th className="w-80 min-w-[240px]">Campaign Name</th>
                     <th className="w-48 min-w-[144px]">Owner</th>
@@ -196,12 +204,14 @@ const Campaigns = () => {
                         <div className="flex flex-col items-center justify-center gap-2">
                           <Megaphone size={48} className="text-slate-200 mx-auto" />
                           <p>No campaigns found.</p>
-                          <button
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
-                          >
-                            Add your first campaign
-                          </button>
+                          {canCreate && (
+                            <button
+                              onClick={() => setIsAddModalOpen(true)}
+                              className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
+                            >
+                              Add your first campaign
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -212,12 +222,14 @@ const Campaigns = () => {
                         className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(campaign.campaign_id) ? "bg-vsph-light-blue/30" : ""}`}
                       >
                         <td className="border-b border-border px-6 py-4 text-center">
-                          <input
-                            type="checkbox"
-                            className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
-                            checked={selectedRows.includes(campaign.campaign_id)}
-                            onChange={(e) => { e.stopPropagation(); toggleRow(campaign.campaign_id); }}
-                          />
+                          {canDelete && (
+                            <input
+                              type="checkbox"
+                              className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
+                              checked={selectedRows.includes(campaign.campaign_id)}
+                              onChange={(e) => { e.stopPropagation(); toggleRow(campaign.campaign_id); }}
+                            />
+                          )}
                         </td>
                         <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
                           onClick={(e) => { e.stopPropagation(); setViewCampaignId(campaign.campaign_id); }}
@@ -235,20 +247,24 @@ const Campaigns = () => {
                         </td>
                         <td className={`px-6 py-4 text-center sticky right-0 group-hover:bg-vsph-light-blue/20 shadow-[-1px_0_0_rgba(0,0,0,0.05)] ${selectedRows.includes(campaign.campaign_id) ? "bg-vsph-light-blue/30" : "bg-surface"}`}>
                           <div className="flex items-center justify-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                            <button
-                              className="btn-icon"
-                              title="Edit"
-                              onClick={(e) => { e.stopPropagation(); setCampaignToEdit(campaign); setIsAddModalOpen(true); }}
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              className="p-2 rounded text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
-                              title="Delete"
-                              onClick={(e) => { e.stopPropagation(); handleDelete(campaign); }}
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            {canEdit && (
+                              <button
+                                className="btn-icon"
+                                title="Edit"
+                                onClick={(e) => { e.stopPropagation(); setCampaignToEdit(campaign); setIsAddModalOpen(true); }}
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                className="p-2 rounded text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                                title="Delete"
+                                onClick={(e) => { e.stopPropagation(); handleDelete(campaign); }}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -297,6 +313,7 @@ const Campaigns = () => {
           isOpen={!!viewCampaignId}
           onClose={() => setViewCampaignId(null)}
           campaignId={viewCampaignId}
+          onEdit={(camp) => { setViewCampaignId(null); setCampaignToEdit(camp); setIsAddModalOpen(true); }}
         />
       )}
     </div>

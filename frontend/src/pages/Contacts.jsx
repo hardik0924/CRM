@@ -8,6 +8,7 @@ import { api } from "../utils/api";
 import { exportCsv } from "../utils/csv";
 import AddContactModal from "../components/modals/AddContactModal";
 import ConDetailView from "../components/ConDetailView";
+import { canDoAction } from "../utils/modules";
 import toast from "react-hot-toast";
 
 const formatName = (c) =>
@@ -28,6 +29,9 @@ const Contacts = () => {
   const [contactToEdit, setContactToEdit] = useState(null);
   const [viewContactId, setViewContactId] = useState(null);
   const [searchParams] = useSearchParams();
+  const canCreate = canDoAction("CONTACTS", "CREATE");
+  const canEdit = canDoAction("CONTACTS", "EDIT");
+  const canDelete = canDoAction("CONTACTS", "DELETE");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -149,14 +153,16 @@ const Contacts = () => {
           >
             <Download size={16} className="text-slate-500" /> Export
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setIsAddModalOpen(true)}
-            className="gap-2 font-semibold"
-          >
-            <Plus size={16} /> New contact
-          </Button>
+          {canCreate && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsAddModalOpen(true)}
+              className="gap-2 font-semibold"
+            >
+              <Plus size={16} /> New contact
+            </Button>
+          )}
         </div>
       </div>
 
@@ -175,7 +181,7 @@ const Contacts = () => {
           />
         </div>
         <div className="flex items-center gap-3 text-sm">
-          {selectedRows.length > 0 && (
+          {canDelete && selectedRows.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -197,12 +203,14 @@ const Contacts = () => {
                 <thead className="sticky top-0 z-10">
                   <tr>
                     <th className="w-10 min-w-[44px] max-w-[44px] text-center z-10">
-                      <input
-                        type="checkbox"
-                        className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
-                        checked={selectAll}
-                        onChange={toggleSelectAll}
-                      />
+                      {canDelete && (
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
+                          checked={selectAll}
+                          onChange={toggleSelectAll}
+                        />
+                      )}
                     </th>
                     <th className="w-80 min-w-[240px]">Contact Name</th>
                     <th className="w-48 min-w-[144px]">Code</th>
@@ -229,12 +237,14 @@ const Contacts = () => {
                         <div className="flex flex-col items-center justify-center gap-2">
                           <Users size={48} className="text-slate-200 mx-auto" />
                           <p>No contacts found.</p>
-                          <button
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
-                          >
-                            Add your first contact
-                          </button>
+                          {canCreate && (
+                            <button
+                              onClick={() => setIsAddModalOpen(true)}
+                              className="mt-3 text-xs font-semibold text-vsph-core-blue hover:underline"
+                            >
+                              Add your first contact
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -245,12 +255,14 @@ const Contacts = () => {
                         className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(contact.contact_id) ? "bg-vsph-light-blue/30" : ""}`}
                       >
                         <td className="border-b border-border px-6 py-4 text-center">
-                          <input
-                            type="checkbox"
-                            className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
-                            checked={selectedRows.includes(contact.contact_id)}
-                            onChange={(e) => { e.stopPropagation(); toggleRow(contact.contact_id); }}
-                          />
+                          {canDelete && (
+                            <input
+                              type="checkbox"
+                              className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
+                              checked={selectedRows.includes(contact.contact_id)}
+                              onChange={(e) => { e.stopPropagation(); toggleRow(contact.contact_id); }}
+                            />
+                          )}
                         </td>
                         <td
                           className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
@@ -294,20 +306,24 @@ const Contacts = () => {
                             >
                               <Eye size={16} />
                             </button>
-                            <button
-                              onClick={() => { setContactToEdit(contact); setIsAddModalOpen(true); }}
-                              className="btn-icon"
-                              title="Edit"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDelete(contact); }}
-                              className="p-2 rounded text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            {canEdit && (
+                              <button
+                                onClick={() => { setContactToEdit(contact); setIsAddModalOpen(true); }}
+                                className="btn-icon"
+                                title="Edit"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDelete(contact); }}
+                                className="p-2 rounded text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

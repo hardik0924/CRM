@@ -256,7 +256,10 @@ Frontend:
 `v2/login/loginForm.jsx`, `v2/sidebar.jsx`, `v2/dashboard.jsx`,
 `ModulePicker.jsx`, `TaskDetailView.jsx`, `modals/AddTaskModal.jsx`,
 `modals/EmployeeAccessModal.jsx`, `modals/InviteEmployeeModal.jsx`,
-`pages/Tasks.jsx`, `pages/Team.jsx`, `ConDetailView.jsx`.
+`pages/Tasks.jsx`, `pages/Team.jsx`, `ConDetailView.jsx`,
+`pages/Accounts.jsx`, `pages/Contacts.jsx`, `pages/Opportunities.jsx`,
+`pages/Projects.jsx`, `pages/Campaigns.jsx`, `AccDetailView.jsx`,
+`OppDetailView.jsx`, `ProjectDetailView.jsx`, `CampaignDetailView.jsx`.
 
 ### Remaining issues / manual steps
 
@@ -266,4 +269,50 @@ Frontend:
   is rejected by the backend with a 400 and the message is shown in the form.
 * Production deployment must run the migration and `prisma generate` before
   restarting the API; no production configuration was touched here.
+
+### Full browser regression pass (2026-11-04)
+
+Run against the Vite dev server on `http://localhost:5174` and API on
+`http://localhost:5000`, signed in through the shared CRM login. All records
+created for the pass were deleted afterwards; no demo data was reset.
+
+| Area | Check | Result |
+| --- | --- | --- |
+| Login | Admin, employee and owner sign in through the same form; sign-out returns to `/v2/login` | Pass |
+| Navigation | Employee sidebar shows Dashboard, Contacts, Tasks only; direct visits to Accounts, Opportunities, Projects, Team and Campaigns redirect to dashboard | Pass |
+| API enforcement | Employee `GET /api/accounts`, `/opportunities`, `/projects`, `/campaigns` = 403 `MODULE_ACCESS_DENIED`; Contacts/Tasks = 200; `/api/users` scoped to self | Pass |
+| Dashboard | Admin sees organization pipeline/team progress; employee sees own tasks only, no other user's tasks, pipeline access message | Pass |
+| Contacts | Create with 46 fields; edit designation/mobile; delete + confirm; list/detail render | Pass, with display gaps below |
+| Accounts | Create with email, phone, website, employees, revenue, description and billing/shipping; edit, required-name validation, delete; detail tabs render | Pass, with placeholder tabs below |
+| Opportunities | Create with core fields, statuses, dates, pickup/drop, account/contact/project; stage saved on edit; detail/Activity; delete | Pass |
+| Projects | Create name/location/date/type/status; edit date; detail/Activity; delete | Pass |
+| Campaigns | Create name; detail/Activity; delete | Pass, owner select empty (below) |
+| Tasks | Admin creates and assigns to employee, edits priority; employee sees own tasks only, updates status/progress/note, history entry appears; employee personal task assigns self | Pass |
+| Task permissions | Employee delete attempt returns 403 (admin-only); UI no longer shows Delete, checkboxes or bulk delete to employees | Pass after fix |
+| Module grants | Employee temporarily set to `ACCOUNTS:VIEW` saw the Accounts nav/list but no New/Edit/Delete/bulk controls; backend create/edit returned 403 `ACTION_ACCESS_DENIED` | Pass after fix |
+| Search | Global navbar search (2+ chars) and per-page search with 300 ms debounce work | Pass |
+
+Fixes made during the pass:
+
+* List pages (`Accounts`, `Contacts`, `Opportunities`, `Projects`, `Campaigns`)
+  now gate New/Edit/Delete, row checkboxes and bulk delete with `canDoAction`.
+* Detail views (`AccDetailView`, `ConDetailView`, `OppDetailView`,
+  `ProjectDetailView`, `CampaignDetailView`) gate their action buttons; the
+  previously inert Edit buttons now open the edit modal via an `onEdit` prop.
+* `Tasks.jsx` now treats delete and bulk selection as admin/owner-only, matching
+  the backend's "Only an organization administrator can delete tasks."
+
+Known gaps observed but not changed (pre-existing or out of scope):
+
+* Account/Opportunity/Project/Campaign detail Activity tabs are placeholders.
+* Contact detail labels "Designation" with `contact_title` first, so a real
+  designation is hidden when a title exists; billing/shipping addresses are
+  stored but not shown in the contact detail view.
+* Account drawer "New Contact"/"New Opportunity" do not prefill the linked
+  account.
+* Campaign create owner dropdown has only the empty option, so new campaigns
+  have no owner.
+* Detail drawers show stale data after an edit until reopened.
+* Employee personal tasks cannot be deleted by the employee (backend rule);
+  the UI now reflects that.
 

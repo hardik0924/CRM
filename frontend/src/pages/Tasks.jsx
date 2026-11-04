@@ -36,7 +36,7 @@ const Tasks = () => {
   const canCreate = canDoAction("TASKS", "CREATE");
   const canEdit = canDoAction("TASKS", "EDIT");
   const canManageTasks = canEdit && currentOrgRole() !== "EMPLOYEE";
-  const canDelete = canDoAction("TASKS", "DELETE");
+  const canDelete = canManageTasks;
 
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -180,7 +180,7 @@ const Tasks = () => {
           />
         </div>
         <div className="flex items-center gap-3 text-sm">
-          {selectedRows.length > 0 && (
+          {canDelete && selectedRows.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -201,12 +201,14 @@ const Tasks = () => {
                 <thead className="sticky top-0 z-10">
                   <tr>
                     <th className="w-10 min-w-[44px] max-w-[44px] text-center z-10">
-                      <input
-                        type="checkbox"
-                        className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
-                        checked={selectAll}
-                        onChange={toggleSelectAll}
-                      />
+                      {canDelete && (
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
+                          checked={selectAll}
+                          onChange={toggleSelectAll}
+                        />
+                      )}
                     </th>
                     <th className="w-80 min-w-[220px]">Subject</th>
                     <th className="w-36 min-w-[120px]">Status</th>
@@ -249,12 +251,14 @@ const Tasks = () => {
                         className={`hover:bg-vsph-light-blue/20 group cursor-pointer transition-colors ${selectedRows.includes(task.task_id) ? "bg-vsph-light-blue/30" : ""}`}
                       >
                         <td className="border-b border-border px-6 py-4 text-center">
-                          <input
-                            type="checkbox"
-                            className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
-                            checked={selectedRows.includes(task.task_id)}
-                            onChange={(e) => { e.stopPropagation(); toggleRow(task.task_id); }}
-                          />
+                          {canDelete && (
+                            <input
+                              type="checkbox"
+                              className="rounded border-slate-300 text-vsph-core-blue focus:ring-vsph-core-blue cursor-pointer"
+                              checked={selectedRows.includes(task.task_id)}
+                              onChange={(e) => { e.stopPropagation(); toggleRow(task.task_id); }}
+                            />
+                          )}
                         </td>
                         <td className="border-b border-border px-6 py-4 font-medium text-sidebar hover:underline cursor-pointer truncate group-hover:text-vsph-core-blue"
                           onClick={(e) => { e.stopPropagation(); setViewTaskId(task.task_id); }}
