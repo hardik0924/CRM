@@ -227,6 +227,11 @@ const DashboardV2 = () => {
                         Overdue {metrics.work.overdue}
                       </span>
                     )}
+                    {metrics.work.upcoming > 0 && (
+                      <span className="text-[10px] font-semibold px-2 py-1 rounded border bg-amber-50 text-amber-700 border-amber-100">
+                        Upcoming {metrics.work.upcoming}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -306,8 +311,14 @@ const DashboardV2 = () => {
                   <div className="space-y-4">
                     {metrics.pipeline.map((row) => {
                       const percent = totalPipeline ? Math.round((row.count / totalPipeline) * 100) : 0;
+                      const canView = hasModule("OPPORTUNITIES");
+                      const clickable = canView && row.count > 0;
                       return (
-                        <div key={row.stage}>
+                        <div
+                          key={row.stage}
+                          className={clickable ? "cursor-pointer hover:bg-vsph-grey/50 rounded-lg p-1.5 transition-colors" : ""}
+                          onClick={clickable ? () => navigate(`/v2/opportunities?stage=${row.stage || "UNASSIGNED"}`) : undefined}
+                        >
                           <div className="flex justify-between text-[10px] mb-1.5">
                             <span className="font-medium text-slate-600">{label(row.stage)}</span>
                             <span className="text-slate-500">{row.count}</span>
