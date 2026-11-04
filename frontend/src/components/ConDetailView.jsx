@@ -237,6 +237,9 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
     contactData?.contact_title ||
     contactData?.contact_designation ||
     "No Title";
+  const designation = contactData?.contact_designation || "—";
+  const billing = contactData?.contact_account_billing_address?.[0] || {};
+  const shipping = contactData?.contact_account_shipping_address?.[0] || {};
   const accountName = contactData?.account?.account_name || "-";
   const mobile =
     contactData?.contact_mobile || contactData?.contact_phone || "-";
@@ -485,7 +488,7 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                     <GridRow
                       left={{
                         label: "Designation",
-                        value: title,
+                        value: designation,
                         isLink: false,
                       }}
                       right={{
@@ -675,25 +678,83 @@ const ConDetailView = ({ isOpen, onClose, contactId }) => {
                     />
                   </div>
 
-                  {/* Mailing Box */}
+                  {/* Billing Address */}
                   <div className="flex items-center justify-between p-4 border-b border-t border-slate-200 bg-slate-50/50">
                     <h3 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                      Mailing Box
+                      Billing Address
                     </h3>
                     <ChevronDown size={16} className="text-slate-400" />
                   </div>
                   <div className="flex flex-col">
                     <GridRow
-                      left={{ label: "Mailing Street", value: "—" }}
-                      right={{ label: "Mailing State/Province", value: "—" }}
+                      left={{
+                        label: "Street",
+                        value: billing.billing_street || "—",
+                      }}
+                      right={{
+                        label: "City",
+                        value: billing.billing_city || "—",
+                      }}
                     />
                     <GridRow
-                      left={{ label: "Mailing City", value: "—" }}
-                      right={{ label: "Mailing Zip/Postal Code", value: "—" }}
+                      left={{
+                        label: "State/Province",
+                        value: billing.billing_state || "—",
+                      }}
+                      right={{
+                        label: "Zip/Postal Code",
+                        value: billing.billing_zip || "—",
+                      }}
                     />
                     <GridRow
-                      left={{ label: "Mailing Country", value: "—" }}
-                      right={{ label: "PO Box", value: "—" }}
+                      left={{
+                        label: "Country",
+                        value: billing.billing_country || "—",
+                      }}
+                      right={{
+                        label: "Phone",
+                        value: billing.billing_phone || "—",
+                      }}
+                    />
+                  </div>
+
+                  {/* Shipping Address */}
+                  <div className="flex items-center justify-between p-4 border-b border-t border-slate-200 bg-slate-50/50">
+                    <h3 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                      Shipping Address
+                    </h3>
+                    <ChevronDown size={16} className="text-slate-400" />
+                  </div>
+                  <div className="flex flex-col">
+                    <GridRow
+                      left={{
+                        label: "Street",
+                        value: shipping.shipping_street || "—",
+                      }}
+                      right={{
+                        label: "City",
+                        value: shipping.shipping_city || "—",
+                      }}
+                    />
+                    <GridRow
+                      left={{
+                        label: "State/Province",
+                        value: shipping.shipping_state || "—",
+                      }}
+                      right={{
+                        label: "Zip/Postal Code",
+                        value: shipping.shipping_zip || "—",
+                      }}
+                    />
+                    <GridRow
+                      left={{
+                        label: "Country",
+                        value: shipping.shipping_country || "—",
+                      }}
+                      right={{
+                        label: "Phone",
+                        value: shipping.shipping_phone || "—",
+                      }}
                     />
                   </div>
 
