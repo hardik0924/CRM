@@ -206,9 +206,9 @@ const Navbar = () => {
       </div>
 
       {/* Section tabs */}
-      <div className="bg-[#001B44] border-t border-white/10">
+      <div className="bg-[#001B44] border-t border-white/10 overflow-x-auto">
         <nav
-          className="flex items-stretch gap-1 px-2 sm:px-4 overflow-x-auto"
+          className="flex w-max mx-auto items-stretch gap-1 px-2 sm:px-4"
           aria-label="Navigation"
         >
           {navItems.map((item) => (
