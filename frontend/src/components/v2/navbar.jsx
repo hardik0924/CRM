@@ -112,7 +112,7 @@ const Navbar = () => {
     <header className="shrink-0 z-30">
       {/* Top bar */}
       <div className="bg-vsph-navy">
-        <div className="h-16 flex items-center gap-3 sm:gap-6 px-4 sm:px-6">
+        <div className="relative h-16 flex items-center gap-3 sm:gap-6 px-4 sm:px-6">
           <NavLink to="/v2/dashboard" className="shrink-0 leading-none select-none">
             <span className="block text-[22px] font-bold text-white tracking-tight">VSPH</span>
             <span className="block text-[9px] font-semibold text-vsph-light-blue tracking-[0.28em] mt-1">
@@ -120,7 +120,7 @@ const Navbar = () => {
             </span>
           </NavLink>
 
-          <div className="relative flex-1 max-w-[680px] hidden md:block">
+          <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(680px,calc(100%-340px))]">
             <div className="flex items-center h-10 bg-white rounded-md overflow-hidden">
               <Search size={17} className="ml-3.5 text-slate-400 shrink-0" />
               <input
@@ -190,7 +190,7 @@ const Navbar = () => {
             <div className="w-9 h-9 rounded-full bg-vsph-core-blue border border-white/20 flex items-center justify-center text-white text-[12px] font-bold">
               {initials}
             </div>
-            <div className="hidden md:block leading-tight max-w-[150px]">
+            <div className="hidden xl:block leading-tight max-w-[150px]">
               <p className="text-[13px] font-semibold text-white truncate">{userName}</p>
               <p className="text-[10px] text-white/60 truncate">{userRole}</p>
             </div>
