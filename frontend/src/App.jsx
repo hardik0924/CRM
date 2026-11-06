@@ -13,6 +13,7 @@ import LoginV2Layout from './components/v2/login/loginLayout'
 import LoginV2Form from './components/v2/login/loginForm'
 import DashboardV2Layout from './components/v2/dashboardLayout'
 import DashboardV2 from './components/v2/dashboard'
+import ProfileV2 from './components/v2/profile'
 
 // Superadmin Portal Imports
 import SuperadminLayout from './components/superadmin/SuperadminLayout'
@@ -53,6 +54,7 @@ const App = () => {
       {/* V2 Client Dashboard */}
       <Route path="/v2" element={<DashboardV2Layout />}>
         <Route path="/v2/dashboard" element={<DashboardV2 />} />
+        <Route path="/v2/profile" element={<ProfileV2 />} />
         <Route path="/v2/contacts" element={<ModuleGuard code="CONTACTS"><Contacts /></ModuleGuard>} />
         <Route path="/v2/accounts" element={<ModuleGuard code="ACCOUNTS"><Accounts /></ModuleGuard>} />
         <Route path="/v2/opportunities" element={<ModuleGuard code="OPPORTUNITIES"><Opportunities /></ModuleGuard>} />

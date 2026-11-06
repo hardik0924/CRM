@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LogOut, Search, LayoutGrid, Loader2 } from 'lucide-react';
+import { LogOut, Search, LayoutGrid, Loader2, UserRound } from 'lucide-react';
 import { hasModule, canDoAction, canManageOrganization } from '../../utils/modules';
+import { avatarColorHex, initialsOf, readProfile } from '../../utils/profile';
 import { api } from '../../utils/api';
 
 const NAV_ITEMS = [
@@ -45,15 +46,28 @@ const Navbar = () => {
     ...(canManage ? [{ name: 'Team', path: '/v2/team' }] : []),
   ];
 
-  const userName = localStorage.getItem('vsph_user_name') || 'CRM user';
-  const userRole = localStorage.getItem('vsph_user_role')?.replace(/_/g, ' ') || 'User';
-  const initials = userName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase() || 'US';
+  const [profile, setProfile] = useState(readProfile);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  // Keep the header in sync when the profile page saves.
+  useEffect(() => {
+    const refresh = () => setProfile(readProfile());
+    const onPointerDown = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) setProfileOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setProfileOpen(false);
+    };
+    window.addEventListener('vsph-profile-updated', refresh);
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('vsph-profile-updated', refresh);
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -187,12 +201,49 @@ const Navbar = () => {
             >
               <LayoutGrid size={17} />
             </NavLink>
-            <div className="w-9 h-9 rounded-full bg-vsph-core-blue border border-white/20 flex items-center justify-center text-white text-[12px] font-bold">
-              {initials}
-            </div>
-            <div className="hidden xl:block leading-tight max-w-[150px]">
-              <p className="text-[13px] font-semibold text-white truncate">{userName}</p>
-              <p className="text-[10px] text-white/60 truncate">{userRole}</p>
+            <div ref={profileRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setProfileOpen((value) => !value)}
+                aria-expanded={profileOpen}
+                aria-haspopup="menu"
+                className="flex items-center gap-2 sm:gap-3 rounded-lg px-1 py-1 hover:bg-white/10 transition-colors"
+              >
+                <span
+                  className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white text-[12px] font-bold"
+                  style={{ backgroundColor: avatarColorHex(profile.color) }}
+                >
+                  {initialsOf(profile.name)}
+                </span>
+                <span className="hidden xl:block leading-tight max-w-[150px] text-left">
+                  <span className="block text-[13px] font-semibold text-white truncate">{profile.name}</span>
+                  <span className="block text-[10px] text-white/60 truncate">{profile.roleLabel}</span>
+                </span>
+              </button>
+
+              {profileOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden z-50"
+                >
+                  <div className="px-4 py-3">
+                    <p className="text-sm font-semibold text-vsph-navy truncate">{profile.name}</p>
+                    <p className="text-xs text-slate-500 truncate">{profile.roleLabel}</p>
+                  </div>
+                  <div className="border-t border-slate-100" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setProfileOpen(false);
+                      navigate('/v2/profile');
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-vsph-grey hover:text-vsph-navy transition-colors"
+                  >
+                    <UserRound size={15} /> Your profile
+                  </button>
+                </div>
+              )}
             </div>
             <button
               onClick={signOut}
