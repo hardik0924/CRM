@@ -161,7 +161,7 @@ export const createContact = async (req, res) => {
       resolvedIndustryId = industry?.industry_id || null;
     }
 
-    let resolvedOwnerId = contact_owner_fk || null;
+    let resolvedOwnerId = contact_owner_fk || req.user.id;
     if (resolvedOwnerId) {
       const ownerExists = await prisma.user.findUnique({
         where: { user_id: resolvedOwnerId },

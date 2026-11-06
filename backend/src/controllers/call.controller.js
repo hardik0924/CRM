@@ -3,7 +3,7 @@ import { getTenantFilter } from "../middleware/auth.middleware.js";
 
 export const createCall = async (req, res) => {
   try {
-    const { call_user_fk, call_contact_fk, call_subject, call_description } = req.body;
+    const { call_contact_fk, call_subject, call_description } = req.body;
 
     // Resolve tenant: client users always use their own tenant; superadmin may specify one
     let tenantId = req.user.tenantFk;
@@ -17,10 +17,28 @@ export const createCall = async (req, res) => {
       });
     }
 
+    // Attribute the call to the signed-in user; only platform superadmins may
+    // log on behalf of someone else.
+    const callUserId =
+      req.user.role === "SUPER_ADMIN" && req.body.call_user_fk
+        ? req.body.call_user_fk
+        : req.user.id;
+
+    // A call may only link to a contact inside the same organization.
+    if (call_contact_fk) {
+      const contact = await prisma.contact.findFirst({
+        where: { contact_id: call_contact_fk, tenant_fk: tenantId, contact_deleted_at: null },
+        select: { contact_id: true },
+      });
+      if (!contact) {
+        return res.status(400).json({ success: false, error: "Contact not found in this organization" });
+      }
+    }
+
     const newCall = await prisma.call.create({
       data: {
         tenant_fk: tenantId,
-        call_user_fk,
+        call_user_fk: callUserId,
         call_contact_fk,
         call_subject,
         call_description,

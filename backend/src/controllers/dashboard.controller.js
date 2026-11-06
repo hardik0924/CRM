@@ -7,14 +7,29 @@ import { TASK_STATUSES } from "../lib/tasks.js";
 const countByStatus = () =>
   Object.fromEntries(TASK_STATUSES.map((status) => [status, 0]));
 
+const startOfDaysAgo = (days) => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - (days - 1));
+  return date;
+};
+
+const dayKey = (date) => {
+  const value = new Date(date);
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(
+    value.getDate()
+  ).padStart(2, "0")}`;
+};
+
+const fullName = (contact) =>
+  [contact?.contact_firstname, contact?.contact_lastname].filter(Boolean).join(" ");
+
 /**
- * Dashboard summary. Every number is tenant-filtered; module counts are omitted
- * (null) for employees who were not granted that module.
+ * Dashboard summary. Counts are organization-wide so every teammate sees the
+ * same live picture; personal task scope is kept for employees.
  */
 export const getDashboardMetrics = async (req, res) => {
   try {
-    // Dashboard is personal: default to the signed-in user, ignore another
-    // user_id from the browser for non-superadmins.
     const userId =
       req.user.role === "SUPER_ADMIN" && req.query.user_id
         ? req.query.user_id
@@ -25,6 +40,7 @@ export const getDashboardMetrics = async (req, res) => {
     const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+    const weekStart = startOfDaysAgo(7);
 
     const tenant = getTenantFilter(req);
     const can = {
@@ -38,31 +54,42 @@ export const getDashboardMetrics = async (req, res) => {
 
     const [
       callsToday,
+      callsThisWeek,
       oppsWonThisMonth,
       accounts,
       contacts,
       openOpportunities,
       myOpenTasks,
+      openTasks,
       stageGroups,
       recentOpportunities,
       recentTasks,
     ] = await Promise.all([
-      prisma.call.count({
-        where: {
-          call_user_fk: userId,
-          ...tenant,
-          call_deleted_at: null,
-          call_created_at: { gte: startOfToday, lte: endOfToday },
-        },
-      }),
-      prisma.opportunity.count({
-        where: {
-          opportunity_owner_fk: userId,
-          ...tenant,
-          opportunity_stage: "CLOSED_WON",
-          opportunity_close_date: { gte: startOfMonth, lte: endOfMonth },
-        },
-      }),
+      can.contacts
+        ? prisma.call.count({
+            where: {
+              ...tenant,
+              call_deleted_at: null,
+              call_created_at: { gte: startOfToday, lte: endOfToday },
+            },
+          })
+        : null,
+      can.contacts
+        ? prisma.call.findMany({
+            where: { ...tenant, call_deleted_at: null, call_created_at: { gte: weekStart } },
+            select: { call_created_at: true },
+            take: 2000,
+          })
+        : null,
+      can.opportunities
+        ? prisma.opportunity.count({
+            where: {
+              ...tenant,
+              opportunity_stage: "CLOSED_WON",
+              opportunity_close_date: { gte: startOfMonth, lte: endOfMonth },
+            },
+          })
+        : null,
       can.accounts
         ? prisma.account.count({ where: { account_deleted_at: null, ...tenant } })
         : null,
@@ -77,6 +104,16 @@ export const getDashboardMetrics = async (req, res) => {
       can.tasks
         ? prisma.task.count({
             where: { task_user_fk: userId, task_status: { not: "COMPLETED" }, task_deleted_at: null, ...tenant },
+          })
+        : null,
+      can.tasks
+        ? prisma.task.count({
+            where: {
+              task_deleted_at: null,
+              task_status: { not: "COMPLETED" },
+              ...tenant,
+              ...(isEmployee(req.user) ? { task_user_fk: req.user.id } : {}),
+            },
           })
         : null,
       can.opportunities
@@ -102,7 +139,6 @@ export const getDashboardMetrics = async (req, res) => {
             where: {
               task_deleted_at: null,
               ...tenant,
-              // Employees only ever see their own work, including the sidebar list.
               ...(isEmployee(req.user) ? { task_user_fk: req.user.id } : {}),
             },
             orderBy: { task_due_date: "asc" },
@@ -111,6 +147,122 @@ export const getDashboardMetrics = async (req, res) => {
           })
         : null,
     ]);
+
+    // Seven-day call volume, bucketed by local day.
+    let callsByDay = null;
+    if (callsThisWeek) {
+      const buckets = new Map();
+      for (let index = 0; index < 7; index += 1) {
+        const day = startOfDaysAgo(7 - index);
+        buckets.set(dayKey(day), { date: dayKey(day), count: 0 });
+      }
+      for (const call of callsThisWeek) {
+        const bucket = buckets.get(dayKey(call.call_created_at));
+        if (bucket) bucket.count += 1;
+      }
+      callsByDay = [...buckets.values()];
+    }
+
+    // A single organization-wide feed of recent records, newest first.
+    const [recentCalls, recentContacts, recentAccounts, recentOpps, recentTaskRows] =
+      await Promise.all([
+        can.contacts
+          ? prisma.call.findMany({
+              where: { ...tenant, call_deleted_at: null },
+              orderBy: { call_created_at: "desc" },
+              take: 6,
+              include: {
+                user: { select: { user_name: true } },
+                contact: { select: { contact_firstname: true, contact_lastname: true } },
+              },
+            })
+          : [],
+        can.contacts
+          ? prisma.contact.findMany({
+              where: { contact_deleted_at: null, ...tenant },
+              orderBy: { contact_created_at: "desc" },
+              take: 4,
+              include: {
+                contact_owner: { select: { user_name: true } },
+                account: { select: { account_name: true } },
+              },
+            })
+          : [],
+        can.accounts
+          ? prisma.account.findMany({
+              where: { account_deleted_at: null, ...tenant },
+              orderBy: { account_created_at: "desc" },
+              take: 4,
+              include: { owner: { select: { user_name: true } } },
+            })
+          : [],
+        can.opportunities
+          ? prisma.opportunity.findMany({
+              where: tenant,
+              orderBy: { opportunity_created_at: "desc" },
+              take: 4,
+              include: {
+                opportunity_owner: { select: { user_name: true } },
+                opportunity_account: { select: { account_name: true } },
+              },
+            })
+          : [],
+        can.tasks
+          ? prisma.task.findMany({
+              where: { task_deleted_at: null, ...tenant },
+              orderBy: { task_created_at: "desc" },
+              take: 4,
+              include: { user: { select: { user_name: true } } },
+            })
+          : [],
+      ]);
+
+    const recentActivity = [
+      ...recentCalls.map((call) => ({
+        id: call.call_id,
+        type: "call",
+        title: call.call_subject || "Call logged",
+        subtitle: fullName(call.contact) || call.call_description || "Call",
+        user: call.user?.user_name || null,
+        at: call.call_created_at,
+      })),
+      ...recentContacts.map((contact) => ({
+        id: contact.contact_id,
+        type: "contact",
+        title: fullName(contact) || "New contact",
+        subtitle: contact.account?.account_name || "Contact added",
+        user: contact.contact_owner?.user_name || null,
+        at: contact.contact_created_at,
+      })),
+      ...recentAccounts.map((account) => ({
+        id: account.account_id,
+        type: "account",
+        title: account.account_name,
+        subtitle: "Account added",
+        user: account.owner?.user_name || null,
+        at: account.account_created_at,
+      })),
+      ...recentOpps.map((opp) => ({
+        id: opp.opportunity_id,
+        type: "opportunity",
+        title: opp.opportunity_name,
+        subtitle: [opp.opportunity_account?.account_name, opp.opportunity_stage?.replace(/_/g, " ")]
+          .filter(Boolean)
+          .join(" · "),
+        user: opp.opportunity_owner?.user_name || null,
+        at: opp.opportunity_created_at,
+      })),
+      ...recentTaskRows.map((task) => ({
+        id: task.task_id,
+        type: "task",
+        title: task.task_subject || "New task",
+        subtitle: `Assigned to ${task.user?.user_name || "unassigned"}`,
+        user: task.user?.user_name || null,
+        at: task.task_created_at,
+      })),
+    ]
+      .sort((a, b) => new Date(b.at) - new Date(a.at))
+      .slice(0, 12);
 
     let work = null;
     if (can.tasks) {
@@ -203,17 +355,20 @@ export const getDashboardMetrics = async (req, res) => {
       success: true,
       data: {
         callsToday,
+        callsByDay,
         oppsWonThisMonth,
         accounts,
         contacts,
         openOpportunities,
         myOpenTasks,
+        openTasks,
         pipeline: stageGroups
           ? stageGroups.map((row) => ({
               stage: row.opportunity_stage || "UNASSIGNED",
               count: row._count._all,
             }))
           : null,
+        recentActivity,
         recentOpportunities,
         recentTasks,
         work,
