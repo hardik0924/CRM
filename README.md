@@ -94,13 +94,13 @@ A client sees **only their own organization's data**. A superadmin sees **everyt
 
 ## Authentication
 
-- **No JWT.** Sessions are tracked by the user's ID in localStorage.
-- On login, the frontend stores `vsph_user_id`, `vsph_user_role`, `vsph_user_name`, `vsph_user_email`, `vsph_user_owner`, `vsph_tenant_id`, `vsph_tenant_name`, `vsph_tenant_code`, and the sidebar preference `vsph.sidebar.collapsed`.
-- Every API call (`frontend/src/utils/api.js`) sends the `X-User-Id` header.
-- `authMiddleware` looks up the user, checks the organization's CRM entitlement, and rejects missing/inactive/blocked users. `superadminOnly` guards all `/api/tenants` routes.
+- **Signed bearer tokens.** Login returns an HMAC-SHA256 token (12 hours by default) that every API call sends as `Authorization: Bearer <token>`. The backend verifies the signature, expiry and the password fingerprint before loading the user.
+- On login, the frontend stores `vsph_auth_token`, `vsph_user_id`, `vsph_user_role`, `vsph_user_name`, `vsph_user_email`, `vsph_user_owner`, `vsph_tenant_id`, `vsph_tenant_name`, `vsph_tenant_code`, and the sidebar preference `vsph.sidebar.collapsed`.
+- `authMiddleware` ignores `X-User-Id` entirely: the authenticated user comes only from the verified token. It also checks the organization's CRM entitlement and rejects missing/inactive/blocked users. `superadminOnly` guards all `/api/tenants` routes.
 - Client users are identified by `user_is_tenant_owner` (the organization's Client Super Admin) plus `user_role = ADMIN`.
 - Invited users start with `user_password = NULL` and `user_status = false`; they cannot sign in until they accept their invitation.
-- **Passwords are plaintext in the DB (dev only)** — see [Known Limits](#dev-notes--known-limits).
+- **Passwords are scrypt hashes.** Legacy plaintext rows are upgraded automatically on their first successful login; there is no permanent plaintext fallback.
+- Signing out clears the token in the browser. Deactivating a user, changing their password or removing their entitlement revokes access on the next request.
 - Superadmin routes redirect to `/` when the role isn't `SUPER_ADMIN`.
 
 ---
@@ -179,6 +179,11 @@ DATABASE_USER=root
 DATABASE_PASSWORD=
 DATABASE_NAME=crm
 
+# Session signing. Generate a long random value for any shared environment.
+AUTH_TOKEN_SECRET=change-me-to-a-long-random-value
+AUTH_TOKEN_TTL_MINUTES=720
+CORS_ORIGINS=http://localhost:5173
+
 # Central platform integration
 INTEGRATION_HMAC_SECRET=change-me
 INTEGRATION_API_KEY=change-me
@@ -234,6 +239,9 @@ npx vite build
 | Variable | Purpose |
 |----------|---------|
 | `PORT` | Backend port (default `5000`) |
+| `AUTH_TOKEN_SECRET` | Secret used to sign session tokens. Set a long random value; without it a random per-process secret is used and sessions end on restart. |
+| `AUTH_TOKEN_TTL_MINUTES` | Session lifetime in minutes (default `720`, i.e. 12 hours) |
+| `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (for example `https://crm.example.com`). Defaults to `FRONTEND_URL`, then `http://localhost:5173`. |
 | `DATABASE_URL` | Prisma connection string (MySQL) |
 | `DATABASE_HOST` / `DATABASE_PORT` / `DATABASE_USER` / `DATABASE_PASSWORD` / `DATABASE_NAME` | Alternate connection details |
 | `INTEGRATION_HMAC_SECRET` | Shared secret used to verify `apps.vsph.in` HMAC signatures |
@@ -251,7 +259,7 @@ Frontend API base is `VITE_API_URL` in `frontend/.env` (consumed via `import.met
 
 ## API Routes
 
-All data routes require `X-User-Id` header. `/api/tenants` additionally requires superadmin.
+All data routes require an `Authorization: Bearer <token>` header. `/api/tenants` additionally requires superadmin.
 
 ### Auth
 | Method | Route | Description |
@@ -367,8 +375,8 @@ The UI follows the VSPH brand (`frontend/DESIGN.md`):
 
 ## Dev Notes & Known Limits
 
-- **Plaintext passwords** — dev only. Hash before any production deployment.
-- **No JWT / server sessions** — `X-User-Id` header auth; fine for dev, needs hardening for production.
+- **Passwords** — scrypt hashes. Existing plaintext rows are rehashed on their first successful login.
+- **Sessions** — HMAC-signed bearer tokens in localStorage (12 hours by default). Set `AUTH_TOKEN_SECRET` in production; without it tokens are signed with a random per-process secret. A move to httpOnly cookies needs a same-site deployment decision, since the SPA and API are currently cross-origin.
 - **Invitation email** — no provider is installed. Development prints the invitation URL / returns it in the API response. Set `EMAIL_WEBHOOK_URL` before production; tokens are never logged or returned in production.
 - **Integration is CRM-side complete, end-to-end pending** — the contract is implemented and tested locally. `apps.vsph.in` must supply its base URL, HMAC secret and final field names before end-to-end can be claimed.
 - **Entitlement fail-closed** — client access is blocked when no entitlement record exists. Run `npm run backfill:onboarding` after migrating existing data.

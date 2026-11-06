@@ -11,7 +11,7 @@ task/progress workflow. It is a working record, not a proposal.
 | Frontend | React 19 + Vite, React Router (`frontend/src/App.jsx`), Tailwind v4 tokens in `frontend/src/index.css` |
 | Backend | Node + Express 5 (`backend/src/app.js`), controllers + routes, no service layer for CRM CRUD |
 | ORM / DB | Prisma 7 with MariaDB adapter, MySQL database `crm` |
-| Auth | `POST /api/auth/login` (email + password) returns a user object; every protected request sends `X-User-Id`; `authMiddleware` reloads the user from the database on every call |
+| Auth | `POST /api/auth/login` (email + password) returns a signed bearer token; every protected request sends `Authorization: Bearer <token>`; `authMiddleware` verifies the token and reloads the user from the database on every call |
 | Tenant isolation | `tenant_fk` on every CRM table + `getTenantFilter(req)`; browser supplied tenant ids are ignored for client users |
 | Platform admin | `user_role = SUPER_ADMIN`, no tenant, `/superadmin` portal, `/api/tenants` (`superadminOnly`) |
 | Client roles | `user_role = ADMIN` for organization admin; `USER`/`SALES`/`DATA`/`PRODUCTION`/`SPONSORSHIP`/`OPERATION` for employees; `user_is_tenant_owner` marks the client organization owner |

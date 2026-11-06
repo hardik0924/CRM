@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { CLIENT_ROLES } from "../lib/onboarding.logic.js";
+import { hashPassword } from "../lib/passwords.js";
 import { upsertCrmEntitlement } from "../services/entitlement.service.js";
 
 const tenantInclude = {
@@ -272,7 +273,7 @@ export const createTenantUser = async (req, res) => {
       data: {
         user_name,
         user_email,
-        user_password,
+        user_password: await hashPassword(user_password),
         user_role: role,
         user_department: user_department || "SALES",
         user_status: user_status === undefined ? true : Boolean(user_status),
@@ -315,7 +316,7 @@ export const updateTenantUser = async (req, res) => {
     if (user_role !== undefined) data.user_role = user_role;
     if (user_department !== undefined) data.user_department = user_department;
     if (user_status !== undefined) data.user_status = Boolean(user_status);
-    if (user_password) data.user_password = user_password;
+    if (user_password) data.user_password = await hashPassword(user_password);
 
     const user = await prisma.user.update({ where: { user_id: userId }, data });
 

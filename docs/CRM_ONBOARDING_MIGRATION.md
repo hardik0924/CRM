@@ -18,7 +18,7 @@ record for CRM users and business data.
 | Backend | Node.js + Express 5 |
 | ORM | Prisma 7 (`@prisma/adapter-mariadb`) |
 | Database | MySQL (Laragon) |
-| Auth | `X-User-Id` header + `authMiddleware`; no JWT, no server session |
+| Auth | HMAC-signed bearer token issued at login + `authMiddleware`; no server-side session store |
 | Tenancy | Single `tenant` table; every CRM data model has `tenant_fk` |
 | Email | **None.** No SMTP/SendGrid/nodemailer anywhere |
 | Tests | **None in the repo.** No test runner configured |
@@ -60,7 +60,7 @@ record for CRM users and business data.
 1. VSPH operator signs in at `/` as Superadmin → `/superadmin`.
 2. Operator creates a client: `POST /api/tenants` (`tenant.controller.js`).
 3. Operator opens the client and creates users:
-   `POST /api/tenants/:id/users` (plaintext password supplied by operator).
+   `POST /api/tenants/:id/users` (operator-supplied password, stored as a scrypt hash).
 4. Client user signs in at `/` → `/v2/dashboard`.
 
 Problems with this flow for a commercial product:

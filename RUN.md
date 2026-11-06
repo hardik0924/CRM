@@ -55,6 +55,11 @@ DATABASE_USER=root
 DATABASE_PASSWORD=YOUR_PASSWORD
 DATABASE_NAME=crm
 
+# Session signing. Generate a long random value for any shared environment.
+AUTH_TOKEN_SECRET=change-me-to-a-long-random-value
+AUTH_TOKEN_TTL_MINUTES=720
+CORS_ORIGINS=http://localhost:5173
+
 # Local development only — change before deploying anywhere public
 INTEGRATION_HMAC_SECRET=dev-local-hmac-secret-change-me
 INTEGRATION_API_KEY=dev-local-integration-key

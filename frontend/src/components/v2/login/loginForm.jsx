@@ -22,6 +22,7 @@ const LoginForm = ({ title = "Welcome back", subtitle = "Sign in to your VSPH CR
 
             if (res.success) {
                 const user = res.user;
+                localStorage.setItem("vsph_auth_token", res.token);
                 localStorage.setItem("vsph_user_id", user.id);
                 localStorage.setItem("vsph_user_role", user.role);
                 localStorage.setItem("vsph_user_name", user.name);

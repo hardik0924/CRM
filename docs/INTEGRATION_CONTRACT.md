@@ -215,7 +215,7 @@ Email adapter: `backend/src/services/email.service.js`. Set
 
 ## 6. Client administrator employee management
 
-All routes require `X-User-Id` of an `ADMIN`/owner in their own organization and
+All routes require a valid `Authorization: Bearer <token>` session of an `ADMIN`/owner in their own organization and
 an active entitlement.
 
 | Method | Route | Notes |

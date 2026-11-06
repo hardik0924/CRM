@@ -4,9 +4,9 @@ const getAuthHeaders = () => {
   const headers = {
     "Content-Type": "application/json",
   };
-  const userId = localStorage.getItem("vsph_user_id");
-  if (userId) {
-    headers["x-user-id"] = userId;
+  const token = localStorage.getItem("vsph_auth_token");
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
   return headers;
 };

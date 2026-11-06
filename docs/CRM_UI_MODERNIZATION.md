@@ -71,7 +71,7 @@
 
 ## Features and Workflows Verified
 
-- Login/logout with `X-User-Id` header auth
+- Login/logout with signed bearer-token auth
 - Per-employee module access enforcement (`ModuleGuard` + backend `requireModule`)
 - Tenant isolation (backend enforces `tenant_fk` from session, never browser)
 - CRUD for accounts, contacts, opportunities, projects, tasks, campaigns

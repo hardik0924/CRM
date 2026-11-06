@@ -1,4 +1,5 @@
 import { prisma } from "../src/lib/prisma.js";
+import { hashPassword } from "../src/lib/passwords.js";
 
 async function main() {
   console.log("🌱 Seeding default tenant...");
@@ -29,7 +30,7 @@ async function main() {
       user_name: "VSPH Superadmin",
       user_role: "SUPER_ADMIN",
       user_department: "SALES",
-      user_password: "0000",
+      user_password: await hashPassword("0000"),
       user_status: true,
       tenant_fk: null,
     },
@@ -43,7 +44,7 @@ async function main() {
       user_name: "Client User",
       user_role: "ADMIN",
       user_department: "SALES",
-      user_password: "0000",
+      user_password: await hashPassword("0000"),
       user_status: true,
       user_is_tenant_owner: true,
       tenant_fk: tenant.tenant_id,

@@ -54,6 +54,8 @@ test("provisioning is idempotent and invitations are single-use", { skip: !runDb
     assert.equal(activated.user_status, true);
     assert.equal(activated.user_role, "ADMIN");
     assert.equal(activated.user_is_tenant_owner, true);
+    assert.ok(activated.user_password.startsWith("scrypt$"), "password must be stored as a hash");
+    assert.notEqual(activated.user_password, "secret123");
 
     await assert.rejects(() => acceptInvitation(token, "secret123"), /already been used|invalid/i);
 

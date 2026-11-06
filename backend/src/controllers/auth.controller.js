@@ -2,6 +2,8 @@ import { prisma } from "../lib/prisma.js";
 import { checkCrmAccess } from "../services/entitlement.service.js";
 import { parseModuleGrants } from "../lib/modules.js";
 import { getOrgRole } from "../lib/roles.js";
+import { hashPassword, verifyPassword } from "../lib/passwords.js";
+import { signSessionToken, tokenTtlSeconds } from "../lib/session.js";
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
@@ -40,8 +42,8 @@ export const login = async (req, res) => {
     });
   }
 
-  // Simple password check (plaintext match for dev; hash in production)
-  if (user.user_password !== password) {
+  const passwordCheck = await verifyPassword(user.user_password, password);
+  if (!passwordCheck.ok) {
     return res.status(401).json({
       success: false,
       message: "Invalid password",
@@ -68,11 +70,22 @@ export const login = async (req, res) => {
     });
   }
 
+  // Existing plaintext rows are upgraded on their first successful login.
+  if (passwordCheck.needsRehash) {
+    user.user_password = await hashPassword(password);
+    await prisma.user.update({
+      where: { user_id: user.user_id },
+      data: { user_password: user.user_password },
+    });
+  }
+
   const grants = parseModuleGrants(user.user_module_access);
 
   return res.status(200).json({
     success: true,
     message: "Login successful",
+    token: signSessionToken(user),
+    expiresIn: tokenTtlSeconds(),
     user: {
       id: user.user_id,
       name: user.user_name,

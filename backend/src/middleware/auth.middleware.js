@@ -6,23 +6,26 @@ import {
   parseModuleGrants,
 } from "../lib/modules.js";
 import { getOrgRole } from "../lib/roles.js";
+import { readSessionToken, sessionMatchesUser, verifySessionToken } from "../lib/session.js";
 
 export const authMiddleware = async (req, res, next) => {
-  const userId = req.headers["x-user-id"];
+  const session = verifySessionToken(readSessionToken(req));
 
-  if (!userId) {
+  if (!session) {
     return res.status(401).json({
       success: false,
-      message: "Authentication required. X-User-Id header missing.",
+      message: "Authentication required. Sign in again.",
     });
   }
 
   const user = await prisma.user.findUnique({
-    where: { user_id: userId },
+    where: { user_id: session.sub },
     include: { tenant: true },
   });
 
-  if (!user || !user.user_status || user.user_deleted_at) {
+  // A token stops working when the user is deactivated, deleted or the
+  // password changes.
+  if (!user || !user.user_status || user.user_deleted_at || !sessionMatchesUser(session, user)) {
     return res.status(401).json({
       success: false,
       message: "Invalid or inactive user session.",

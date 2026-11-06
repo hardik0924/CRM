@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { hashPassword } from "../lib/passwords.js";
 import {
   buildInviteUrl,
   generateInvitationToken,
@@ -95,6 +96,9 @@ export const acceptInvitation = async (rawToken, password) => {
     throw err;
   }
 
+  // Hash outside the transaction so the scrypt work does not hold a DB lock.
+  const passwordHash = await hashPassword(password);
+
   return prisma.$transaction(async (tx) => {
     const invitation = await tx.invitation.findUnique({
       where: { invitation_token_hash: hashInvitationToken(rawToken) },
@@ -145,7 +149,7 @@ export const acceptInvitation = async (rawToken, password) => {
       ? await tx.user.update({
           where: { user_id: existing.user_id },
           data: {
-            user_password: password,
+            user_password: passwordHash,
             user_status: true,
             tenant_fk: invitation.tenant_fk,
             user_role: invitation.invitation_role,
@@ -156,7 +160,7 @@ export const acceptInvitation = async (rawToken, password) => {
           data: {
             user_name: email.split("@")[0],
             user_email: email,
-            user_password: password,
+            user_password: passwordHash,
             user_status: true,
             user_role: invitation.invitation_role,
             user_is_tenant_owner: becomesOwner,
