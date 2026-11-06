@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { hashPassword, isPasswordHash, verifyPassword } from "../src/lib/passwords.js";
 import {
+  assertSessionConfigured,
   readSessionToken,
   sessionMatchesUser,
   signSessionToken,
@@ -45,6 +46,7 @@ test("a signed session token round-trips and identifies the user", () => {
 test("a tampered or foreign token is rejected", () => {
   const token = signSessionToken(user);
   assert.equal(verifySessionToken(`${token}tampered`), null);
+  assert.equal(verifySessionToken(`${token}.extra`), null);
 
   process.env.AUTH_TOKEN_SECRET = "another-secret-that-is-long-enough-for-hmac";
   assert.equal(verifySessionToken(token), null);
@@ -89,6 +91,31 @@ test("a legacy plaintext password verifies once and asks to be rehashed", async 
   assert.equal(result.ok, true);
   assert.equal(result.needsRehash, true);
   assert.equal((await verifyPassword("0000", "0001")).ok, false);
+});
+
+test("malformed stored hashes are rejected instead of crashing", async () => {
+  const salt = Buffer.alloc(16).toString("base64url");
+  assert.equal((await verifyPassword(`scrypt$${salt}$!`, "x")).ok, false);
+  assert.equal((await verifyPassword("scrypt$bad$bad", "x")).ok, false);
+  assert.equal((await verifyPassword("scrypt$only-one-part", "x")).ok, false);
+});
+
+test("production requires a strong signing secret", () => {
+  const savedSecret = process.env.AUTH_TOKEN_SECRET;
+  const savedNodeEnv = process.env.NODE_ENV;
+
+  try {
+    delete process.env.AUTH_TOKEN_SECRET;
+    process.env.NODE_ENV = "production";
+    assert.throws(() => signSessionToken(user), /required in production/);
+
+    process.env.AUTH_TOKEN_SECRET = "too-short";
+    assert.throws(() => assertSessionConfigured(), /at least 32 characters/);
+  } finally {
+    process.env.AUTH_TOKEN_SECRET = savedSecret;
+    if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = savedNodeEnv;
+  }
 });
 
 test("changing the stored password invalidates existing tokens", () => {

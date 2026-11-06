@@ -1,16 +1,32 @@
 import crypto from "node:crypto";
 
 const DEFAULT_TTL_MINUTES = 12 * 60;
+const MIN_SECRET_LENGTH = 32;
 let ephemeralSecret = null;
 
+const isProduction = () => process.env.NODE_ENV === "production";
+
+const configuredSecret = () => {
+  const value = String(process.env.AUTH_TOKEN_SECRET || "").trim();
+  if (!value) return null;
+  if (value.length < MIN_SECRET_LENGTH) {
+    throw new Error(`AUTH_TOKEN_SECRET must be at least ${MIN_SECRET_LENGTH} characters.`);
+  }
+  return value;
+};
+
 /**
- * Sessions are HMAC-signed bearer tokens. A missing AUTH_TOKEN_SECRET gets a
- * random per-process secret instead of a known default: the app still runs,
- * but every restart signs existing sessions out.
+ * Sessions are HMAC-signed bearer tokens. Outside production a missing secret
+ * gets a random per-process value instead of a known default. Production must
+ * configure AUTH_TOKEN_SECRET, otherwise every process would sign with a
+ * different key and sessions would break on restart or behind a load balancer.
  */
 const secret = () => {
-  const configured = process.env.AUTH_TOKEN_SECRET;
+  const configured = configuredSecret();
   if (configured) return configured;
+  if (isProduction()) {
+    throw new Error("AUTH_TOKEN_SECRET is required in production.");
+  }
   if (!ephemeralSecret) {
     ephemeralSecret = crypto.randomBytes(32).toString("hex");
     console.warn(
@@ -18,6 +34,11 @@ const secret = () => {
     );
   }
   return ephemeralSecret;
+};
+
+/** Fails fast at startup when the signing secret is missing or too short. */
+export const assertSessionConfigured = () => {
+  secret();
 };
 
 export const tokenTtlSeconds = () => {
@@ -47,9 +68,11 @@ export const signSessionToken = (user, now = Date.now()) => {
 };
 
 export const verifySessionToken = (token, now = Date.now()) => {
-  if (typeof token !== "string" || !token.includes(".")) return null;
+  if (typeof token !== "string") return null;
 
-  const [body, provided] = token.split(".");
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [body, provided] = parts;
   if (!body || !provided) return null;
 
   const expected = signature(body);

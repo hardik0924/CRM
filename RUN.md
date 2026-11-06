@@ -55,8 +55,9 @@ DATABASE_USER=root
 DATABASE_PASSWORD=YOUR_PASSWORD
 DATABASE_NAME=crm
 
-# Session signing. Generate a long random value for any shared environment.
-AUTH_TOKEN_SECRET=change-me-to-a-long-random-value
+# Session signing. Minimum 32 characters; required when NODE_ENV=production.
+# Generate one with: openssl rand -hex 32
+AUTH_TOKEN_SECRET=
 AUTH_TOKEN_TTL_MINUTES=720
 CORS_ORIGINS=http://localhost:5173
 

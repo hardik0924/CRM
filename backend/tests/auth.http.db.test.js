@@ -22,7 +22,7 @@ const login = (base, emailAddress, supplied = password) =>
 
 const usersRequest = (base, headers) => fetch(`${base}/api/users`, { headers });
 
-test("login, spoofing, expiry, revocation and tenant isolation", { skip: !runDbTests }, async () => {
+test("login, spoofing, expiry, revocation, tenant isolation and role boundaries", { skip: !runDbTests }, async () => {
   const tenantA = await prisma.tenant.create({
     data: {
       tenant_name: "Auth Test A",
@@ -74,6 +74,25 @@ test("login, spoofing, expiry, revocation and tenant isolation", { skip: !runDbT
       tenant_fk: tenantA.tenant_id,
     },
   });
+  const employee = await prisma.user.create({
+    data: {
+      user_name: "Employee A",
+      user_email: email("employee-a"),
+      user_password: await hashPassword(password),
+      user_role: "SALES",
+      user_module_access: "CONTACTS:VIEW",
+      tenant_fk: tenantA.tenant_id,
+    },
+  });
+  const platform = await prisma.user.create({
+    data: {
+      user_name: "Platform Admin",
+      user_email: email("platform"),
+      user_password: await hashPassword(password),
+      user_role: "SUPER_ADMIN",
+      tenant_fk: null,
+    },
+  });
 
   const server = app.listen(0);
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -94,6 +113,40 @@ test("login, spoofing, expiry, revocation and tenant isolation", { skip: !runDbT
     const listed = await allowed.json();
     assert.equal(listed.data.some((row) => row.user_id === userB.user_id), false);
     assert.equal(listed.data.some((row) => row.user_id === adminA.user_id), true);
+
+    // Module permissions are enforced per module and per action.
+    const employeeLogin = await login(base, employee.user_email);
+    assert.equal(employeeLogin.status, 200);
+    const employeeToken = (await employeeLogin.json()).token;
+    const employeeAuth = { Authorization: `Bearer ${employeeToken}` };
+
+    assert.equal((await fetch(`${base}/api/accounts`, { headers: employeeAuth })).status, 403);
+    assert.equal((await fetch(`${base}/api/contacts`, { headers: employeeAuth })).status, 200);
+    assert.equal(
+      (
+        await fetch(`${base}/api/contacts`, {
+          method: "POST",
+          headers: { ...employeeAuth, "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        })
+      ).status,
+      403
+    );
+
+    // Organization role: an employee receives only their own user row.
+    const selfOnly = await (await usersRequest(base, employeeAuth)).json();
+    assert.equal(selfOnly.data.length, 1);
+    assert.equal(selfOnly.data[0].user_id, employee.user_id);
+
+    // Platform superadmin boundary: client admins cannot reach /api/tenants.
+    assert.equal((await fetch(`${base}/api/tenants`, { headers: auth })).status, 403);
+    const platformLogin = await login(base, platform.user_email);
+    assert.equal(platformLogin.status, 200);
+    const platformToken = (await platformLogin.json()).token;
+    assert.equal(
+      (await fetch(`${base}/api/tenants`, { headers: { Authorization: `Bearer ${platformToken}` } })).status,
+      200
+    );
 
     // A client-supplied identity header is ignored.
     const spoofed = await usersRequest(base, { "x-user-id": adminA.user_id });
@@ -127,7 +180,14 @@ test("login, spoofing, expiry, revocation and tenant isolation", { skip: !runDbT
       server.closeAllConnections?.();
     });
     await prisma.invitation.deleteMany({ where: { tenant_fk: { in: [tenantA.tenant_id, tenantB.tenant_id] } } });
-    await prisma.user.deleteMany({ where: { tenant_fk: { in: [tenantA.tenant_id, tenantB.tenant_id] } } });
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { tenant_fk: { in: [tenantA.tenant_id, tenantB.tenant_id] } },
+          { user_email: platform.user_email },
+        ],
+      },
+    });
     await prisma.organization_app_entitlement.deleteMany({
       where: { tenant_fk: { in: [tenantA.tenant_id, tenantB.tenant_id] } },
     });

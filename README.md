@@ -179,8 +179,9 @@ DATABASE_USER=root
 DATABASE_PASSWORD=
 DATABASE_NAME=crm
 
-# Session signing. Generate a long random value for any shared environment.
-AUTH_TOKEN_SECRET=change-me-to-a-long-random-value
+# Session signing. Minimum 32 characters; required when NODE_ENV=production.
+# Generate one with: openssl rand -hex 32
+AUTH_TOKEN_SECRET=
 AUTH_TOKEN_TTL_MINUTES=720
 CORS_ORIGINS=http://localhost:5173
 
@@ -239,7 +240,7 @@ npx vite build
 | Variable | Purpose |
 |----------|---------|
 | `PORT` | Backend port (default `5000`) |
-| `AUTH_TOKEN_SECRET` | Secret used to sign session tokens. Set a long random value; without it a random per-process secret is used and sessions end on restart. |
+| `AUTH_TOKEN_SECRET` | Secret used to sign session tokens. Must be at least 32 characters and is required when `NODE_ENV=production`. Outside production a random per-process secret is used if omitted, so sessions end on restart. |
 | `AUTH_TOKEN_TTL_MINUTES` | Session lifetime in minutes (default `720`, i.e. 12 hours) |
 | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (for example `https://crm.example.com`). Defaults to `FRONTEND_URL`, then `http://localhost:5173`. |
 | `DATABASE_URL` | Prisma connection string (MySQL) |
@@ -376,7 +377,7 @@ The UI follows the VSPH brand (`frontend/DESIGN.md`):
 ## Dev Notes & Known Limits
 
 - **Passwords** — scrypt hashes. Existing plaintext rows are rehashed on their first successful login.
-- **Sessions** — HMAC-signed bearer tokens in localStorage (12 hours by default). Set `AUTH_TOKEN_SECRET` in production; without it tokens are signed with a random per-process secret. A move to httpOnly cookies needs a same-site deployment decision, since the SPA and API are currently cross-origin.
+- **Sessions** — HMAC-signed bearer tokens in localStorage (12 hours by default). `AUTH_TOKEN_SECRET` must be at least 32 characters and is required when `NODE_ENV=production`; a missing or short secret stops the server at startup. Outside production a random per-process secret is used, so sessions end on restart. A move to httpOnly cookies needs a same-site deployment decision, since the SPA and API are currently cross-origin.
 - **Invitation email** — no provider is installed. Development prints the invitation URL / returns it in the API response. Set `EMAIL_WEBHOOK_URL` before production; tokens are never logged or returned in production.
 - **Integration is CRM-side complete, end-to-end pending** — the contract is implemented and tested locally. `apps.vsph.in` must supply its base URL, HMAC secret and final field names before end-to-end can be claimed.
 - **Entitlement fail-closed** — client access is blocked when no entitlement record exists. Run `npm run backfill:onboarding` after migrating existing data.

@@ -16,6 +16,7 @@ import invitationRoutes from "./routes/invitation.routes.js";
 import organizationRoutes from "./routes/organization.routes.js";
 import activityRoutes from "./routes/activity.routes.js";
 import { authMiddleware, requireModule } from "./middleware/auth.middleware.js";
+import { assertSessionConfigured } from "./lib/session.js";
 import cors from "cors";
 import dotenv from "dotenv";
 import { pathToFileURL } from "node:url";
@@ -87,6 +88,13 @@ export { app };
 // Only listen when this file is the process entry point, so tests can import
 // the app without opening a port.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  try {
+    assertSessionConfigured();
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+
   const server = app.listen(port, () => {
     console.log(`Server running on port ${port}`);
   });
