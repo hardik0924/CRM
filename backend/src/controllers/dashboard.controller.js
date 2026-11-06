@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 import { getTenantFilter } from "../middleware/auth.middleware.js";
 import { canAccessModule } from "../lib/modules.js";
-import { getOrgRole, isEmployee } from "../lib/roles.js";
+import { isEmployee } from "../lib/roles.js";
 import { TASK_STATUSES } from "../lib/tasks.js";
 
 const countByStatus = () =>
@@ -25,8 +25,9 @@ const fullName = (contact) =>
   [contact?.contact_firstname, contact?.contact_lastname].filter(Boolean).join(" ");
 
 /**
- * Dashboard summary. Counts are organization-wide so every teammate sees the
- * same live picture; personal task scope is kept for employees.
+ * Dashboard summary. Organization roles see every teammate's calls, records
+ * and activity; employees see only their own. Module counts stay null for
+ * modules the user cannot access.
  */
 export const getDashboardMetrics = async (req, res) => {
   try {
@@ -52,6 +53,17 @@ export const getDashboardMetrics = async (req, res) => {
 
     const openStages = { notIn: ["CLOSED_WON", "CLOSED_LOST"] };
 
+    // Employees see only their own dashboard; organization roles see the whole
+    // organization.
+    const personal = isEmployee(req.user);
+    const own = {
+      call: personal ? { call_user_fk: req.user.id } : {},
+      contact: personal ? { contact_owner_fk: req.user.id } : {},
+      account: personal ? { account_owner_fk: req.user.id } : {},
+      opportunity: personal ? { opportunity_owner_fk: req.user.id } : {},
+      task: personal ? { task_user_fk: req.user.id } : {},
+    };
+
     const [
       callsToday,
       callsThisWeek,
@@ -69,6 +81,7 @@ export const getDashboardMetrics = async (req, res) => {
         ? prisma.call.count({
             where: {
               ...tenant,
+              ...own.call,
               call_deleted_at: null,
               call_created_at: { gte: startOfToday, lte: endOfToday },
             },
@@ -76,7 +89,7 @@ export const getDashboardMetrics = async (req, res) => {
         : null,
       can.contacts
         ? prisma.call.findMany({
-            where: { ...tenant, call_deleted_at: null, call_created_at: { gte: weekStart } },
+            where: { ...tenant, ...own.call, call_deleted_at: null, call_created_at: { gte: weekStart } },
             select: { call_created_at: true },
             take: 2000,
           })
@@ -85,20 +98,21 @@ export const getDashboardMetrics = async (req, res) => {
         ? prisma.opportunity.count({
             where: {
               ...tenant,
+              ...own.opportunity,
               opportunity_stage: "CLOSED_WON",
               opportunity_close_date: { gte: startOfMonth, lte: endOfMonth },
             },
           })
         : null,
       can.accounts
-        ? prisma.account.count({ where: { account_deleted_at: null, ...tenant } })
+        ? prisma.account.count({ where: { account_deleted_at: null, ...tenant, ...own.account } })
         : null,
       can.contacts
-        ? prisma.contact.count({ where: { contact_deleted_at: null, ...tenant } })
+        ? prisma.contact.count({ where: { contact_deleted_at: null, ...tenant, ...own.contact } })
         : null,
       can.opportunities
         ? prisma.opportunity.count({
-            where: { opportunity_stage: openStages, ...tenant },
+            where: { opportunity_stage: openStages, ...tenant, ...own.opportunity },
           })
         : null,
       can.tasks
@@ -112,20 +126,20 @@ export const getDashboardMetrics = async (req, res) => {
               task_deleted_at: null,
               task_status: { not: "COMPLETED" },
               ...tenant,
-              ...(isEmployee(req.user) ? { task_user_fk: req.user.id } : {}),
+              ...own.task,
             },
           })
         : null,
       can.opportunities
         ? prisma.opportunity.groupBy({
             by: ["opportunity_stage"],
-            where: tenant,
+            where: { ...tenant, ...own.opportunity },
             _count: { _all: true },
           })
         : null,
       can.opportunities
         ? prisma.opportunity.findMany({
-            where: tenant,
+            where: { ...tenant, ...own.opportunity },
             orderBy: { opportunity_created_at: "desc" },
             take: 5,
             include: {
@@ -139,7 +153,7 @@ export const getDashboardMetrics = async (req, res) => {
             where: {
               task_deleted_at: null,
               ...tenant,
-              ...(isEmployee(req.user) ? { task_user_fk: req.user.id } : {}),
+              ...own.task,
             },
             orderBy: { task_due_date: "asc" },
             take: 5,
@@ -163,12 +177,13 @@ export const getDashboardMetrics = async (req, res) => {
       callsByDay = [...buckets.values()];
     }
 
-    // A single organization-wide feed of recent records, newest first.
+    // One recent feed per scope: organization-wide for admins, own work for
+    // employees.
     const [recentCalls, recentContacts, recentAccounts, recentOpps, recentTaskRows] =
       await Promise.all([
         can.contacts
           ? prisma.call.findMany({
-              where: { ...tenant, call_deleted_at: null },
+              where: { ...tenant, ...own.call, call_deleted_at: null },
               orderBy: { call_created_at: "desc" },
               take: 6,
               include: {
@@ -179,7 +194,7 @@ export const getDashboardMetrics = async (req, res) => {
           : [],
         can.contacts
           ? prisma.contact.findMany({
-              where: { contact_deleted_at: null, ...tenant },
+              where: { contact_deleted_at: null, ...tenant, ...own.contact },
               orderBy: { contact_created_at: "desc" },
               take: 4,
               include: {
@@ -190,7 +205,7 @@ export const getDashboardMetrics = async (req, res) => {
           : [],
         can.accounts
           ? prisma.account.findMany({
-              where: { account_deleted_at: null, ...tenant },
+              where: { account_deleted_at: null, ...tenant, ...own.account },
               orderBy: { account_created_at: "desc" },
               take: 4,
               include: { owner: { select: { user_name: true } } },
@@ -198,7 +213,7 @@ export const getDashboardMetrics = async (req, res) => {
           : [],
         can.opportunities
           ? prisma.opportunity.findMany({
-              where: tenant,
+              where: { ...tenant, ...own.opportunity },
               orderBy: { opportunity_created_at: "desc" },
               take: 4,
               include: {
@@ -209,7 +224,7 @@ export const getDashboardMetrics = async (req, res) => {
           : [],
         can.tasks
           ? prisma.task.findMany({
-              where: { task_deleted_at: null, ...tenant },
+              where: { task_deleted_at: null, ...tenant, ...own.task },
               orderBy: { task_created_at: "desc" },
               take: 4,
               include: { user: { select: { user_name: true } } },
@@ -266,9 +281,7 @@ export const getDashboardMetrics = async (req, res) => {
 
     let work = null;
     if (can.tasks) {
-      const orgRole = getOrgRole(req.user);
-      const employeeScope = orgRole === "EMPLOYEE" ? { task_user_fk: req.user.id } : {};
-      const workWhere = { task_deleted_at: null, ...tenant, ...employeeScope };
+      const workWhere = { task_deleted_at: null, ...tenant, ...own.task };
 
       const [workTasks, recentUpdates] = await Promise.all([
         prisma.task.findMany({
@@ -284,7 +297,7 @@ export const getDashboardMetrics = async (req, res) => {
         prisma.task_update.findMany({
           where: {
             ...tenant,
-            ...(orgRole === "EMPLOYEE" ? { user_fk: req.user.id } : {}),
+            ...(personal ? { user_fk: req.user.id } : {}),
           },
           orderBy: { created_at: "desc" },
           take: 10,
@@ -331,7 +344,7 @@ export const getDashboardMetrics = async (req, res) => {
       }
 
       work = {
-        scope: orgRole === "EMPLOYEE" ? "PERSONAL" : "ORGANIZATION",
+        scope: personal ? "PERSONAL" : "ORGANIZATION",
         total: workTasks.length,
         byStatus,
         overdue,
@@ -354,6 +367,7 @@ export const getDashboardMetrics = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
+        scope: personal ? "PERSONAL" : "ORGANIZATION",
         callsToday,
         callsByDay,
         oppsWonThisMonth,

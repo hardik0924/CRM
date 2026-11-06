@@ -240,13 +240,15 @@ const DashboardV2 = () => {
     year: "numeric",
   });
 
+  const personal = metrics?.scope === "PERSONAL";
+
   const cards = metrics
     ? [
         metrics.callsToday !== null && {
           key: "calls",
           label: "Calls today",
           value: metrics.callsToday,
-          hint: "Logged by your team",
+          hint: personal ? "Logged by you" : "Logged by your team",
           icon: Phone,
           tone: "bg-vsph-core-blue/10 text-vsph-core-blue border-vsph-core-blue/20",
           path: null,
@@ -255,7 +257,7 @@ const DashboardV2 = () => {
           key: "won",
           label: "Won this month",
           value: metrics.oppsWonThisMonth,
-          hint: "Closed won · team",
+          hint: personal ? "Closed won · you" : "Closed won · team",
           icon: Trophy,
           tone: "bg-emerald-50 text-emerald-600 border-emerald-100",
           path: "/v2/opportunities",
@@ -325,7 +327,7 @@ const DashboardV2 = () => {
               Welcome back, {userName}
             </h1>
             <p className="text-secondary text-sm mt-1">
-              Signed in as {userRole}. Here is what your organization is doing right now.
+              Signed in as {userRole}. {personal ? "Here is your work right now." : "Here is what your organization is doing right now."}
             </p>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -399,7 +401,7 @@ const DashboardV2 = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4 card border-border p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="font-bold text-sidebar">Team call volume</h2>
+                  <h2 className="font-bold text-sidebar">{personal ? "Your call volume" : "Team call volume"}</h2>
                   <span className="text-[10px] text-secondary">7 days</span>
                 </div>
                 {metrics.callsByDay ? (
@@ -446,9 +448,11 @@ const DashboardV2 = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="font-bold text-sidebar inline-flex items-center gap-2">
-                      <Radio size={16} className="text-emerald-500" /> Team activity
+                      <Radio size={16} className="text-emerald-500" /> {personal ? "Your activity" : "Team activity"}
                     </h2>
-                    <p className="text-[11px] text-secondary mt-0.5">Every call, contact and deal as it happens.</p>
+                    <p className="text-[11px] text-secondary mt-0.5">
+                      {personal ? "Your calls, contacts and deals as they happen." : "Every call, contact and deal as it happens."}
+                    </p>
                   </div>
                   <span className="text-[10px] font-semibold text-vsph-core-blue">LIVE</span>
                 </div>
@@ -482,7 +486,7 @@ const DashboardV2 = () => {
 
               <div className="lg:col-span-5 card border-border p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-sidebar">Recent opportunities</h2>
+                  <h2 className="font-bold text-sidebar">{personal ? "Your recent opportunities" : "Recent opportunities"}</h2>
                   {metrics.recentOpportunities && (
                     <Link to="/v2/opportunities" className="text-[10px] font-semibold text-vsph-core-blue hover:underline inline-flex items-center gap-1">
                       View all <ArrowRight size={13} />

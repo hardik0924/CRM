@@ -9,7 +9,7 @@ const runDbTests = process.env.RUN_DB_TESTS === "1";
 
 process.env.AUTH_TOKEN_SECRET ||= "dashboard-db-test-secret-key-32-chars-min";
 
-test("dashboard shows organization-wide activity from every teammate", { skip: !runDbTests }, async () => {
+test("dashboard is organization-wide for admins and personal for employees", { skip: !runDbTests }, async () => {
   const stamp = Date.now();
   const tenant = await prisma.tenant.create({
     data: { tenant_name: "Dashboard Test", tenant_code: `D${stamp}`.slice(0, 20), tenant_status: "ACTIVE" },
@@ -43,6 +43,15 @@ test("dashboard shows organization-wide activity from every teammate", { skip: !
       tenant_fk: tenant.tenant_id,
     },
   });
+  const teammate = await prisma.user.create({
+    data: {
+      user_name: "Dash Teammate",
+      user_email: `dash.teammate.${stamp}@example.test`,
+      user_password: password,
+      user_role: "SALES",
+      tenant_fk: tenant.tenant_id,
+    },
+  });
 
   const contact = await prisma.contact.create({
     data: {
@@ -61,6 +70,23 @@ test("dashboard shows organization-wide activity from every teammate", { skip: !
       call_subject: "Intro call",
     },
   });
+  const teammateContact = await prisma.contact.create({
+    data: {
+      tenant_fk: tenant.tenant_id,
+      contact_code: `DBT2-${stamp}`,
+      contact_firstname: "Other",
+      contact_lastname: "Contact",
+      contact_owner_fk: teammate.user_id,
+    },
+  });
+  await prisma.call.create({
+    data: {
+      tenant_fk: tenant.tenant_id,
+      call_user_fk: teammate.user_id,
+      call_contact_fk: teammateContact.contact_id,
+      call_subject: "Teammate call",
+    },
+  });
 
   const server = app.listen(0);
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -74,15 +100,35 @@ test("dashboard shows organization-wide activity from every teammate", { skip: !
     const body = await response.json();
     assert.equal(body.success, true);
 
-    // Organization-wide counts: the admin sees the employee's work.
-    assert.equal(body.data.callsToday, 1);
-    assert.equal(body.data.callsByDay.reduce((sum, day) => sum + day.count, 0), 1);
+    // Organization-wide counts: the admin sees both teammates' work.
+    assert.equal(body.data.scope, "ORGANIZATION");
+    assert.equal(body.data.callsToday, 2);
+    assert.equal(body.data.callsByDay.reduce((sum, day) => sum + day.count, 0), 2);
 
     const contactActivity = body.data.recentActivity.find((item) => item.type === "contact");
-    assert.equal(contactActivity.user, "Dash Employee");
-    const callActivity = body.data.recentActivity.find((item) => item.type === "call");
-    assert.equal(callActivity.user, "Dash Employee");
-    assert.equal(callActivity.subtitle, "Live Contact");
+    assert.equal(contactActivity.user, "Dash Teammate");
+    assert.deepEqual(
+      [...new Set(body.data.recentActivity.map((item) => item.user))].sort(),
+      ["Dash Employee", "Dash Teammate"]
+    );
+
+    // Same data, employee scope: only their own calls, contacts and tasks.
+    const employeeResponse = await fetch(`${base}/api/dashboard/metrics`, {
+      headers: { Authorization: `Bearer ${signSessionToken(employee)}` },
+    });
+    assert.equal(employeeResponse.status, 200);
+    const employeeBody = await employeeResponse.json();
+    assert.equal(employeeBody.data.scope, "PERSONAL");
+    assert.equal(employeeBody.data.callsToday, 1);
+    assert.equal(
+      employeeBody.data.callsByDay.reduce((sum, day) => sum + day.count, 0),
+      1
+    );
+    assert.ok(
+      employeeBody.data.recentActivity.every((item) => item.user === "Dash Employee"),
+      "employees only see their own activity"
+    );
+    assert.equal(employeeBody.data.recentActivity.length, 2);
   } finally {
     await new Promise((resolve) => {
       server.close(resolve);
