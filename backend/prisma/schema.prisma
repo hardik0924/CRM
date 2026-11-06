@@ -48,7 +48,8 @@ model user {
   user_password        String?
   user_status          Boolean    @default(true)
   // Granted CRM modules (comma separated). Null means all modules.
-  user_module_access   String?
+  // Text: explicit per-action grants exceed the 191-char VARCHAR default.
+  user_module_access   String?    @db.Text
   // Explicit client super admin marker (organization owner).
   user_is_tenant_owner Boolean    @default(false)
   user_created_at      DateTime   @default(now())

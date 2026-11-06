@@ -114,6 +114,28 @@ test("login, spoofing, expiry, revocation, tenant isolation and role boundaries"
     assert.equal(listed.data.some((row) => row.user_id === userB.user_id), false);
     assert.equal(listed.data.some((row) => row.user_id === adminA.user_id), true);
 
+    // Inviting with every module selected must store a grant longer than the
+    // old VARCHAR(191) default without failing.
+    const allModules = ["CONTACTS", "ACCOUNTS", "OPPORTUNITIES", "PROJECTS", "CAMPAIGNS", "TASKS"];
+    const invitedEmail = email("invited");
+    const invite = await fetch(`${base}/api/organization/employees/invite`, {
+      method: "POST",
+      headers: { ...auth, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Invited Employee",
+        email: invitedEmail,
+        role: "USER",
+        department: "SALES",
+        modules: allModules,
+        permissions: Object.fromEntries(
+          allModules.map((module) => [module, ["VIEW", "CREATE", "EDIT", "DELETE"]])
+        ),
+      }),
+    });
+    assert.equal(invite.status, 201);
+    const invited = await prisma.user.findUnique({ where: { user_email: invitedEmail } });
+    assert.ok(invited.user_module_access.length > 191);
+
     // Module permissions are enforced per module and per action.
     const employeeLogin = await login(base, employee.user_email);
     assert.equal(employeeLogin.status, 200);
